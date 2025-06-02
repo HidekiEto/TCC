@@ -1,25 +1,21 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { StatusBar, View } from 'react-native';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.tetxinhodelicia}> AquaLink</Text>
-      <StatusBar style="auto" />
-    </View>
+import { NavigationContainer } from '@react-navigation/native';
+import Navigation from './src/navigation/NavigationContainer';
+
+import InitialScreen from './src/screens/initialScreen';
+import SecondSlider from './src/screens/SecondSlider';
+
+
+export default function App(){
+  return(
+    <SecondSlider/>
+  // <InitialScreen />
+    // <NavigationContainer>
+    //   <StatusBar backgroundColor="#1081c7" barStyle="light-content"/>
+    //   <Navigation/>
+    // </NavigationContainer>
+    
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'blue',
-    alignItems: 'center',
-    justifyContent: 'center', 
-  },
-  tetxinhodelicia: {
-    fontSize: 89 ,
-    color: '#FAAFF8'
-  },
-});
-
