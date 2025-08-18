@@ -4,28 +4,34 @@ import {
     StyleSheet
 } from "react-native";
 
-import React from "react";
 
 export default function Inputs(){
     return (
         <View style={styles.container}>
-            <TextInput style={styles.inputName}>
+            <TextInput
+             style={styles.input}
+            placeholderTextColor="#C0C0C0"
+            placeholder={" Nome Completo "}
+            onChange={() => {""}}
+             />
                 Nome Completo
-            </TextInput>
 
-            <TextInput style={styles.inputNasc}>
+            <TextInput style={styles.input}>
                 Data de Nascimento
             </TextInput>
 
-            <TextInput style={styles.inputEmail}>
+            <TextInput style={styles.input}>
                 Email
             </TextInput>
 
-            <TextInput style={styles.inputSenha}>
+            <TextInput style={styles.input}>
                 Senha
             </TextInput>
 
-            <TextInput style={styles.inputSenha2}>
+            <TextInput 
+            style={styles.input}
+            secureTextEntry={true}
+            >
                 Confirme sua Senha
             </TextInput>
         </View>
@@ -34,46 +40,15 @@ export default function Inputs(){
 
 const styles = StyleSheet.create ({
     container:{
+        backgroundColor: 'blue',
+        flex: 1,
+        padding: 20,
+        
+    },
+    input: {
         backgroundColor: 'white',
+        marginTop: 20,
+        padding: 10,
+        borderRadius: 5,
     },
-    inputName: {
-        backgroundColor: 'red',
-        fontSize: 5,
-        alignItems: 'center',
-        alignSelf: 'center',
-        padding: 1,
-        width: '60%',
-    },
-    inputNasc: {
-        backgroundColor: 'red',
-        fontSize: 5,
-        alignItems: 'center',
-        alignSelf: 'center',
-        padding: 1,
-        width: '60%',
-    },
-    inputEmail: {
-        backgroundColor: 'red',
-        fontSize: 5,
-        alignItems: 'center',
-        alignSelf: 'center',
-        padding: 1,
-        width: '60%',
-    },
-    inputSenha: {
-        backgroundColor: 'red',
-        fontSize: 5,
-        alignItems: 'center',
-        alignSelf: 'center',
-        padding: 1,
-        width: '60%',
-    },
-    inputSenha2: {
-        backgroundColor: 'red',
-        fontSize: 5,
-        alignItems: 'center',
-        alignSelf: 'center',
-        padding: 1,
-        width: '60%',
-    }
 })

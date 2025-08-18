@@ -9,9 +9,7 @@ export default function Register(){
             <View style={styles.textContainer}>
                 <Text style={styles.title}>Vamos te cadastrar.</Text>
                 <Text style={styles.text}>Insira suas informações!</Text>
-            </View>
-            
-        <View>
+                
             <Inputs/>
         </View>
 

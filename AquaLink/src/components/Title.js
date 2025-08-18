@@ -1,20 +1,21 @@
-import { Text, StyleSheet } from "react-native";
+import { 
+    Text, 
+    StyleSheet,
+    View,
+} from "react-native";
 
 const Title = () => {
     return (
-        <Text style={styles.text}>
-            <Text style={{ fontWeight: 'bold' }}>Aqua</Text>
-            <Text>Link</Text>
-        </Text>
+        <View style={styles.view}>
+            <Text style={{ fontWeight: 'bold', color: 'white', fontSize: 50 }}>Aqua</Text>
+            <Text style={{ fontWeight: 'normal', color: 'white', fontSize: 50 }}>Link</Text>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    text: {
-        fontSize: 50,
-        position: 'absolute',
-        bottom: '50%',
-        color: 'white'
+    view: {
+        flexDirection: "row",
     }
 })
 

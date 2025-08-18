@@ -1,21 +1,22 @@
-import React from 'react';
-import { StatusBar, View } from 'react-native';
+import React, { useState } from 'react';
+import { StatusBar } from 'react-native';
 
 import { NavigationContainer } from '@react-navigation/native';
 import Navigation from './src/navigation/NavigationContainer';
 
-import InitialScreen from './src/screens/initialScreen';
-import SecondSlider from './src/screens/SecondSlider';
+import Slides from './src/screens/Slider';
 
+export default function App() {
+  const [showNav, setShowNav] = useState(false);
 
-export default function App(){
-  return(
-    <SecondSlider/>
-  // <InitialScreen />
-    // <NavigationContainer>
-    //   <StatusBar backgroundColor="#1081c7" barStyle="light-content"/>
-    //   <Navigation/>
-    // </NavigationContainer>
-    
+  return (
+    showNav ? (
+      <NavigationContainer>
+        <StatusBar backgroundColor="#1081c7" barStyle="light-content"/>
+        <Navigation/>
+      </NavigationContainer>
+    ) : (
+      <Slides onDone={() => setShowNav(true)} />
+    )
   );
 }

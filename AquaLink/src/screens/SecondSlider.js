@@ -7,6 +7,7 @@ import {
 
 import Title from "../components/Title";
 
+
 const SecondSlider = () => {
     return(
         <View style={styles.container}>
