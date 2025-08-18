@@ -28,7 +28,10 @@ export default function Welcome(){
                     <Text style={styles.buttonText}>Nova Conta</Text>
                 </TouchableOpacity>
 
-                 <TouchableOpacity  style={styles.signinButton}>
+                 <TouchableOpacity  
+                    style={styles.signinButton}
+                    onPress={() => navigation.navigate('Home')}
+                    >
                     <Text style={styles.buttonText}>Já possuo uma Conta</Text>
                 </TouchableOpacity>
             </Animatable.View>

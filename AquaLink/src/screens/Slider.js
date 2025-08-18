@@ -41,6 +41,8 @@ export default function Slides({ onDone }) {
         <Slider
             renderItem={renderSlides}
             data={slides}
+            showNextButton={false}
+            showDoneButton={true}
             onDone={onDone}
             dotStyle={{
                 marginBottom: 100,

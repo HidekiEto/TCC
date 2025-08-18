@@ -4,10 +4,14 @@ import {
     Image,
     StyleSheet
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RenderSlides({ item }) {
     return (
-        <View style={[styles.container, { backgroundColor: item.backgroundColor }]}>
+        <LinearGradient
+            colors={['#3498db', '#084F8C']}
+            style={styles.container}
+        >
             {item.topContent ? (
                 <View style={styles.topContent}>
                     {item.component && item.component}
@@ -17,10 +21,10 @@ export default function RenderSlides({ item }) {
                 <View style={styles.centered}>
                     {item.component && item.component}
                     {item.text && <Text style={styles.slideText}>{item.text}</Text>}
-                    {item.image && <Image source={item.image} style={styles.image} />}
+                    {item.image && <Image source={item.image}/>}
                 </View>
             )}
-        </View>
+        </LinearGradient>
     );
 }
 
@@ -50,9 +54,5 @@ const styles = StyleSheet.create({
         fontWeight: 'normal',
         marginTop: 10,
     },
-    image: {
-        width: 150,
-        height: 150,
-        margin: 50,
-    },
+
 });
