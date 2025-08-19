@@ -11,12 +11,14 @@ import * as Animatable from 'react-native-animatable'
 
 import { useNavigation } from '@react-navigation/native';
 
+import { StatusBar } from 'react-native';
+
 export default function Welcome(){
     const navigation = useNavigation()
 
     return (
         <View style={styles.container}>
-
+            <StatusBar backgroundColor="#1081C7" barStyle="light-content"/>
             <Animatable.View delay={600} animation='fadeInUp' style={styles.containerContent}> 
                 <Text style={styles.title}>Bem Vindo!</Text>
                 <Text style={styles.text}>Sua experiência com{'\n'}Aqualink acaba de começar. </Text>

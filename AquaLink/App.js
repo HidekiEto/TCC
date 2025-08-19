@@ -13,14 +13,14 @@ export default function App() {
   const [showNav, setShowNav] = useState(false);
 
   return (
-    showNav ? (
-      <NavigationContainer>
-        <StatusBar backgroundColor="#1081c7" barStyle="light-content"/>
-        <Navigation/>
-      </NavigationContainer>
-    ) : (
-      <Slides onDone={() => setShowNav(true)} />
-    )
+    // showNav ? (
+    //   <NavigationContainer>
+    //     <Navigation/>
+    //   </NavigationContainer>
+    // ) : (
+    //   <Slides onDone={() => setShowNav(true)} />
+    // )
 
+    <Home/>
   );
 }

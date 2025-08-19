@@ -24,11 +24,11 @@ function liquidFillGaugeDefaultSettings() {
     maxValue: 100,
     circleThickness: 0.05,
     circleFillGap: 0.05,
-    circleColor: '#178BCA',
+    circleColor: '#A6B9C8',
     waveHeight: 0.05,
     waveCount: 1,
     waveRiseTime: 1000,
-    waveAnimateTime: 18000,
+    waveAnimateTime: 6000,
     waveRise: true,
     waveHeightScaling: true,
     waveAnimate: true,
@@ -46,9 +46,9 @@ function liquidFillGaugeDefaultSettings() {
 
 export const LiquidGauge = ({
   config,
-  width = 150,
-  height = 150,
-  value = 50,
+  width = 250,
+  height = 250,
+  value = 65,
 }) => {
   const defaultConfig = liquidFillGaugeDefaultSettings();
   const mergedConfig = { ...defaultConfig, ...config };

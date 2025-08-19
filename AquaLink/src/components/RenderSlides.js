@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function RenderSlides({ item }) {
     return (
         <LinearGradient
-            colors={['#3498db', '#084F8C']}
+            colors={['#084F8C', '#27D5E8']}
             style={styles.container}
         >
             {item.topContent ? (
