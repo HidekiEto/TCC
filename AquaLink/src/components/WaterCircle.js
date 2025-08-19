@@ -48,7 +48,7 @@ export const LiquidGauge = ({
   config,
   width = 250,
   height = 250,
-  value = 65,
+  value = 69,
 }) => {
   const defaultConfig = liquidFillGaugeDefaultSettings();
   const mergedConfig = { ...defaultConfig, ...config };
