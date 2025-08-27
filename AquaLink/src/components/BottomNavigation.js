@@ -14,6 +14,7 @@ export default function BottomMenu() {
     { key: 'home', iconName: 'home-outline', iconActiveName: 'home', type: 'ion', label: 'Home' },
     { key: 'perfil', iconName: 'user-o', iconActiveName: 'user', type: 'fa', label: 'Perfil' },
     { key: 'conquistas', iconName: 'trophy', iconActiveName: 'trophy', type: 'fa', label: 'Conquistas' },
+    { key: 'dashboard', iconName: 'dashboard', iconActiveName: 'dashboard', type: 'fa', label: 'Dashboard' },
   ];
 
   const handlePress = (key) => {

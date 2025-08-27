@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import Navigation from './src/navigation/NavigationContainer';
 import Slides from './src/components/Slider';
 import SplashScreen from './src/screens/SplashScreen';
+import { BLEProvider } from './src/contexts/BLEContext';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -13,12 +14,14 @@ export default function App() {
   }
 
   return showNav ? (
-    <NavigationContainer>
-      <Navigation />
-    </NavigationContainer>
+    <BLEProvider>
+      <NavigationContainer>
+        <Navigation />
+      </NavigationContainer>
+    </BLEProvider>
   ) : (
-    <Slides 
-    
-    onDone={() => setShowNav(true)} />
+    <Slides
+
+      onDone={() => setShowNav(true)} />
   );
 }
