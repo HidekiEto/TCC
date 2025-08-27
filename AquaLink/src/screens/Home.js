@@ -1,91 +1,82 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-
+import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { PaperProvider } from 'react-native-paper';
+import { useState } from 'react';
 
 import Title from '../components/Title';
 import { LiquidGauge } from '../components/WaterCircle';
-import HomeFooter from '../components/HomeFooter';
-
-import { StatusBar } from 'react-native';
+import BottomMenu from '../components/BottomNavigation';
+import { DateStrip } from '../components/Teste';
+import Input from '../components/Input';
+import '../../global.css'
+import WeekDays from '../components/CalendarStrip';
+import ModalComponent from '../components/Modal';
 
 export default function Home() {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#27D5E8' }}>
-            <StatusBar backgroundColor="white" barStyle="light-content" />
-            {/* <LinearGradient
-                colors={['#084F8C', '#27D5E8']}
-                style={styles.containerHeader}
-            > 
-                <Title />
-            </LinearGradient> */}
-            <View style={styles.containerHome}> 
-                <View style={{ flexDirection: 'row', }}> 
-                    <View> 
-                        <Text style={{ fontSize: 24, fontWeight: 'bold'}}>Olá, Samuel,</Text>
-                        <Text style={{ fontSize: 16, marginBottom: 20}}>Bem vindo ao Aqualink.</Text>
-                    </View>
+  const [waterValue, setWaterValue] = useState(0);
 
-                <View style={{marginLeft: '40%', backgroundColor: '#27D5E8', borderRadius: 20, width: 40, height: 40, justifyContent: 'center', alignItems: 'center'}}> 
-                     <FontAwesome 
-                name='bell' 
-                size={20}
-                color={'white'}
-                />    
-                </View>    
-               
+  const waterIncrement = () => {
+    setWaterValue((prev) => Math.min(prev + 30, 100));
+  };
 
-                 </View>   
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}> 
-                        <Text style={{ fontSize: 18, fontWeight: '900', color: '#084F8C'}}>Meta diária</Text>
-                        <LiquidGauge/> 
-                        <TouchableOpacity style={{ marginTop: 20, padding: 10, backgroundColor: '#084F8C', borderRadius: 20, width: '80%', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 }}>
-                            <Text style={styles.textButton}>Adicionar Água</Text>
-                        </TouchableOpacity>
-                        
-                    </View>
-                
+  return (
+    <PaperProvider className="flex-1 justify-center items-center bg-[#00000]">
+      <StatusBar backgroundColor="white" barStyle="light-content" />
 
-            </View>
-            <HomeFooter activeScreen="Home" />
+      <View className="flex-1 w-full p-5 bg-white shadow-md elevation-5">
+      
+        <View className="flex-row items-start">
+          <View>
+            <Text className="text-2xl font-bold">Olá, Samuel,</Text>
+            <Text className="text-base mb-5">Bem vindo ao Aqualink.</Text>
+          </View>
+          <View className="ml-auto bg-[#27D5E8] rounded-full w-10 h-10 justify-center items-center">
+            <FontAwesome name="bell" size={20} color="white" />
+          </View>
         </View>
-    );
-}
 
-const styles = {
-    // containerHeader: {
-    //     width: '100%',
-    //     height: 70,
-    //     justifyContent: 'center',
-    //     alignItems: 'center',
-    //     shadowColor: '#000',
-    //     shadowOffset: {
-    //         width: 0,
-    //         height: 2,
-    //     },
-        
-    // },
-    containerHome: {
-        flex: 1,
-        width: '100%',
-        padding: 20,
-        backgroundColor: 'white',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-        // borderTopLeftRadius: 20,
-        // borderTopRightRadius: 20,
-    },
-    textButton: {
-        color: 'white', 
-        fontSize: 16, 
-        fontWeight: 'bold',
-        textAlign: 'center',
-        fontFamily: 'poppins',
-    },
+       
+        <WeekDays/> 
+
+      
+        <View className="flex-1 justify-center items-center">
+          <Text className="text-lg font-extrabold text-[#084F8C]">
+            Meta diária
+          </Text>
+
+          <LiquidGauge value={waterValue} />
+
+          <TouchableOpacity
+            className="mt-5 p-2 bg-[#084F8C] rounded-2xl w-4/5 shadow-md elevation-5"
+            onPress={waterIncrement}
+          >
+            <Text className="text-white text-base font-bold text-center font-poppins">
+              Adicionar Água
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View className="flex-row justify-between gap-x-2   px-4 ">
+  <ModalComponent 
+    title="Status da Bateria"
+    icon="battery-70"
+    info1="Bateria: 53%"
+    info2="Água restante: 160ml"
+    buttonStyle="bg-white rounded-2xl w-[60%] h-[50%] shadow-lg shadow-black/40 justify-center items-center "
+  />
+  
+  <ModalComponent 
+    title="Lembretes"
+    icon="bell"
+    info1="12:30"
+    info2="16:30"
+    buttonStyle="bg-blue-200 rounded-2xl w-[40%] h-[50%] shadow-lg shadow-black/40 justify-center items-center "
+  />
+</View>
+
+      </View>
+
+      <BottomMenu />
+    </PaperProvider>
+  );
 }

@@ -4,6 +4,7 @@ import Welcome from '../screens/Welcome'
 import Register from '../screens/Register'
 import Home from '../screens/Home'
 import Login from '../screens/Login'
+import CalendarScreen  from '../screens/Calendar';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,11 @@ export default function Navigation() {
             <Stack.Screen
                 name = "Login"
                 component= { Login }
+                options={{ headerShown: false}}
+            />
+            <Stack.Screen
+                name = "Calendar"
+                component= { CalendarScreen }
                 options={{ headerShown: false}}
             />
         </Stack.Navigator>

@@ -1,236 +1,111 @@
-import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, Form } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useState } from 'react';
 import { CheckBox } from 'react-native-elements';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from '../config/firebase';
-import Home from './Home';
 import { useNavigation } from '@react-navigation/native';
 
+import Input from '../components/Input'; 
+import '../../global.css'
 
 export default function Login() {
-    const navigation = useNavigation()
+  const navigation = useNavigation();
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [passwordVisible, setPasswordVisible] = useState(false);
-    const [checked, setChecked] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [checked, setChecked] = useState(false);
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            console.log("User logged in successfully");
-            navigation.navigate('Home');
-        } catch (error) {
-            console.error("Error logging in:", error);
-        }
-    };
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      console.log("User logged in successfully");
+      navigation.navigate('Home');
+    } catch (error) {
+      console.error("Error logging in:", error);
+    }
+  };
 
-    return (
-        <LinearGradient
-            style={styles.container}
-            colors={['#1081C7', '#FFFF']}
+  return (
+    <LinearGradient
+        colors={['#1081C7', '#27D5E8', '#FFFFFF']}
+        locations={[0.2, 0.5, 0.8]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.25 }}
+      className="flex-1 justify-center p-5"
+    >
+      <View className="mb-8">
+        <Text className="text-2xl font-bold text-[#222]">Acesse</Text>
+        <Text className="text-sm text-[#666] mt-1">com E-mail e senha</Text>
+      </View>
+
+      <Input
+        label="E-mail"
+        placeholder="Digite seu E-mail"
+        value={email}
+        onChangeText={(text) => setEmail(text)}
+      />
+
+      <View className="relative justify-center mt-4">
+        <Input
+          label="Senha"
+          placeholder="Digite sua senha"
+          value={password}
+          onChangeText={(text) => setPassword(text)}
+          secureTextEntry={!passwordVisible}
+        />
+        <TouchableOpacity
+          className="absolute right-3 top-9"
+          onPress={() => setPasswordVisible(!passwordVisible)}
         >
-            <View style={{ marginBottom: 30 }}>
-                <Text style={styles.title}>Acesse</Text>
-                <Text style={styles.subtitle}>com E-mail e senha</Text>
-            </View>
+          <Ionicons
+            name={passwordVisible ? "eye-off-outline" : "eye-outline"}
+            size={22}
+            color="#777"
+          />
+        </TouchableOpacity>
+      </View>
 
-            <Text style={styles.label}>E-mail</Text>
-            <TextInput
-                placeholder="Digite seu E-mail"
-                style={styles.input}
-                keyboardType="email-address"
-                value={email}
-                onChangeText={(text) => setEmail(text)}
-            />
+      <View className="flex-row items-center justify-between mt-6 mb-5">
+        <CheckBox
+          title="Lembrar senha"
+          checked={checked}
+          onPress={() => setChecked(!checked)}
+          checkedColor="#1081C7"
+          uncheckedColor="#1081C7"
+          containerStyle={{ backgroundColor: "transparent", borderWidth: 0, padding: 0, margin: 0 }}
+          textStyle={{ fontSize: 14, color: "#333", fontWeight: "normal" }}
+        />
+        <Text className="text-xs text-[#555] mr-2">Esqueci minha senha</Text>
+      </View>
 
-            <Text style={styles.label}>Senha</Text>
-            <View style={styles.passwordContainer}>
-                <TextInput
-                    placeholder="Digite sua senha"
-                    secureTextEntry={!passwordVisible}
-                    style={styles.inputPassword}
-                    value={password}
-                    onChangeText={(text) => setPassword(text)}
-                />
-                <TouchableOpacity
-                    style={styles.eyeIcon}
-                    onPress={() => setPasswordVisible(!passwordVisible)}
-                >
-                    <Ionicons
-                        name={passwordVisible ? "eye-off-outline" : "eye-outline"}
-                        size={22}
-                        color="#777"
-                    />
-                </TouchableOpacity>
-            </View>
+      <View className="flex-row justify-around mt-5">
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Home')}
+          className="bg-[#27D5E8] py-3 px-10 rounded-md"
+        >
+          <Text className="text-[#084F8C] text-base font-bold text-center">Acessar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity className="border border-[#27D5E8] py-3 px-9 rounded-md">
+          <Text className="text-[#084F8C] text-base font-bold text-center">Cadastrar</Text>
+        </TouchableOpacity>
+      </View>
 
 
-            <View style={styles.rememberContainer}>
-                <CheckBox
-                    title="Lembrar senha"
-                    checked={checked}
-                    onPress={() => setChecked(!checked)}
-                    checkedColor="#1081C7"
-                    uncheckedColor="#1081C7"
-                    containerStyle={styles.checkBox}
-                    textStyle={{ fontSize: 14, color: "#333", fontWeight: "normal" }}
-                />
-                <Text style={styles.forgotText}>Esqueci minha senha</Text>
-            </View>
+      <View className="flex-row items-center my-6">
+        <View className="flex-1 h-px bg-gray-300" />
+        <Text className="mx-2 text-sm text-gray-500">Ou continue com</Text>
+        <View className="flex-1 h-px bg-gray-300" />
+      </View>
 
-            <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.btnPrimary} onPress={handleLogin}>
-                    <Text style={styles.btnTextPrimary}>Acessar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.btnSecondary}>
-                    <Text style={styles.btnTextSecondary}>Cadastrar</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.dividerContainer}>
-                <View style={styles.line} />
-                <Text style={styles.dividerText}>Ou continue com</Text>
-                <View style={styles.line} />
-            </View>
-
-            <View style={styles.socialContainer}>
-                <Image
-                    source={require('../assets/Google.png')}
-                    style={styles.socialIcon}
-                />
-                <Image
-                    source={require('../assets/Facebook.png')}
-                    style={styles.socialIcon}
-                />
-            </View>
-        </LinearGradient>
-    );
+      <View className="flex-row justify-around mx-12">
+        <Image source={require('../assets/Google.png')} className="w-12 h-12" />
+        <Image source={require('../assets/Facebook.png')} className="w-12 h-12" />
+      </View>
+    </LinearGradient>
+  );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#fff",
-        padding: 20,
-        justifyContent: 'center'
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: "bold",
-        color: "#222",
-    },
-    subtitle: {
-        fontSize: 14,
-        color: "#666",
-        marginTop: 2,
-    },
-    label: {
-        fontSize: 14,
-        color: "#222",
-        marginLeft: 5,
-        marginTop: 15,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: "#ddd",
-        backgroundColor: "#f5f6fa",
-        padding: 12,
-        borderRadius: 8,
-        marginTop: 5,
-        fontSize: 14,
-    },
-    passwordContainer: {
-        position: "relative",
-        justifyContent: "center",
-    },
-    inputPassword: {
-        borderWidth: 1,
-        borderColor: "#ddd",
-        backgroundColor: "#f5f6fa",
-        padding: 12,
-        borderRadius: 8,
-        marginTop: 5,
-        fontSize: 14,
-        paddingRight: 40,
-    },
-    eyeIcon: {
-        position: "absolute",
-        right: 10,
-        top: "35%",
-    },
-    rememberContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginTop: 25,
-        marginBottom: 20,
-    },
-    checkBox: {
-        backgroundColor: "transparent",
-        borderWidth: 0,
-        padding: 0,
-        margin: 0,
-    },
-    forgotText: {
-        fontSize: 13,
-        color: "#555",
-        marginRight: 10,
-    },
-    buttonRow: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        marginTop: 20,
-    },
-    btnPrimary: {
-        backgroundColor: "#27D5E8",
-        paddingVertical: 12,
-        paddingHorizontal: 40,
-        borderRadius: 8,
-    },
-    btnTextPrimary: {
-        color: "#084F8C",
-        fontSize: 15,
-        fontWeight: "bold",
-    },
-    btnSecondary: {
-        borderWidth: 1,
-        borderColor: "#27D5E8",
-        paddingVertical: 12,
-        paddingHorizontal: 35,
-        borderRadius: 8,
-    },
-    btnTextSecondary: {
-        color: "#084F8C",
-        fontSize: 15,
-        fontWeight: "bold",
-    },
-    dividerContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginVertical: 25,
-    },
-    line: {
-        flex: 1,
-        height: 1,
-        backgroundColor: "#ccc",
-    },
-    dividerText: {
-        marginHorizontal: 10,
-        color: "#777",
-        fontSize: 14,
-    },
-    socialContainer: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        marginHorizontal: 50,
-    },
-    socialIcon: {
-        width: 50,
-        height: 50,
-    },
-});

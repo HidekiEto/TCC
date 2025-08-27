@@ -1,46 +1,38 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 
-const CheckBox = ({ checked, onChange, label }) => (
-  <TouchableOpacity style={styles.container} onPress={() => onChange(!checked)}>
-    <View style={[styles.box, checked && styles.checkedBox]}>
-      {checked && <View style={styles.innerBox} />}
-    </View>
-    {label && <Text style={styles.label}>{label}</Text>}
-  </TouchableOpacity>
-);
+export default function Checkbox() {
+  const [checked, setChecked] = useState(false);
+  const scaleAnim = useState(new Animated.Value(1))[0];
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-  },
-  box: {
-    width: 24,
-    height: 24,
-    borderWidth: 1,
-    borderColor: '#1081C7',
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  checkedBox: {
-    borderColor: '#007AFF',
-  },
-  innerBox: {
-    width: 12,
-    height: 12,
-    backgroundColor: '#007AFF',
-    borderRadius: 2,
-  },
-  label: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#1081C7',
-  },
-});
+  const toggleCheck = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.8, duration: 100, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+    ]).start();
 
-export default CheckBox;
+    setChecked(!checked);
+  };
+
+  return (
+    <TouchableOpacity 
+      onPress={toggleCheck} 
+      className="flex-row items-center justify-center m-1.5"
+    >
+      <Animated.View
+        style={{
+          transform: [{ scale: scaleAnim }],
+        }}
+        className={`
+          w-7 h-7 rounded-lg border 
+          ${checked ? 'border-blue-900 bg-white' : 'border-blue-900 bg-white'} 
+          items-center justify-center mr-2.5
+        `}
+      >
+        {checked && <MaterialIcons name="check" size={20} color="#082862" />}
+      </Animated.View>
+      <Text className="text-blue-900 text-base">Manter Conectado</Text>
+    </TouchableOpacity>
+  );
+}

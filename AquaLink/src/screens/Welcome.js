@@ -1,110 +1,54 @@
 import React from 'react';
-import { 
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    Image,
-} from 'react-native';
-
-import * as Animatable from 'react-native-animatable'
-
+import { View, Text, TouchableOpacity } from 'react-native';
+import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
-
 import { StatusBar } from 'react-native';
+import { Image } from 'react-native';
 
-export default function Welcome(){
-    const navigation = useNavigation()
+import '../../global.css';
 
-    return (
-        <View style={styles.container}>
-            <StatusBar backgroundColor="#1081C7" barStyle="light-content"/>
-            <Animatable.View delay={600} animation='fadeInUp' style={styles.containerContent}> 
-                <Text style={styles.title}>Bem Vindo!</Text>
-                <Text style={styles.text}>Sua experiência com{'\n'}Aqualink acaba de começar. </Text>
+export default function Welcome() {
+  const navigation = useNavigation();
 
-                <TouchableOpacity
-                 style={styles.registerButton}
-                 onPress={ () => navigation.navigate('Register')}
-                 >
-                    <Text style={styles.buttonText}>Nova Conta</Text>
-                </TouchableOpacity>
+  return (
+    <View className="flex-1 bg-[#1081C7]">
+      <StatusBar backgroundColor="#1081C7" barStyle="light-content" />
 
-                 <TouchableOpacity  
-                    style={styles.signinButton}
-                    onPress={() => navigation.navigate('Login')}
-                    >
-                    <Text style={styles.buttonText}>Já possuo uma Conta</Text>
-                </TouchableOpacity>
-            </Animatable.View>
+      <Animatable.View 
+        delay={600} 
+        animation="fadeInUp" 
+        className="flex-1 px-5"
+      >
+        <Text className="mt-20 text-4xl font-bold text-white font-poppins">
+          Bem Vindo!
+        </Text>
+        <Text className="text-2xl text-white font-poppins font-thin mt-2">
+          Sua experiência com{'\n'}Aqualink acaba de começar.
+        </Text>
 
-            <View style={styles.containerImage}>
-                <Animatable.Image style={styles.image}
-                    animation='flipInY'
-                    source={require('../assets/fitFemale.png')}
-                    resizeMode='contain'
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Register')}
+          className="absolute self-center bg-[#27D5E8] w-3/5 rounded-md items-center py-2 mt-10 bottom-12 shadow-md elevation-5 h-12 justify-center"
+        >
+          <Text className="text-white font-poppins">Nova Conta</Text>
+        </TouchableOpacity>
 
-                />
-            </View>
-            
-        </View>
-    );
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Login')}
+          className="absolute bottom-0 self-center border-b border-white"
+        >
+          <Text className="text-white font-poppins">Já possuo uma Conta</Text>
+        </TouchableOpacity>
+      </Animatable.View>
+
+      <View className="flex-3 bg-[#1081C7] top-5">
+        <Animatable.Image
+          animation="flipInY"
+          source={require('../assets/fitFemale.png')}
+          resizeMode="contain"
+          className="w-full mt-10"
+        />
+      </View>
+    </View>
+  );
 }
-
-const styles = StyleSheet.create ({
-    container:{
-        backgroundColor: '#1081C7',
-        flex: 1,
-    },
-    containerContent: {
-        flex: 3,
-        paddingStart: '5%',
-        paddingEnd: '5%',
-
-    },
-    title:{
-        fontSize: 40,
-        fontWeight: 'bold',
-        color: '#fff',
-        fontFamily: 'poppins',
-        marginTop: 80,
-    },
-    text: {
-        fontSize: 23,
-        color: '#fff',
-        fontFamily: 'poppins',
-        fontWeight: 'thin',
-    },
-    registerButton: {
-       position: 'absolute',
-       bottom: '15%',
-       alignSelf: 'center',
-       backgroundColor: '#27D5E8',
-       width: '60%',
-       borderRadius: 5,
-       alignItems: 'center',
-       paddingVertical: 8,
-    },
-    buttonText:{
-        color: 'white',
-        fontFamily: 'poppins'
-        
-
-    },
-    signinButton: {
-       alignSelf: 'center',
-       position: 'absolute',
-       bottom: '2%',
-       borderBottomWidth: 1,
-       borderBottomColor: 'white',
-       
-    },
-    containerImage: {
-        flex: 3,
-        backgroundColor: '#1081C7',
-    },
-    image: {
-        width: '100%',
-        marginTop: 40,
-    }
-})
