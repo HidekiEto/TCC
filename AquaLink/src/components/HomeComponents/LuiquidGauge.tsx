@@ -1,61 +1,100 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
+import { View } from "react-native";
 import {
   Canvas,
   Circle,
   Group,
+  Path,
   Skia,
   Text,
   useFont,
-} from '@shopify/react-native-skia';
-import { area, scaleLinear } from 'd3';
-import { View } from 'react-native';
-
+} from "@shopify/react-native-skia";
+import { area, scaleLinear } from "d3";
 import {
   Easing,
   useDerivedValue,
   useSharedValue,
   withRepeat,
   withTiming,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
 
-function liquidFillGaugeDefaultSettings() {
+export type GaugeConfig = {
+  minValue: number;
+  maxValue: number;
+  circleThickness: number;
+  circleFillGap: number;
+  circleColor: string;
+  waveHeight: number;
+  waveCount: number;
+  waveRiseTime: number;
+  waveAnimateTime: number;
+  waveRise: boolean;
+  waveHeightScaling: boolean;
+  waveAnimate: boolean;
+  waveColor: string;
+  waveOffset: number;
+  textVertPosition: number;
+  textSize: number;
+  valueCountUp: boolean;
+  textSuffix: string;
+  textColor: string;
+  waveTextColor: string;
+  toFixed: number;
+};
+
+function liquidFillGaugeDefaultSettings(): GaugeConfig {
   return {
     minValue: 0,
     maxValue: 100,
     circleThickness: 0.05,
     circleFillGap: 0.05,
-    circleColor: '#A6B9C8',
+    circleColor: "#178BCA",
     waveHeight: 0.05,
     waveCount: 1,
     waveRiseTime: 1000,
-    waveAnimateTime: 6000,
+    waveAnimateTime: 9000,
     waveRise: true,
     waveHeightScaling: true,
     waveAnimate: true,
-    waveColor: '#178BCA',
+    waveColor: "#178BCA",
     waveOffset: 0,
     textVertPosition: 0.5,
     textSize: 1,
     valueCountUp: true,
-    textSuffix: '%',
-    textColor: '#045681',
-    waveTextColor: '#A4DBf8',
+    textSuffix: "%",
+    textColor: "#045681",
+    waveTextColor: "#A4DBf8",
     toFixed: 0,
   };
 }
+
+type Props = {
+  config?: Partial<GaugeConfig>;
+  width?: number;
+  height?: number;
+  value?: number;
+};
 
 export const LiquidGauge = ({
   config,
   width = 250,
   height = 250,
-  value = 69,
-}) => {
+  value = 50,
+}: Props) => {
   const defaultConfig = liquidFillGaugeDefaultSettings();
   const mergedConfig = { ...defaultConfig, ...config };
+
+  const radius = Math.min(width, height) / 2;
+  const circleThickness = mergedConfig.circleThickness * radius;
+
+  const circleFillGap = mergedConfig.circleFillGap * radius;
+  const fillCircleMargin = circleThickness + circleFillGap;
+  const fillCircleRadius = radius - fillCircleMargin;
 
   const fillPercent =
     Math.max(mergedConfig.minValue, Math.min(mergedConfig.maxValue, value)) /
     mergedConfig.maxValue;
+
   let waveHeightScale;
   if (mergedConfig.waveHeightScaling) {
     waveHeightScale = scaleLinear()
@@ -67,13 +106,7 @@ export const LiquidGauge = ({
       .domain([0, 100]);
   }
 
-  const radius = Math.min(width, height) / 2;
-  const circleThickness = mergedConfig.circleThickness * radius;
-
   const waveClipCount = 1 + mergedConfig.waveCount;
-  const circleFillGap = mergedConfig.circleFillGap * radius;
-  const fillCircleMargin = circleThickness + circleFillGap;
-  const fillCircleRadius = radius - fillCircleMargin;
   const waveLength = (fillCircleRadius * 2) / mergedConfig.waveCount;
   const waveClipWidth = waveLength * waveClipCount;
   const waveHeight = fillCircleRadius * waveHeightScale(fillPercent * 100);
@@ -91,7 +124,7 @@ export const LiquidGauge = ({
     ])
     .domain([0, 1]);
 
-  const data = [];
+  const data: Array<[number, number]> = [];
   for (let i = 0; i <= 40 * waveClipCount; i++) {
     data.push([i / (40 * waveClipCount), i / 40]);
   }
@@ -100,33 +133,35 @@ export const LiquidGauge = ({
   const waveScaleY = scaleLinear().range([0, waveHeight]).domain([0, 1]);
 
   const clipArea = area()
-    .x(function (d) {
-      return waveScaleX(d[0]);
-    })
-    .y0(function (d) {
-      return waveScaleY(
+    .x((d) => waveScaleX(d[0]))
+    .y0((d) =>
+      waveScaleY(
         Math.sin(
           Math.PI * 2 * mergedConfig.waveOffset * -1 +
             Math.PI * 2 * (1 - mergedConfig.waveCount) +
             d[1] * 2 * Math.PI
         )
-      );
-    })
-    .y1(function (_d) {
-      return fillCircleRadius * 2 + waveHeight * 5;
-    });
+      )
+    )
+    .y1(() => fillCircleRadius * 2 + waveHeight * 5);
 
   const waveGroupXPosition =
     fillCircleMargin + fillCircleRadius * 2 - waveClipWidth;
 
-  const font = useFont(require('../assets/fonts/Roboto-Bold.ttf'), textPixels);
+  const font = useFont(require("../../assets/fonts/Roboto-Bold.ttf"), textPixels);
 
   const textValue = useSharedValue(textStartValue);
   const translateYPercent = useSharedValue(0);
   const translateXProgress = useSharedValue(0);
 
+  // Progresso da borda (animado)
+  const progressValue = useSharedValue(fillPercent);
+
   useEffect(() => {
     translateYPercent.value = withTiming(fillPercent, {
+      duration: mergedConfig.waveRiseTime,
+    });
+    progressValue.value = withTiming(fillPercent, {
       duration: mergedConfig.waveRiseTime,
     });
   }, [fillPercent]);
@@ -160,9 +195,9 @@ export const LiquidGauge = ({
     return radius - textWidth * 0.5;
   }, [text, radius, font]);
 
-  const clipSVGString = clipArea(data);
+  const clipSVGString = clipArea(data)!;
   const path = useDerivedValue(() => {
-    const p = Skia.Path.MakeFromSVGString(clipSVGString);
+    const p = Skia.Path.MakeFromSVGString(clipSVGString)!;
     const m = Skia.Matrix();
     m.translate(
       waveGroupXPosition + waveLength * translateXProgress.value,
@@ -176,19 +211,47 @@ export const LiquidGauge = ({
     { translateY: textRiseScaleY(mergedConfig.textVertPosition) - textPixels },
   ];
 
+  // Path animado da borda
+  const borderPath = useDerivedValue(() => {
+    const p = Skia.Path.Make();
+    const sweepAngle = 360 * progressValue.value;
+    p.addArc(
+      {
+        x: circleThickness * 0.5,
+        y: circleThickness * 0.5,
+        width: (radius - circleThickness * 0.5) * 2,
+        height: (radius - circleThickness * 0.5) * 2,
+      },
+      -90,
+      sweepAngle
+    );
+    return p;
+  }, [progressValue]);
+
   return (
     <View>
-      <Canvas style={{ width, height, }}>
+      <Canvas style={{ width, height }}>
         <Group>
+          {/* Fundo da borda (cinza claro) */}
           <Circle
             cx={radius}
             cy={radius}
             r={radius - circleThickness * 0.5}
-            color={mergedConfig.circleColor}
+            color="#e0e0e0"
             style="stroke"
             strokeWidth={circleThickness}
           />
 
+          {/* Progresso da borda */}
+          <Path
+            path={borderPath}
+            style="stroke"
+            strokeWidth={circleThickness}
+            color="#082862"
+            strokeCap="round"
+          />
+
+          {/* Texto fora do líquido */}
           <Text
             x={textTranslateX}
             y={textPixels}
@@ -198,6 +261,7 @@ export const LiquidGauge = ({
             transform={textTransform}
           />
 
+          {/* Líquido */}
           <Group clip={path}>
             <Circle
               cx={radius}
@@ -205,7 +269,6 @@ export const LiquidGauge = ({
               r={fillCircleRadius}
               color={mergedConfig.waveColor}
             />
-
             <Text
               x={textTranslateX}
               y={textPixels}

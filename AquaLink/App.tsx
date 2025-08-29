@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import Navigation from './src/navigation/NavigationContainer';
-import Slides from './src/components/Slider';
-import SplashScreen from './src/screens/SplashScreen';
+import React, { useState } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import Navigation from "./src/navigation/NavigationContainer";
+import Slides from "./src/components/InitialSlider";
+import SplashScreen from "./src/screens/SplashScreen";
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -17,8 +17,6 @@ export default function App() {
       <Navigation />
     </NavigationContainer>
   ) : (
-    <Slides 
-    
-    onDone={() => setShowNav(true)} />
+    <Slides onDone={() => setShowNav(true)} />
   );
 }

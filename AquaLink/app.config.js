@@ -2,8 +2,8 @@ import 'dotenv/config';
 
 export default {
   expo: {
-    name: "SeuApp",
-    slug: "seu-app",
+    name: "AquaLink",
+    slug: "aqualink",
     version: "1.0.0",
     extra: {
       FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,

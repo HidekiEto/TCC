@@ -5,6 +5,10 @@ import Title from '../components/Title';
 
 import { useFonts } from "expo-font";
 
+interface SlidesProps {
+  onDone: () => void; 
+}
+
 const slides = [
   {
     key: '1',
@@ -29,13 +33,11 @@ const slides = [
   },
 ];
 
-export default function Slides({ onDone }) {
+export default function Slides({ onDone }: SlidesProps) {
+  const [fontsLoaded] = useFonts({
+    latoRegular: require("../assets/fonts/Lato-Regular.ttf"),
+  });
 
-const [fontsLoaded] = useFonts({
-  latoRegular: require("../assets/fonts/Lato-Regular.ttf"),
-});
-
-  
   const renderDoneButton = () => (
     <View className="bottom-24 right-[100%]  w-full flex items-center justify-center">
       <TouchableOpacity
@@ -69,7 +71,7 @@ const [fontsLoaded] = useFonts({
         borderRadius: 20,
       }}
       renderDoneButton={renderDoneButton}
-
     />
   );
 }
+

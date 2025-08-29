@@ -1,40 +1,44 @@
-import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { useState } from 'react';
-import { CheckBox } from 'react-native-elements';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, Image, GestureResponderEvent } from "react-native";
+import { CheckBox } from "react-native-elements";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from '../config/firebase';
-import { useNavigation } from '@react-navigation/native';
+// import { auth } from "../config/firebase";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 
-import Input from '../components/Input'; 
-import '../../global.css'
+import Input from "../components/Input";
+import "../../global.css";
+
+type RootStackParamList = {
+  Home: undefined;
+};
 
 export default function Login() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  const [checked, setChecked] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
+  const [checked, setChecked] = useState<boolean>(false);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      console.log("User logged in successfully");
-      navigation.navigate('Home');
-    } catch (error) {
-      console.error("Error logging in:", error);
-    }
-  };
+  // const handleLogin = async (e: GestureResponderEvent) => {
+  //   e.preventDefault?.(); // React Native TouchableOpacity não tem preventDefault, mas mantido por compatibilidade
+  //   try {
+  //     await signInWithEmailAndPassword(auth, email, password);
+  //     console.log("User logged in successfully");
+  //     navigation.navigate("Home");
+  //   } catch (error) {
+  //     console.error("Error logging in:", error);
+  //   }
+  // };
 
   return (
     <LinearGradient
-        colors={['#1081C7', '#27D5E8', '#FFFFFF']}
-        locations={[0.2, 0.5, 0.8]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 0.25 }}
+      colors={["#1081C7", "#27D5E8", "#FFFFFF"]}
+      locations={[0.2, 0.5, 0.8]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 0.25 }}
       className="flex-1 justify-center p-5"
     >
       <View className="mb-8">
@@ -46,7 +50,7 @@ export default function Login() {
         label="E-mail"
         placeholder="Digite seu E-mail"
         value={email}
-        onChangeText={(text) => setEmail(text)}
+        onChangeText={setEmail}
       />
 
       <View className="relative justify-center mt-4">
@@ -54,8 +58,9 @@ export default function Login() {
           label="Senha"
           placeholder="Digite sua senha"
           value={password}
-          onChangeText={(text) => setPassword(text)}
+          onChangeText={setPassword}
           secureTextEntry={!passwordVisible}
+          
         />
         <TouchableOpacity
           className="absolute right-3 top-9"
@@ -84,7 +89,7 @@ export default function Login() {
 
       <View className="flex-row justify-around mt-5">
         <TouchableOpacity
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigation.navigate("Home")}
           className="bg-[#27D5E8] py-3 px-10 rounded-md"
         >
           <Text className="text-[#084F8C] text-base font-bold text-center">Acessar</Text>
@@ -95,7 +100,6 @@ export default function Login() {
         </TouchableOpacity>
       </View>
 
-
       <View className="flex-row items-center my-6">
         <View className="flex-1 h-px bg-gray-300" />
         <Text className="mx-2 text-sm text-gray-500">Ou continue com</Text>
@@ -103,8 +107,8 @@ export default function Login() {
       </View>
 
       <View className="flex-row justify-around mx-12">
-        <Image source={require('../assets/Google.png')} className="w-12 h-12" />
-        <Image source={require('../assets/Facebook.png')} className="w-12 h-12" />
+        <Image source={require("../assets/Google.png")} className="w-12 h-12" />
+        <Image source={require("../assets/Facebook.png")} className="w-12 h-12" />
       </View>
     </LinearGradient>
   );

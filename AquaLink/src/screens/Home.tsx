@@ -1,16 +1,15 @@
+
 import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { PaperProvider } from 'react-native-paper';
 import { useState } from 'react';
 
-import Title from '../components/Title';
-import { LiquidGauge } from '../components/WaterCircle';
-import BottomMenu from '../components/BottomNavigation';
-import { DateStrip } from '../components/Teste';
-import Input from '../components/Input';
-import '../../global.css'
-import WeekDays from '../components/CalendarStrip';
-import ModalComponent from '../components/Modal';
+import { CircularLiquidProgress} from '../components/HomeComponents/WaterCircle';
+import { BottomMenu } from '../components/BottomNavigation';
+
+import WeekDays from '../components/HomeComponents/CalendarStrip';
+import ModalComponent from '../components/HomeComponents/Modal';
+import { LiquidGauge } from '../components/HomeComponents/LuiquidGauge';
 
 export default function Home() {
   const [waterValue, setWaterValue] = useState(0);
@@ -20,7 +19,7 @@ export default function Home() {
   };
 
   return (
-    <PaperProvider className="flex-1 justify-center items-center bg-[#00000]">
+    <PaperProvider>
       <StatusBar backgroundColor="white" barStyle="light-content" />
 
       <View className="flex-1 w-full p-5 bg-white shadow-md elevation-5">
@@ -62,7 +61,7 @@ export default function Home() {
     icon="battery-70"
     info1="Bateria: 53%"
     info2="Água restante: 160ml"
-    buttonStyle="bg-white rounded-2xl w-[60%] h-[50%] shadow-lg shadow-black/40 justify-center items-center "
+    buttonClassName="bg-white rounded-2xl w-[60%] h-[50%] shadow-lg shadow-black/40 justify-center items-center "
   />
   
   <ModalComponent 
@@ -70,7 +69,7 @@ export default function Home() {
     icon="bell"
     info1="12:30"
     info2="16:30"
-    buttonStyle="bg-blue-200 rounded-2xl w-[40%] h-[50%] shadow-lg shadow-black/40 justify-center items-center "
+    buttonClassName="bg-blue-200 rounded-2xl w-[40%] h-[50%] shadow-lg shadow-black/40 justify-center items-center "
   />
 </View>
 
