@@ -2,12 +2,13 @@ import React from 'react';
 import Slider from 'react-native-app-intro-slider';
 import { View } from 'react-native';
 import { RenderComponentSlides } from './RenderComponentSlides';
-import { useFonts } from 'expo-font';
+import { useAppFonts } from '../../hooks/useAppFonts';
 
 interface Slide {
   key: string;
   text?: string;
-  subtitle?: string;
+  info1?: string;
+  info2?: string;
   backgroundColor?: string;
 }
 
@@ -16,20 +17,19 @@ const slides: Slide[] = [
     key: '1',
     backgroundColor: '#3498db',
     text: 'Metas Alcançadas',
-    subtitle: 'Você alcançou sua meta em: 2 dos 31 dias',
+    info1: 'Você alcançou sua meta em: 2 dos 31 dias',
+    info2: 'Água ingerida: 12,5L',
   },
   {
     key: '2',
     text: 'Água ingerida',
     backgroundColor: '#3498db',
+    info1: 'Você ingeriu um total de 12,5L de água este mês!',
   },
 ];
 
-export const ComponentSlides: React.FC = () => {
-  const [fontsLoaded] = useFonts({
-    latoRegular: require('../../assets/fonts/Lato-Regular.ttf'),
-  });
-
+export default function SliderComponent() {
+  const fontsLoaded = useAppFonts();
   if (!fontsLoaded) return null;
 
   const renderItem = ({ item }: { item: Slide }) => {
@@ -70,4 +70,4 @@ export const ComponentSlides: React.FC = () => {
       />
     </View>
   );
-};
+}

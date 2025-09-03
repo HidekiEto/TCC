@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Ionicons, FontAwesome, Octicons } from "@expo/vector-icons";
 import { useNavigation, useRoute, NavigationProp } from "@react-navigation/native";
+import type { RootStackParamList } from "../types/navigation";
 
 // Tipos para nomes de ícones
 type IonIconNames = keyof typeof Ionicons.glyphMap;
@@ -13,26 +14,48 @@ interface MenuItem {
   key: string;
   type: "ion" | "fa" | "oct";
   label: string;
-  iconName: string; // nome padrão
-  iconActiveName: string; // nome quando ativo
+  iconName: string;
+  iconActiveName: string;
 }
 
-export const BottomMenu: React.FC = () => {
-  const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
+type Key = "calendar" | "info" | "home" | "profile" | "achievements";
+
+const ROUTE_MAP: Record<Key, keyof RootStackParamList> = {
+  calendar: "Calendar",
+  info: "Info",
+  home: "Home",
+  profile: "Profile",
+  achievements: "Achievements",
+};
+
+const items: MenuItem[] = [
+  { key: "calendar", iconName: "calendar-outline", iconActiveName: "calendar", type: "ion", label: "Calendário" },
+  { key: "info", iconName: "info", iconActiveName: "info", type: "oct", label: "Info" },
+  { key: "home", iconName: "home-outline", iconActiveName: "home", type: "ion", label: "Home" },
+  { key: "profile", iconName: "user-o", iconActiveName: "user", type: "fa", label: "Perfil" },
+  { key: "achievements", iconName: "trophy-outline", iconActiveName: "trophy", type: "ion", label: "Conquistas" },
+];
+
+const BottomMenu: React.FC = () => {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute();
-  const [activeKey, setActiveKey] = useState(route.name.toLowerCase());
+  const initial = ((route.name ?? "Home") as string).toLowerCase() as Key;
+  const [activeKey, setActiveKey] = useState<Key>(initial);
 
-  const items: MenuItem[] = [
-    { key: "calendar", iconName: "calendar-outline", iconActiveName: "calendar", type: "ion", label: "Calendário" },
-    { key: "info", iconName: "info", iconActiveName: "info", type: "oct", label: "Info" },
-    { key: "home", iconName: "home-outline", iconActiveName: "home", type: "ion", label: "Home" },
-    { key: "profile", iconName: "user-o", iconActiveName: "user", type: "fa", label: "Perfil" },
-    { key: "achievements", iconName: "trophy-outline", iconActiveName: "trophy", type: "ion", label: "Conquistas" },
-  ];
+  useEffect(() => {
+    const current = (route.name ?? "Home") as keyof RootStackParamList;
+    const reverse = Object.entries(ROUTE_MAP).reduce<Record<string, Key>>((acc, [k, v]) => {
+      acc[v as string] = k as Key;
+      return acc;
+    }, {});
+    const key = reverse[current];
+    if (key) setActiveKey(key);
+  }, [route.name]);
 
-  const handlePress = (key: string) => {
+  const handlePress = (key: Key) => {
     setActiveKey(key);
-    navigation.navigate(key.charAt(0).toUpperCase() + key.slice(1) as never);
+    const screen = ROUTE_MAP[key];
+    if (screen) navigation.navigate(screen);
   };
 
   const renderIcon = (item: MenuItem, isActive: boolean) => {
@@ -43,7 +66,7 @@ export const BottomMenu: React.FC = () => {
       case "ion":
         return (
           <Ionicons
-            name={isActive ? (item.iconActiveName as IonIconNames) : (item.iconName as IonIconNames)}
+            name={(isActive ? item.iconActiveName : item.iconName) as IonIconNames}
             size={size}
             color={color}
           />
@@ -51,7 +74,7 @@ export const BottomMenu: React.FC = () => {
       case "fa":
         return (
           <FontAwesome
-            name={isActive ? (item.iconActiveName as FaIconNames) : (item.iconName as FaIconNames)}
+            name={(isActive ? item.iconActiveName : item.iconName) as FaIconNames}
             size={size}
             color={color}
           />
@@ -59,7 +82,7 @@ export const BottomMenu: React.FC = () => {
       case "oct":
         return (
           <Octicons
-            name={isActive ? (item.iconActiveName as OctIconNames) : (item.iconName as OctIconNames)}
+            name={(isActive ? item.iconActiveName : item.iconName) as OctIconNames}
             size={size}
             color={color}
           />
@@ -73,11 +96,10 @@ export const BottomMenu: React.FC = () => {
     <View style={styles.container}>
       {items.map((item) => {
         const isActive = activeKey === item.key;
-
         return (
           <TouchableOpacity
             key={item.key}
-            onPress={() => handlePress(item.key)}
+            onPress={() => handlePress(item.key as Key)}
             style={[styles.item, isActive && styles.activeItem]}
           >
             {renderIcon(item, isActive)}
@@ -88,6 +110,8 @@ export const BottomMenu: React.FC = () => {
     </View>
   );
 };
+
+export default React.memo(BottomMenu);
 
 const styles = StyleSheet.create({
   container: {
@@ -122,3 +146,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 });
+

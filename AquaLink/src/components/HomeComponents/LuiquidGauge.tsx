@@ -211,7 +211,7 @@ export const LiquidGauge = ({
     { translateY: textRiseScaleY(mergedConfig.textVertPosition) - textPixels },
   ];
 
-  // Path animado da borda
+  // path animado da borda
   const borderPath = useDerivedValue(() => {
     const p = Skia.Path.Make();
     const sweepAngle = 360 * progressValue.value;
@@ -232,7 +232,7 @@ export const LiquidGauge = ({
     <View>
       <Canvas style={{ width, height }}>
         <Group>
-          {/* Fundo da borda (cinza claro) */}
+         
           <Circle
             cx={radius}
             cy={radius}
@@ -242,16 +242,16 @@ export const LiquidGauge = ({
             strokeWidth={circleThickness}
           />
 
-          {/* Progresso da borda */}
+         
           <Path
             path={borderPath}
             style="stroke"
             strokeWidth={circleThickness}
-            color="#082862"
+            color="#178BCA"
             strokeCap="round"
           />
 
-          {/* Texto fora do líquido */}
+          
           <Text
             x={textTranslateX}
             y={textPixels}
@@ -261,7 +261,7 @@ export const LiquidGauge = ({
             transform={textTransform}
           />
 
-          {/* Líquido */}
+         
           <Group clip={path}>
             <Circle
               cx={radius}

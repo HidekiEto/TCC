@@ -1,39 +1,85 @@
+// RenderComponentSlides.tsx
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, Dimensions } from "react-native";
 import { LinearGradient, LinearGradientProps } from "expo-linear-gradient";
+import { Line } from "@shopify/react-native-skia";
 
 interface SlideItem {
   key: string;
   text?: string;
-  subtitle?: string;
+  info1?: string;
+  info2?: string;
 }
 
 interface RenderComponentSlidesProps {
   item: SlideItem;
 }
 
+const { width } = Dimensions.get("window");
+
 export const RenderComponentSlides: React.FC<RenderComponentSlidesProps> = ({ item }) => {
- 
   const gradientColors: LinearGradientProps["colors"] =
-    item.key === "2"
-      ? ["#084F8C", "#27D5E8"]
-      : ["#27E8A4", "#1DBF84"];
+    item.key === "2" ? 
+          ["#3498db", "white", "#3498db"] :
+          ["#1DBF84", "white", "#1DBF84"];
+
 
   return (
-    <View className="flex-1 items-center justify-center ">
-      <LinearGradient
-        colors={gradientColors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ width: 200, height: 100, alignItems: "center", justifyContent: "center", borderRadius: 16 }}
-      >
-        <Text className="text-white text-center text-xl font-latoRegular leading-snug px-5">
+    <View
+      style={{
+        width, 
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <View
+        style={{
+          backgroundColor: 'white',
+          borderColor: item.key === "2" ? "#3498db" : "#1DBF84",
+          borderWidth: 1,
+          width: width * 0.85, 
+          height: 100,
+          borderRadius: 20,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      > 
+        <Text style={{ color: item.key == "2" ? "#3498db" : "#1dbf84",  fontSize: 20, textAlign: "center" }}>
           {item.text}
         </Text>
-        <Text className="text-white text-center text-sm font-latoRegular leading-snug px-5 mt-2">
-          {item.subtitle}
-        </Text>
-      </LinearGradient>
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          className="h-[1px] w-[80%] mt-2"
+        />
+        {item.info1 && (
+          <Text
+            style={{
+              color: item.key == "2" ? "#3498db" : "#1dbf84",
+              fontSize: 14,
+              textAlign: "center",
+              marginTop: 8,
+            }}
+          >
+            {item.info1}
+          </Text>
+        )}
+
+        {item.info2 && (
+          <Text
+            style={{
+              color: item.key == "2" ? "#3498db" : "#1dbf84",
+              fontSize: 14,
+              
+              marginTop: 8,
+            }}
+          >
+            {item.info2}
+          </Text>
+        )}
+      </View> 
     </View>
   );
 };

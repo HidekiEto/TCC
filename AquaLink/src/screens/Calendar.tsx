@@ -2,26 +2,25 @@ import React from "react";
 import { View, Text } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import CalendarCompontent from "../components/CalendarScreenComponents/CalendarComponent";
-import { BottomMenu } from "../components/BottomNavigation";
-import { ComponentSlides } from "../components/CalendarScreenComponents/SliderComponent";
+import  BottomNavigation  from "../components/BottomNavigation";
+import SliderComponent from "../components/CalendarScreenComponents/SliderComponent";
+import { EvilIcons } from '@expo/vector-icons';
 
-import { useFonts } from "expo-font";
+import { useAppFonts } from "../hooks/useAppFonts";
 
 export default function CalendarScreen() {
-  const [fontsLoaded] = useFonts({
-      poppinsBold: require("../assets/fonts/Poppins-Bold.ttf"),
-      poppinsRegular: require("../assets/fonts/Poppins-Regular.ttf"),
-    });
-
-    if (!fontsLoaded) {
-      return null;
-    }
+  const fontsLoaded = useAppFonts();
+  if (!fontsLoaded) return null;
 
   return (
     <View className="flex-1 bg-white">
-      <Text className="text-3xl mx-6 font-latoBold color-[#27D5E8] mt-10 mb-3 font-[poppinsRegular]">
+
+<View className="flex-row items-center justify-start  ">
+      <EvilIcons name="calendar" size={50} color="#27D5E8"/>
+      <Text className="text-3xl font-latoBold color-[#27D5E8] mt-5 mb-3 font-[poppinsRegular]">
         Calendário
       </Text>
+</View>
       <View className="flex-1 bg-white mb-3 ">
         <CalendarCompontent />
       </View>
@@ -32,8 +31,10 @@ export default function CalendarScreen() {
             className="h-[1px] mx-5 mb-3 top-[5%]"
           />
          
-        <ComponentSlides />  
-      <BottomMenu />
+        <SliderComponent />  
+      <View style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
+          <BottomNavigation />
+        </View>
     </View>
   );
 }

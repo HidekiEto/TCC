@@ -4,14 +4,10 @@ import * as Animatable from "react-native-animatable";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 import "../../global.css";
-
-type RootStackParamList = {
-  Register: undefined;
-  Login: undefined;
-};
+import type { RootStackParamList } from "../types/navigation";
 
 export default function Welcome() {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NavigationProp<RootStackParamList, "Welcome">>();
 
   return (
     <View className="flex-1 bg-[#1081C7]">

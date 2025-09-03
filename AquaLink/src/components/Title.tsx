@@ -1,17 +1,7 @@
 import React from "react";
 import { Text, View } from "react-native";
-import { useFonts } from "expo-font";
 
 const Title: React.FC = () => {
-  const [fontsLoaded] = useFonts({
-    poppinsBold: require("../assets/fonts/Poppins-Bold.ttf"),
-    poppinsRegular: require("../assets/fonts/Poppins-Regular.ttf"),
-  });
-
-  if (!fontsLoaded) {
-    return null;
-  }
-
   return (
     <View className="flex-row">
       <Text className="text-white text-[50px] font-[poppinsBold] leading-[60px]">

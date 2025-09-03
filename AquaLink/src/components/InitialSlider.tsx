@@ -3,8 +3,6 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import renderSlides from '../components/RenderSlides';
 import Title from '../components/Title';
 
-import { useFonts } from "expo-font";
-
 interface SlidesProps {
   onDone: () => void; 
 }
@@ -34,44 +32,43 @@ const slides = [
 ];
 
 export default function Slides({ onDone }: SlidesProps) {
-  const [fontsLoaded] = useFonts({
-    latoRegular: require("../assets/fonts/Lato-Regular.ttf"),
-  });
-
   const renderDoneButton = () => (
-    <View className="bottom-24 right-[100%]  w-full flex items-center justify-center">
+    <View className=" -translate-x-1/2 -translate-y-1/2 bottom-20 ">
       <TouchableOpacity
-        className="bg-[#084F8C] rounded-full px-8 py-3 items-center justify-center"
+        className="border-b border-white px-6 py-3"
         onPress={onDone}
       >
-        <Text className="text-white text-lg font-light">Acessar</Text>
+        <Text className="text-white font-latoRegular text-base">
+          Iniciar Experiência
+        </Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <Slider
-      renderItem={renderSlides}
-      data={slides}
-      showNextButton={false}
-      showDoneButton={true}
-      onDone={onDone}
-      dotStyle={{
-        marginBottom: 24,
-        backgroundColor: '#084F8C',
-        width: 15,
-        height: 15,
-        borderRadius: 20,
-      }}
-      activeDotStyle={{
-        marginBottom: 24,
-        backgroundColor: 'white',
-        width: 15,
-        height: 15,
-        borderRadius: 20,
-      }}
-      renderDoneButton={renderDoneButton}
-    />
+    <View className="flex-1 bg-blue-600">
+      <Slider
+        renderItem={renderSlides}
+        data={slides}
+        showNextButton={false}
+        showDoneButton={true}
+        onDone={onDone}
+        dotStyle={{
+          marginBottom: 50, // distância do botão
+          backgroundColor: '#084F8C',
+          width: 15,
+          height: 15,
+          borderRadius: 20,
+        }}
+        activeDotStyle={{
+          marginBottom: 50,
+          backgroundColor: 'white',
+          width: 15,
+          height: 15,
+          borderRadius: 20,
+        }}
+        renderDoneButton={renderDoneButton}
+      />
+    </View>
   );
 }
-

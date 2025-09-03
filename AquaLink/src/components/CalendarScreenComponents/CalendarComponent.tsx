@@ -35,6 +35,7 @@ const CalendarComponent: React.FC = () => {
         textMonthFontWeight: 'bold',
         textDayHeaderFontWeight: '600',
         textMonthFontSize: 20,
+        textMonthFontFamily: "poppinsRegular",
         
       }}
       onDayPress={(day: DateData) => {

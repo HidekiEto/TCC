@@ -1,15 +1,24 @@
+import React, { Suspense, useState } from "react";
+import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, StatusBar } from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { PaperProvider } from "react-native-paper";
 
-import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { PaperProvider } from 'react-native-paper';
-import { useState } from 'react';
+import WeekDays from "../components/HomeComponents/CalendarStrip";
+import ModalComponent from "../components/HomeComponents/Modal";
 
-import { CircularLiquidProgress} from '../components/HomeComponents/WaterCircle';
-import { BottomMenu } from '../components/BottomNavigation';
-
-import WeekDays from '../components/HomeComponents/CalendarStrip';
-import ModalComponent from '../components/HomeComponents/Modal';
-import { LiquidGauge } from '../components/HomeComponents/LuiquidGauge';
+// carregamento dinâmico robusto para módulos com export default ou export nomeado
+const LuiquidGauge = React.lazy(() =>
+  import("../components/HomeComponents/LuiquidGauge").then((mod) => {
+    const comp =
+      (mod as any).default ??
+      (mod as any).LuiquidGauge ??
+      (mod as any).LiquidGauge ??
+      (mod as any).LUIQUIDGAUGE ??
+      (mod as any);
+    return { default: comp as React.ComponentType<any> };
+  })
+);
+import BottomNavigation from "../components/BottomNavigation";
 
 export default function Home() {
   const [waterValue, setWaterValue] = useState(0);
@@ -30,7 +39,7 @@ export default function Home() {
             <Text className="text-base mb-5">Bem vindo ao Aqualink.</Text>
           </View>
           <View className="ml-auto bg-[#27D5E8] rounded-full w-10 h-10 justify-center items-center">
-            <FontAwesome name="bell" size={20} color="white" />
+            <FontAwesome5 name="bell" size={20} color="white" />
           </View>
         </View>
 
@@ -43,7 +52,15 @@ export default function Home() {
             Meta diária
           </Text>
 
-          <LiquidGauge value={waterValue} />
+          <Suspense
+            fallback={
+              <View style={styles.fallback}>
+                <ActivityIndicator size="large" />
+              </View>
+            }
+          >
+            <LuiquidGauge value={waterValue} />
+          </Suspense>
 
           <TouchableOpacity
             className="mt-5 p-2 bg-[#084F8C] rounded-2xl w-4/5 shadow-md elevation-5"
@@ -72,10 +89,22 @@ export default function Home() {
     buttonClassName="bg-blue-200 rounded-2xl w-[40%] h-[50%] shadow-lg shadow-black/40 justify-center items-center "
   />
 </View>
-
+      <View style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
+          <BottomNavigation />
+        </View>
       </View>
 
-      <BottomMenu />
     </PaperProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  fallback: {
+    height: 200,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

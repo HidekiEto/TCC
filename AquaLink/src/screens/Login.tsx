@@ -3,16 +3,13 @@ import { View, Text, TouchableOpacity, Image, GestureResponderEvent } from "reac
 import { CheckBox } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { signInWithEmailAndPassword } from "firebase/auth";
-// import { auth } from "../config/firebase";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { signInUser } from "../services/firebaseService";
+import { RootStackParamList } from "../types/navigation";
 
 import Input from "../components/Input";
 import "../../global.css";
 
-type RootStackParamList = {
-  Home: undefined;
-};
 
 export default function Login() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -22,16 +19,16 @@ export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
   const [checked, setChecked] = useState<boolean>(false);
 
-  // const handleLogin = async (e: GestureResponderEvent) => {
-  //   e.preventDefault?.(); // React Native TouchableOpacity não tem preventDefault, mas mantido por compatibilidade
-  //   try {
-  //     await signInWithEmailAndPassword(auth, email, password);
-  //     console.log("User logged in successfully");
-  //     navigation.navigate("Home");
-  //   } catch (error) {
-  //     console.error("Error logging in:", error);
-  //   }
-  // };
+  const handleLogin = async (e: GestureResponderEvent) => {
+    e.preventDefault?.(); 
+    try {
+      await signInUser(email, password);
+      console.log("User logged in successfully");
+      navigation.navigate("Home");
+    } catch (error) {
+      console.error("Error logging in:", error);
+    }
+  };
 
   return (
     <LinearGradient
@@ -54,25 +51,26 @@ export default function Login() {
       />
 
       <View className="relative justify-center mt-4">
-        <Input
-          label="Senha"
-          placeholder="Digite sua senha"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!passwordVisible}
-          
-        />
-        <TouchableOpacity
-          className="absolute right-3 top-9"
-          onPress={() => setPasswordVisible(!passwordVisible)}
-        >
-          <Ionicons
-            name={passwordVisible ? "eye-off-outline" : "eye-outline"}
-            size={22}
-            color="#777"
-          />
-        </TouchableOpacity>
-      </View>
+  <Input
+    label="Senha"
+    placeholder="Digite sua senha"
+    value={password}
+    onChangeText={setPassword}
+    secureTextEntry={!passwordVisible}
+  />
+  <TouchableOpacity
+    className="absolute right-5"
+    style={{ top: '50%', transform: [{ translateY: -10 }] }} // 11 é metade do tamanho do ícone (22)
+    onPress={() => setPasswordVisible(!passwordVisible)}
+  >
+    <Ionicons
+      name={passwordVisible ? "eye-off-outline" : "eye-outline"}
+      size={22}
+      color="#777"
+    />
+  </TouchableOpacity>
+</View>
+
 
       <View className="flex-row items-center justify-between mt-6 mb-5">
         <CheckBox
@@ -84,19 +82,23 @@ export default function Login() {
           containerStyle={{ backgroundColor: "transparent", borderWidth: 0, padding: 0, margin: 0 }}
           textStyle={{ fontSize: 14, color: "#333", fontWeight: "normal" }}
         />
+        <TouchableOpacity onPress={() => console.log("Esqueci minha senha pressionado")}>
         <Text className="text-xs text-[#555] mr-2">Esqueci minha senha</Text>
+        </TouchableOpacity>
       </View>
 
       <View className="flex-row justify-around mt-5">
         <TouchableOpacity
-          onPress={() => navigation.navigate("Home")}
+          onPress={handleLogin}
           className="bg-[#27D5E8] py-3 px-10 rounded-md"
         >
-          <Text className="text-[#084F8C] text-base font-bold text-center">Acessar</Text>
+          <Text className="text-white text-base font-bold text-center">Acessar</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity className="border border-[#27D5E8] py-3 px-9 rounded-md">
-          <Text className="text-[#084F8C] text-base font-bold text-center">Cadastrar</Text>
+        <TouchableOpacity 
+        onPress={() => navigation.navigate("Register" as never)}
+        className="border border-[#27D5E8] py-3 px-9 rounded-md">
+          <Text className="text-[#27D5E8] text-base font-bold text-center">Cadastrar</Text>
         </TouchableOpacity>
       </View>
 
@@ -106,9 +108,13 @@ export default function Login() {
         <View className="flex-1 h-px bg-gray-300" />
       </View>
 
-      <View className="flex-row justify-around mx-12">
+      <View className="flex-row justify-evenly">
+        <TouchableOpacity onPress={() => console.log("Login com Google")}>
         <Image source={require("../assets/Google.png")} className="w-12 h-12" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => console.log("Login com Facebook")}>
         <Image source={require("../assets/Facebook.png")} className="w-12 h-12" />
+        </TouchableOpacity>
       </View>
     </LinearGradient>
   );

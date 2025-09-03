@@ -32,10 +32,10 @@ const ModalComponent: React.FC<ModalComponentProps> = ({
           visible={visible}
           onDismiss={hideModal}
           contentContainerStyle={
-            containerStyle || { backgroundColor: "white", padding: 20, borderRadius: 16 }
+            containerStyle || { backgroundColor: "white", padding: 20, borderRadius: 16, width: '80%', alignSelf: 'center' }
           }
         >
-          <View className="bg-white p-6 rounded-2xl">
+          <View className="bg-white p-6 rounded-2xl ">
             <Text className="text-lg font-bold mb-2">{title}</Text>
             {info1 && (
               <Text className="flex-row items-center">

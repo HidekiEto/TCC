@@ -1,5 +1,5 @@
 import React from "react";
-import { createNativeStackNavigator, NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import Welcome from "../screens/Welcome";
 import Register from "../screens/Register";
@@ -9,18 +9,7 @@ import CalendarScreen from "../screens/Calendar";
 import Achievements from "../screens/Achievements";
 import Info from "../screens/Info";
 import Profile from "../screens/Profile";
-
-// Definindo todas as rotas e seus parâmetros
-export type RootStackParamList = {
-  Welcome: undefined;
-  Register: undefined;
-  Home: undefined;
-  Login: undefined;
-  Calendar: undefined;
-  Profile: undefined;
-  Achievements: undefined;
-  Info: undefined;
-};
+import { RootStackParamList } from "../types/navigation";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
