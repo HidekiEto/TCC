@@ -25,7 +25,7 @@
         "BLUETOOTH_CONNECT",
         "ACCESS_FINE_LOCATION"
       ],
-      "package": "seu.pacote.aqualink"
+      "package": "com.anonymous.aqualink"
     },
     "web": {
       "bundler": "metro"
