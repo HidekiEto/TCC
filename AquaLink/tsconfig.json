@@ -3,22 +3,29 @@
   "compilerOptions": {
     "target": "es2022",
     "module": "esnext",
-    "jsx": "react-jsx",
+    "jsx": "react-native",
     "allowJs": true,
     "strict": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "noEmit": true
+    "noEmit": true,
+    "lib": [
+      "dom",
+      "esnext"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   },
   "types": [
     "jest"
   ],
   "include": [
-    "src/**/*",
-    "nativewind-env.d.ts"
+    "**/*.ts",
+    "**/*.tsx"
   ],
   "exclude": [
     "node_modules",

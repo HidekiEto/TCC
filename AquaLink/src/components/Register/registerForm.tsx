@@ -1,5 +1,5 @@
 import React from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import Input from "../Input";
 
 interface RegisterFormProps {
@@ -28,44 +28,42 @@ export default function RegisterForm({
   setConfirmPassword,
 }: RegisterFormProps){
   return (
-    <View className="p-5 gap-5 top-[20%]">
+    <View style={styles.container}>
       <Input
-        label="Nome"
-        placeholder="Seu nome completo"
+        label="Nome Completo"
+        placeholder="Nome Completo"
         value={name}
         onChangeText={setName}
       />
 
       <Input
-        label="E-mail"
-        placeholder="Digite seu E-mail"
+        label="Data de Nascimento"
+        placeholder="Data de Nascimento"
+        value={birthdateFormatted}
+        editable={false}
+        onFocus={onBirthdateFocus}
+      />
+
+      <Input
+        label="Email"
+        placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
 
-      {/* Envolvi o Input com TouchableOpacity para detectar o toque mesmo com editable={false} */}
-      <TouchableOpacity activeOpacity={1} onPress={onBirthdateFocus}>
-        <Input
-          label="Data de Nascimento"
-          placeholder="DD/MM/AAAA"
-          value={birthdateFormatted}
-          editable={false} // continua não editável (sem teclado)
-        />
-      </TouchableOpacity>
-
       <Input
         label="Senha"
-        placeholder="Digite sua senha"
+        placeholder="Senha"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
       <Input
-        label="Confirmar senha"
-        placeholder="Repita sua senha"
+        label="Confirme sua Senha"
+        placeholder="Confirme sua Senha"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
@@ -73,3 +71,9 @@ export default function RegisterForm({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 20,
+  },
+});

@@ -1,0 +1,13 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "files.exclude": {
+        "**/node_modules/**/*.gradle": true,
+        "**/node_modules/**/*.java": true,
+        "**/node_modules/**/*.kt": true,
+        "**/node_modules/**/*.xml": true
+    },
+    "search.exclude": {
+        "**/node_modules": true
+    }
+}

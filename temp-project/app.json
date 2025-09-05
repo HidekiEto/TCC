@@ -1,9 +1,11 @@
 {
   "expo": {
-    "name": "AquaLink",
-    "slug": "AquaLink",
+    "name": "temp-project",
+    "slug": "temp-project",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -18,18 +20,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": [
-        "BLUETOOTH",
-        "BLUETOOTH_ADMIN",
-        "BLUETOOTH_SCAN",
-        "BLUETOOTH_CONNECT",
-        "ACCESS_FINE_LOCATION"
-      ],
-      "package": "com.anonymous.aqualink"
+      "edgeToEdgeEnabled": true
     },
     "web": {
-      "bundler": "metro"
+      "favicon": "./assets/favicon.png"
     }
-    
   }
 }
