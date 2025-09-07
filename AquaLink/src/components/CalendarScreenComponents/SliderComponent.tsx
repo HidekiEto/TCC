@@ -1,6 +1,6 @@
 import React from 'react';
 import Slider from 'react-native-app-intro-slider';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { RenderComponentSlides } from './RenderComponentSlides';
 import { useAppFonts } from '../../hooks/useAppFonts';
 
@@ -38,7 +38,7 @@ export default function SliderComponent() {
 
   const renderPagination = (activeIndex: number) => {
     return (
-      <View className="flex-1 flex-row justify-center ">
+      <View style={styles.paginationContainer}>
         {slides.map((slide, i) => {
           const dotColor = slide.key === '2' ? '#3498db' : '#1DBF84';
           const isActive = i === activeIndex;
@@ -46,12 +46,14 @@ export default function SliderComponent() {
           return (
             <View
               key={slide.key}
-              className="w-5 h-5 rounded-full mx-1 "
-              style={{
-                backgroundColor: isActive ? dotColor : 'white',
-                borderWidth: isActive ? 0 : 1,
-                borderColor: isActive ? 'transparent' : dotColor,
-              }}
+              style={[
+                styles.paginationDot,
+                {
+                  backgroundColor: isActive ? dotColor : 'white',
+                  borderWidth: isActive ? 0 : 1,
+                  borderColor: isActive ? 'transparent' : dotColor,
+                }
+              ]}
             />
           );
         })}
@@ -60,7 +62,7 @@ export default function SliderComponent() {
   };
 
   return (
-    <View className="flex-1 justify-center items-center top-[5%]">
+    <View style={styles.container}>
       <Slider
         renderItem={renderItem}
         data={slides}
@@ -71,3 +73,25 @@ export default function SliderComponent() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    minHeight: 160, // Altura mínima em vez de fixa
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  paginationContainer: {
+    height: 40,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  paginationDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginHorizontal: 4,
+  },
+});

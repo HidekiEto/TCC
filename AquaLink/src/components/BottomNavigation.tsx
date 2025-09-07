@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Ionicons, FontAwesome, Octicons } from "@expo/vector-icons";
 import { useNavigation, useRoute, NavigationProp } from "@react-navigation/native";
@@ -39,23 +39,30 @@ const items: MenuItem[] = [
 const BottomMenu: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute();
-  const initial = ((route.name ?? "Home") as string).toLowerCase() as Key;
-  const [activeKey, setActiveKey] = useState<Key>(initial);
-
-  useEffect(() => {
-    const current = (route.name ?? "Home") as keyof RootStackParamList;
-    const reverse = Object.entries(ROUTE_MAP).reduce<Record<string, Key>>((acc, [k, v]) => {
+  
+  // Criar mapeamento reverso usando useMemo para otimização
+  const reverseRouteMap = useMemo(() => {
+    return Object.entries(ROUTE_MAP).reduce<Record<string, Key>>((acc, [k, v]) => {
       acc[v as string] = k as Key;
       return acc;
     }, {});
-    const key = reverse[current];
-    if (key) setActiveKey(key);
-  }, [route.name]);
+  }, []);
+  
+  // Calcular activeKey diretamente baseado na rota atual
+  const activeKey = useMemo(() => {
+    const currentRouteName = route.name ?? "Home";
+    const key = reverseRouteMap[currentRouteName] || "home";
+    return key;
+  }, [route.name, reverseRouteMap]);
 
   const handlePress = (key: Key) => {
-    setActiveKey(key);
     const screen = ROUTE_MAP[key];
-    if (screen) navigation.navigate(screen);
+    if (screen) {
+      // Só navegar se não estivermos já na tela atual
+      if (route.name !== screen) {
+        navigation.navigate(screen);
+      }
+    }
   };
 
   const renderIcon = (item: MenuItem, isActive: boolean) => {

@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   titleContainer: {
-    marginBottom: 40,
+    marginBottom: 0,
   },
   slideText: {
     color: 'white',

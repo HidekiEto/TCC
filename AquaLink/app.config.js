@@ -8,7 +8,7 @@ export default () => ({
     orientation: "portrait",
     newArchEnabled: true,
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/logo.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
@@ -16,7 +16,7 @@ export default () => ({
     android: {
       package: "com.anonymous.aqualink",
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/logo.png",
         backgroundColor: "#ffffff"
       },
       permissions: [

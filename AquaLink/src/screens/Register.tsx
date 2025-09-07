@@ -72,7 +72,7 @@ export default function Register() {
   return (
     <LinearGradient
       colors={["#084F8C", "#27D5E8", "#FFFFFF"]}
-      locations={[0.3, 0.9, 1]}
+      locations={[0.2, 0.8, 1]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 0.20 }}
       style={styles.container}

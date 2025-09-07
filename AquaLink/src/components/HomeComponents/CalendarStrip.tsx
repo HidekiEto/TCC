@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, FlatList } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, StyleSheet } from "react-native";
 
 type DayItem = {
   id: string;
   week: string;
+  date: number;
 };
 
 export default function WeekDays() {
   const [selectedDay, setSelectedDay] = useState(
-    new Date().getDate().toString()
+    new Date().getDate()
   );
 
   const generateDays = (): DayItem[] => {
@@ -19,10 +20,11 @@ export default function WeekDays() {
       let date = new Date();
       date.setDate(today.getDate() + i);
 
-      const id = date.getDate().toString();
+      const id = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
       const week = date.toLocaleDateString("pt-BR", { weekday: "short" });
+      const dateNumber = date.getDate();
 
-      daysArray.push({ id, week });
+      daysArray.push({ id, week, date: dateNumber });
     }
     return daysArray;
   };
@@ -30,30 +32,37 @@ export default function WeekDays() {
   const days = generateDays();
 
   return (
-    <View className="flex-row justify-center mt-5">
+    <View style={styles.container}>
       <FlatList
         horizontal
         data={days}
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => {
-          const isSelected = selectedDay === item.id;
+          const isSelected = selectedDay === item.date;
 
           return (
             <TouchableOpacity
-              className={`items-center justify-center mx-3 px-2 py-4 rounded-full border w-14 h-14
-              ${isSelected ? "bg-blue-700 border-blue-700" : "border-blue-700"}`}
-              onPress={() => setSelectedDay(item.id)}
+              style={[
+                styles.dayButton,
+                isSelected ? styles.selectedButton : styles.unselectedButton
+              ]}
+              onPress={() => setSelectedDay(item.date)}
             >
               <Text
-                className={`text-base font-bold 
-                ${isSelected ? "text-white" : "text-blue-700"}`}
+                style={[
+                  styles.dayNumber,
+                  isSelected ? styles.selectedText : styles.unselectedText
+                ]}
               >
-                {item.id}
+                {item.date}
               </Text>
               <Text
-                className={`text-sm 
-                ${isSelected ? "text-white" : "text-blue-700"}`}
+                style={[
+                  styles.dayWeek,
+                  isSelected ? styles.selectedText : styles.unselectedText
+                ]}
               >
                 {item.week}
               </Text>
@@ -64,3 +73,56 @@ export default function WeekDays() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  listContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  dayButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+    borderRadius: 25,
+    borderWidth: 1,
+    width: 50,
+    height: 50,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  selectedButton: {
+    backgroundColor: '#084F8C',
+    borderColor: '#084F8C',
+  },
+  unselectedButton: {
+    backgroundColor: 'white',
+    borderColor: '#084F8C',
+  },
+  dayNumber: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  dayWeek: {
+    fontSize: 11,
+    fontWeight: '500',
+    textTransform: 'capitalize',
+  },
+  selectedText: {
+    color: 'white',
+  },
+  unselectedText: {
+    color: '#084F8C',
+  },
+});

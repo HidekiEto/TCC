@@ -1,8 +1,7 @@
 // RenderComponentSlides.tsx
 import React from "react";
-import { View, Text, Dimensions } from "react-native";
+import { View, Text, Dimensions, StyleSheet } from "react-native";
 import { LinearGradient, LinearGradientProps } from "expo-linear-gradient";
-import { Line } from "@shopify/react-native-skia";
 
 interface SlideItem {
   key: string;
@@ -23,45 +22,38 @@ export const RenderComponentSlides: React.FC<RenderComponentSlidesProps> = ({ it
           ["#3498db", "white", "#3498db"] :
           ["#1DBF84", "white", "#1DBF84"];
 
-
   return (
-    <View
-      style={{
-        width, 
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+    <View style={styles.container}>
       <View
-        style={{
-          backgroundColor: 'white',
-          borderColor: item.key === "2" ? "#3498db" : "#1DBF84",
-          borderWidth: 1,
-          width: width * 0.85, 
-          height: 100,
-          borderRadius: 20,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
+        style={[
+          styles.slideCard,
+          {
+            borderColor: item.key === "2" ? "#3498db" : "#1DBF84",
+          }
+        ]}
       > 
-        <Text style={{ color: item.key == "2" ? "#3498db" : "#1dbf84",  fontSize: 20, textAlign: "center" }}>
+        <Text 
+          style={[
+            styles.slideTitle,
+            { color: item.key === "2" ? "#3498db" : "#1dbf84" }
+          ]}
+        >
           {item.text}
         </Text>
+        
         <LinearGradient
           colors={gradientColors}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
-          className="h-[1px] w-[80%] mt-2"
+          style={styles.gradientLine}
         />
+        
         {item.info1 && (
           <Text
-            style={{
-              color: item.key == "2" ? "#3498db" : "#1dbf84",
-              fontSize: 14,
-              textAlign: "center",
-              marginTop: 8,
-            }}
+            style={[
+              styles.slideInfo,
+              { color: item.key === "2" ? "#3498db" : "#1dbf84" }
+            ]}
           >
             {item.info1}
           </Text>
@@ -69,17 +61,60 @@ export const RenderComponentSlides: React.FC<RenderComponentSlidesProps> = ({ it
 
         {item.info2 && (
           <Text
-            style={{
-              color: item.key == "2" ? "#3498db" : "#1dbf84",
-              fontSize: 14,
-              
-              marginTop: 8,
-            }}
+            style={[
+              styles.slideInfo,
+              { color: item.key === "2" ? "#3498db" : "#1dbf84" }
+            ]}
           >
             {item.info2}
           </Text>
         )}
-      </View> 
+      </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    width, 
+    height: 140, // Altura fixa em vez de flex
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  slideCard: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    width: width * 0.85, 
+    height: 120,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 3,
+  },
+  slideTitle: {
+    fontSize: 20,
+    textAlign: "center",
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  gradientLine: {
+    height: 1,
+    width: '80%',
+    marginVertical: 8,
+  },
+  slideInfo: {
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 4,
+    lineHeight: 18,
+  },
+});
