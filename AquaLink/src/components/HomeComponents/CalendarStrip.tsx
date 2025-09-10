@@ -38,17 +38,17 @@ export default function WeekDays() {
         data={days}
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
+        scrollEnabled={false}
         contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => {
           const isSelected = selectedDay === item.date;
 
           return (
-            <TouchableOpacity
+            <View
               style={[
                 styles.dayButton,
                 isSelected ? styles.selectedButton : styles.unselectedButton
               ]}
-              onPress={() => setSelectedDay(item.date)}
             >
               <Text
                 style={[
@@ -66,7 +66,7 @@ export default function WeekDays() {
               >
                 {item.week}
               </Text>
-            </TouchableOpacity>
+            </View>
           );
         }}
       />

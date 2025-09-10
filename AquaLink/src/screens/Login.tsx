@@ -4,7 +4,9 @@ import { CheckBox } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import { signInUser } from "../services/firebaseService";
+// import { signInUser } from "../services/firebaseService";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../config/firebase";
 import { RootStackParamList } from "../types/navigation";
 
 import Input from "../components/Input";
@@ -23,7 +25,7 @@ export default function Login() {
   const handleLogin = async (e: GestureResponderEvent) => {
     e.preventDefault?.(); 
     try {
-      await signInUser(email, password);
+      await signInWithEmailAndPassword(auth, email, password);
       console.log("User logged in successfully");
       navigation.navigate("Home");
     } catch (error) {
@@ -156,11 +158,12 @@ const styles = StyleSheet.create({
   passwordContainer: {
     position: 'relative',
     marginTop: 20,
+    
   },
   eyeIcon: {
     position: 'absolute',
     right: 15,
-    top: '50%',
+    top: '40%',
     transform: [{ translateY: -11 }],
   },
   optionsContainer: {

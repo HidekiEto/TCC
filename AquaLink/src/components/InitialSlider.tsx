@@ -165,8 +165,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   slideImage: {
-    width: width * 0.6,
-    height: width * 0.6,
+    width: width * 1,
+    height: width * 1,
   },
   paginationContainer: {
     position: 'absolute',
@@ -191,22 +191,24 @@ const styles = StyleSheet.create({
   },
   doneButtonContainer: {
     position: 'absolute',
-    bottom: 60,
+    bottom: "30%",
     left: 0,
     right: 0,
-    alignItems: 'center',
+    alignItems: 'center',    
+    
   },
   doneButton: {
     backgroundColor: 'transparent',
     paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 25,
-    borderWidth: 1,
+    paddingVertical: 0,
     borderColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: 'white',
   },
   doneButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '400',
-  },
+    backgroundColor: 'transparent'
+  }  
 });
