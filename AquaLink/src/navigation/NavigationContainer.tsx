@@ -7,7 +7,7 @@ import Home from "../screens/Home";
 import Login from "../screens/Login";
 import CalendarScreen from "../screens/Calendar";
 import Achievements from "../screens/Achievements";
-import Info from "../screens/Info";
+import Dashboard from "../screens/Dashboard";
 import Profile from "../screens/Profile";
 
 // Definindo todas as rotas e seus parâmetros
@@ -19,7 +19,7 @@ export type RootStackParamList = {
   Calendar: undefined;
   Profile: undefined;
   Achievements: undefined;
-  Info: undefined;
+  Dashboard: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -70,8 +70,8 @@ export default function Navigation() {
       />
 
       <Stack.Screen
-        name="Info"
-        component={Info}
+        name="Dashboard"
+        component={Dashboard}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

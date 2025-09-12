@@ -1,17 +1,18 @@
 import React, { useState } from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
-import { Ionicons, FontAwesome, Octicons } from "@expo/vector-icons";
+import { Ionicons, FontAwesome, Octicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute, NavigationProp } from "@react-navigation/native";
 
 // Tipos para nomes de ícones
 type IonIconNames = keyof typeof Ionicons.glyphMap;
 type FaIconNames = keyof typeof FontAwesome.glyphMap;
 type OctIconNames = keyof typeof Octicons.glyphMap;
+type MciIconNames = keyof typeof MaterialCommunityIcons.glyphMap;
 
 // Tipagem do item do menu
 interface MenuItem {
   key: string;
-  type: "ion" | "fa" | "oct";
+  type: "ion" | "fa" | "oct" | "mci";
   label: string;
   iconName: string; // nome padrão
   iconActiveName: string; // nome quando ativo
@@ -24,7 +25,7 @@ export const BottomMenu: React.FC = () => {
 
   const items: MenuItem[] = [
     { key: "calendar", iconName: "calendar-outline", iconActiveName: "calendar", type: "ion", label: "Calendário" },
-    { key: "info", iconName: "info", iconActiveName: "info", type: "oct", label: "Info" },
+    { key: "dashboard", iconName: "water", iconActiveName: "water-outline", type: "mci", label: "Info" },
     { key: "home", iconName: "home-outline", iconActiveName: "home", type: "ion", label: "Home" },
     { key: "profile", iconName: "user-o", iconActiveName: "user", type: "fa", label: "Perfil" },
     { key: "achievements", iconName: "trophy-outline", iconActiveName: "trophy", type: "ion", label: "Conquistas" },
@@ -64,6 +65,14 @@ export const BottomMenu: React.FC = () => {
             color={color}
           />
         );
+        case "mci":
+          return (
+            <MaterialCommunityIcons
+              name={isActive ? (item.iconActiveName as MciIconNames) : (item.iconName as MciIconNames)}
+              size={size}
+              color={color}
+            />
+          );
       default:
         return null;
     }
