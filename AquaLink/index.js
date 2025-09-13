@@ -1,6 +1,3 @@
-import './src/polyfills.js';
-// Import Hermes polyfills first
-import './src/config/hermesPolyfills';
 
 import { registerRootComponent } from 'expo';
 import App from './App';
