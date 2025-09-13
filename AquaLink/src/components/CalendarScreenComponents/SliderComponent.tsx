@@ -1,13 +1,14 @@
 import React from 'react';
 import Slider from 'react-native-app-intro-slider';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { RenderComponentSlides } from './RenderComponentSlides';
-import { useFonts } from 'expo-font';
+import { useAppFonts } from '../../hooks/useAppFonts';
 
 interface Slide {
   key: string;
   text?: string;
-  subtitle?: string;
+  info1?: string;
+  info2?: string;
   backgroundColor?: string;
 }
 
@@ -16,20 +17,19 @@ const slides: Slide[] = [
     key: '1',
     backgroundColor: '#3498db',
     text: 'Metas Alcançadas',
-    subtitle: 'Você alcançou sua meta em: 2 dos 31 dias',
+    info1: 'Você alcançou sua meta em: 2 dos 31 dias',
+    info2: 'Água ingerida: 12,5L',
   },
   {
     key: '2',
     text: 'Água ingerida',
     backgroundColor: '#3498db',
+    info1: 'Você ingeriu um total de 12,5L de água este mês!',
   },
 ];
 
-export const ComponentSlides: React.FC = () => {
-  const [fontsLoaded] = useFonts({
-    latoRegular: require('../../assets/fonts/Lato-Regular.ttf'),
-  });
-
+export default function SliderComponent() {
+  const fontsLoaded = useAppFonts();
   if (!fontsLoaded) return null;
 
   const renderItem = ({ item }: { item: Slide }) => {
@@ -38,7 +38,7 @@ export const ComponentSlides: React.FC = () => {
 
   const renderPagination = (activeIndex: number) => {
     return (
-      <View className="flex-1 flex-row justify-center ">
+      <View style={styles.paginationContainer}>
         {slides.map((slide, i) => {
           const dotColor = slide.key === '2' ? '#3498db' : '#1DBF84';
           const isActive = i === activeIndex;
@@ -46,12 +46,14 @@ export const ComponentSlides: React.FC = () => {
           return (
             <View
               key={slide.key}
-              className="w-5 h-5 rounded-full mx-1 "
-              style={{
-                backgroundColor: isActive ? dotColor : 'white',
-                borderWidth: isActive ? 0 : 1,
-                borderColor: isActive ? 'transparent' : dotColor,
-              }}
+              style={[
+                styles.paginationDot,
+                {
+                  backgroundColor: isActive ? dotColor : 'white',
+                  borderWidth: isActive ? 0 : 1,
+                  borderColor: isActive ? 'transparent' : dotColor,
+                }
+              ]}
             />
           );
         })}
@@ -60,7 +62,7 @@ export const ComponentSlides: React.FC = () => {
   };
 
   return (
-    <View className="flex-1 justify-center items-center top-[5%]">
+    <View style={styles.container}>
       <Slider
         renderItem={renderItem}
         data={slides}
@@ -70,4 +72,26 @@ export const ComponentSlides: React.FC = () => {
       />
     </View>
   );
-};
+}
+
+const styles = StyleSheet.create({
+  container: {
+    minHeight: 160, // Altura mínima em vez de fixa
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  paginationContainer: {
+    height: 40,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  paginationDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginHorizontal: 4,
+  },
+});

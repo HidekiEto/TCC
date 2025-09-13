@@ -1,9 +1,11 @@
 {
   "expo": {
-    "name": "AquaLink",
-    "slug": "AquaLink",
+    "name": "temp-project",
+    "slug": "temp-project",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -17,11 +19,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "edgeToEdgeEnabled": true
     },
     "web": {
-      "bundler": "metro"
+      "favicon": "./assets/favicon.png"
     }
-    
   }
 }

@@ -1,0 +1,39 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "files.exclude": {
+        "**/node_modules/**/*.gradle": true,
+        "**/node_modules/**/*.java": true,
+        "**/node_modules/**/*.kt": true,
+        "**/node_modules/**/*.xml": true,
+        "**/node_modules/**/.gradle/": true,
+        "**/node_modules/**/.idea/": true,
+        "**/node_modules/**/.settings/": true,
+        "**/node_modules/**/build/": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/*.code-search": true,
+        "**/android/.gradle": true,
+        "**/android/build": true,
+        "**/ios/Pods": true
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/**": true,
+        "**/android/.gradle/**": true,
+        "**/android/build/**": true,
+        "**/ios/Pods/**": true
+    },
+    "java.project.sourcePaths": [
+        "android/app/src/main/java"
+    ],
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "javascript.preferences.importModuleSpecifier": "relative",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "java.dependency.packagePresentation": "hierarchical",
+    "problems.decorations.enabled": false
+}

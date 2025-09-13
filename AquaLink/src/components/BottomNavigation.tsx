@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useMemo } from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Ionicons, FontAwesome, Octicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute, NavigationProp } from "@react-navigation/native";
+import type { RootStackParamList } from "../types/navigation";
 
 // Tipos para nomes de ícones
 type IonIconNames = keyof typeof Ionicons.glyphMap;
@@ -14,14 +15,46 @@ interface MenuItem {
   key: string;
   type: "ion" | "fa" | "oct" | "mci";
   label: string;
-  iconName: string; // nome padrão
-  iconActiveName: string; // nome quando ativo
+  iconName: string;
+  iconActiveName: string;
 }
 
-export const BottomMenu: React.FC = () => {
-  const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
+type Key = "calendar" | "info" | "home" | "profile" | "achievements";
+
+const ROUTE_MAP: Record<Key, keyof RootStackParamList> = {
+  calendar: "Calendar",
+  info: "Info",
+  home: "Home",
+  profile: "Profile",
+  achievements: "Achievements",
+};
+
+const items: MenuItem[] = [
+  { key: "calendar", iconName: "calendar-outline", iconActiveName: "calendar", type: "ion", label: "Calendário" },
+  { key: "info", iconName: "info", iconActiveName: "info", type: "oct", label: "Info" },
+  { key: "home", iconName: "home-outline", iconActiveName: "home", type: "ion", label: "Home" },
+  { key: "profile", iconName: "user-o", iconActiveName: "user", type: "fa", label: "Perfil" },
+  { key: "achievements", iconName: "trophy-outline", iconActiveName: "trophy", type: "ion", label: "Conquistas" },
+];
+
+const BottomMenu: React.FC = () => {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute();
-  const [activeKey, setActiveKey] = useState(route.name.toLowerCase());
+  
+  // Criar mapeamento reverso usando useMemo para otimização
+  const reverseRouteMap = useMemo(() => {
+    return Object.entries(ROUTE_MAP).reduce<Record<string, Key>>((acc, [k, v]) => {
+      acc[v as string] = k as Key;
+      return acc;
+    }, {});
+  }, []);
+  
+  // Calcular activeKey diretamente baseado na rota atual
+  const activeKey = useMemo(() => {
+    const currentRouteName = route.name ?? "Home";
+    const key = reverseRouteMap[currentRouteName] || "home";
+    return key;
+  }, [route.name, reverseRouteMap]);
 
   const items: MenuItem[] = [
     { key: "calendar", iconName: "calendar-outline", iconActiveName: "calendar", type: "ion", label: "Calendário" },
@@ -44,7 +77,7 @@ export const BottomMenu: React.FC = () => {
       case "ion":
         return (
           <Ionicons
-            name={isActive ? (item.iconActiveName as IonIconNames) : (item.iconName as IonIconNames)}
+            name={(isActive ? item.iconActiveName : item.iconName) as IonIconNames}
             size={size}
             color={color}
           />
@@ -52,7 +85,7 @@ export const BottomMenu: React.FC = () => {
       case "fa":
         return (
           <FontAwesome
-            name={isActive ? (item.iconActiveName as FaIconNames) : (item.iconName as FaIconNames)}
+            name={(isActive ? item.iconActiveName : item.iconName) as FaIconNames}
             size={size}
             color={color}
           />
@@ -60,7 +93,7 @@ export const BottomMenu: React.FC = () => {
       case "oct":
         return (
           <Octicons
-            name={isActive ? (item.iconActiveName as OctIconNames) : (item.iconName as OctIconNames)}
+            name={(isActive ? item.iconActiveName : item.iconName) as OctIconNames}
             size={size}
             color={color}
           />
@@ -82,11 +115,10 @@ export const BottomMenu: React.FC = () => {
     <View style={styles.container}>
       {items.map((item) => {
         const isActive = activeKey === item.key;
-
         return (
           <TouchableOpacity
             key={item.key}
-            onPress={() => handlePress(item.key)}
+            onPress={() => handlePress(item.key as Key)}
             style={[styles.item, isActive && styles.activeItem]}
           >
             {renderIcon(item, isActive)}
@@ -97,6 +129,8 @@ export const BottomMenu: React.FC = () => {
     </View>
   );
 };
+
+export default React.memo(BottomMenu);
 
 const styles = StyleSheet.create({
   container: {
@@ -131,3 +165,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 });
+

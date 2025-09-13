@@ -25,24 +25,35 @@ const CalendarComponent: React.FC = () => {
     <Calendar
       theme={{
         calendarBackground: '#ffffff',
-        textSectionTitleColor: '#1081C7',
-        selectedDayBackgroundColor: '#1081C7',
+        textSectionTitleColor: '#1976D2', // Azul consistente
+        selectedDayBackgroundColor: '#1976D2',
         selectedDayTextColor: '#ffffff',
-        todayTextColor: '#1bf7ffff',
-        arrowColor: '#1081C7',
-        monthTextColor: '#000000',
+        todayTextColor: '#27D5E8', // Azul claro para hoje
+        arrowColor: '#1976D2',
+        monthTextColor: '#333333',
+        dayTextColor: '#333333',
+        textDisabledColor: '#cccccc',
         textDayFontWeight: '500',
         textMonthFontWeight: 'bold',
         textDayHeaderFontWeight: '600',
         textMonthFontSize: 20,
+        textDayFontSize: 16,
+        textDayHeaderFontSize: 14,
+        textMonthFontFamily: "Poppins-Regular",
+        // Melhor espaçamento
         
       }}
       onDayPress={(day: DateData) => {
         setSelected(day.dateString);
       }}
       markedDates={{
-        [selected]: { selected: true, disableTouchEvent: true }
+        [selected]: { 
+          selected: true, 
+          disableTouchEvent: true,
+          selectedColor: '#1976D2',
+        }
       }}
+
     />
   );
 };

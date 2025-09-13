@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { BottomMenu } from "../components/BottomNavigation";
+import  BottomMenu  from "../components/BottomNavigation";
 
 export default function Achievements(){
     return (

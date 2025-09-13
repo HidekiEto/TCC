@@ -1,53 +1,138 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StatusBar } from "react-native";
+import { View, Text, TouchableOpacity, StatusBar, StyleSheet, Dimensions, Image } from "react-native";
 import * as Animatable from "react-native-animatable";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 
-import "../../global.css";
+import type { RootStackParamList } from "../types/navigation";
 
-type RootStackParamList = {
-  Register: undefined;
-  Login: undefined;
-};
+const { width, height } = Dimensions.get('window');
 
 export default function Welcome() {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NavigationProp<RootStackParamList, "Welcome">>();
 
   return (
-    <View className="flex-1 bg-[#1081C7]">
-      <StatusBar backgroundColor="#1081C7" barStyle="light-content" />
+    <LinearGradient
+      colors={["#084F8C", "#27D5E8"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.container}
+    >
+      <StatusBar backgroundColor="#084F8C" barStyle="light-content" />
 
-      <Animatable.View delay={600} animation="fadeInUp" className="flex-1 px-5">
-        <Text className="mt-20 text-4xl font-bold text-white font-poppins">
-          Bem Vindo!
-        </Text>
-        <Text className="text-2xl text-white font-poppins font-thin mt-2">
-          Sua experiência com{"\n"}Aqualink acaba de começar.
-        </Text>
+      <View style={styles.content}>
+        {/* Header - exatamente como na imagem */}
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>Bem-vindo!</Text>
+          <Text style={styles.subtitle}>
+            Sua experiência com{'\n'}
+            <Text style={styles.aquaLinkText}>AquaLink</Text> acaba de começar.
+          </Text>
+        </View>
 
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Register")}
-          className="absolute self-center bg-[#27D5E8] w-3/5 rounded-md items-center py-2 mt-10 bottom-12 shadow-md elevation-5 h-12 justify-center"
-        >
-          <Text className="text-white font-poppins">Nova Conta</Text>
-        </TouchableOpacity>
+        {/* Botões - exatamente como na imagem */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Register")}
+            style={styles.primaryButton}
+          >
+            <Text style={styles.primaryButtonText}>Nova Conta</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Login")}
-          className="absolute bottom-0 self-center border-b border-white"
-        >
-          <Text className="text-white font-poppins">Já possuo uma Conta</Text>
-        </TouchableOpacity>
-      </Animatable.View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Login")}
+            style={styles.secondaryButton}
+          >
+            <Text style={styles.secondaryButtonText}>Já possuo uma Conta</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View className="flex-3 bg-[#1081C7] top-5">
-        <Animatable.Image
-          animation="flipInY"
-          source={require("../assets/fitFemale.png")}
-          resizeMode="contain"
-          className="w-full mt-10"
-        />
+        <View style={styles.imageContainer}>
+          
+            <Animatable.Image
+              animation="flipInY"
+              source={require("../assets/fitFemale.png")}
+              resizeMode="contain"
+              style={styles.image}
+            />
+        </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 30,
+    justifyContent: 'space-between',
+  },
+  headerContainer: {
+    alignItems: 'flex-start',
+    marginTop: height * 0.12,
+    marginBottom: height * 0.05,
+    paddingLeft: 10,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 15,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: '300',
+    lineHeight: 22,
+  },
+  aquaLinkText: {
+    fontWeight: 'bold',
+    fontStyle: 'italic',
+  },
+  buttonContainer: {
+    alignItems: 'center',
+    marginBottom: height * 0.02,
+  },
+  primaryButton: {
+    backgroundColor: '#27D5E8',
+    width: width * 0.75,
+    borderRadius: 12,
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginBottom: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  primaryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1,
+    borderBottomColor: 'white',
+    paddingBottom: 3,
+  },
+  secondaryButtonText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '400',
+  },
+  imageContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 0,
+  },
+  image: {
+    width: width * 2,
+    height: width * 0.8,
+  },
+});

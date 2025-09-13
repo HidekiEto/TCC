@@ -46,24 +46,24 @@ function liquidFillGaugeDefaultSettings(): GaugeConfig {
   return {
     minValue: 0,
     maxValue: 100,
-    circleThickness: 0.05,
-    circleFillGap: 0.05,
-    circleColor: "#178BCA",
-    waveHeight: 0.05,
-    waveCount: 1,
-    waveRiseTime: 1000,
-    waveAnimateTime: 9000,
+    circleThickness: 0.08, // Aumentei para ser mais visível como na imagem
+    circleFillGap: 0.02, // Diminui o gap para ficar mais próximo
+    circleColor: "#E0E0E0", // Cor cinza clara para o fundo como na imagem
+    waveHeight: 0.03, // Ondas mais suaves
+    waveCount: 2, // Mais ondas para efeito mais natural
+    waveRiseTime: 2000, // Animação mais lenta
+    waveAnimateTime: 4000, // Animação das ondas mais lenta
     waveRise: true,
-    waveHeightScaling: true,
+    waveHeightScaling: false, // Altura constante das ondas
     waveAnimate: true,
-    waveColor: "#178BCA",
+    waveColor: "#1976D2", // Azul mais próximo da imagem
     waveOffset: 0,
     textVertPosition: 0.5,
-    textSize: 1,
+    textSize: 1, // Texto um pouco menor
     valueCountUp: true,
     textSuffix: "%",
-    textColor: "#045681",
-    waveTextColor: "#A4DBf8",
+    textColor: "#1976D2", // Azul escuro para o texto
+    waveTextColor: "#FFFFFF", // Texto branco sobre a água
     toFixed: 0,
   };
 }
@@ -211,7 +211,7 @@ export const LiquidGauge = ({
     { translateY: textRiseScaleY(mergedConfig.textVertPosition) - textPixels },
   ];
 
-  // Path animado da borda
+  // path animado da borda
   const borderPath = useDerivedValue(() => {
     const p = Skia.Path.Make();
     const sweepAngle = 360 * progressValue.value;
@@ -232,7 +232,7 @@ export const LiquidGauge = ({
     <View>
       <Canvas style={{ width, height }}>
         <Group>
-          {/* Fundo da borda (cinza claro) */}
+         
           <Circle
             cx={radius}
             cy={radius}
@@ -242,16 +242,16 @@ export const LiquidGauge = ({
             strokeWidth={circleThickness}
           />
 
-          {/* Progresso da borda */}
+         
           <Path
             path={borderPath}
             style="stroke"
             strokeWidth={circleThickness}
-            color="#082862"
+            color="#178BCA"
             strokeCap="round"
           />
 
-          {/* Texto fora do líquido */}
+          
           <Text
             x={textTranslateX}
             y={textPixels}
@@ -261,7 +261,7 @@ export const LiquidGauge = ({
             transform={textTransform}
           />
 
-          {/* Líquido */}
+         
           <Group clip={path}>
             <Circle
               cx={radius}
