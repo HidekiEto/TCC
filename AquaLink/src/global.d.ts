@@ -1,5 +1,4 @@
-// Temporary ambient declarations to satisfy TypeScript in environments
-// where devDependencies might not be installed yet (tests).
+
 declare module '@testing-library/react-native';
 declare module '@testing-library/jest-native';
 declare module 'expo-splash-screen';
@@ -17,7 +16,7 @@ declare const jest: any;
 
 export {};
 
-// Allow `className` on core React Native components (used by NativeWind/native-tailwind)
+
 import 'react-native';
 
 declare module 'react-native' {

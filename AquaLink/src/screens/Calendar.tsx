@@ -11,7 +11,7 @@ import { useAppFonts } from "../hooks/useAppFonts";
 
 const { width, height } = Dimensions.get('window');
 
-// Constantes para cálculo responsivo
+
 const BOTTOM_NAV_HEIGHT = 60;
 const BOTTOM_NAV_PADDING = 30;
 const HEADER_HEIGHT = 100;
@@ -26,9 +26,9 @@ export default function CalendarScreen() {
       <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       
       <View style={styles.container}>
-        {/* Content que NUNCA deve sobrepor o BottomNavigation */}
+        
         <View style={styles.contentArea}>
-          {/* Header com altura fixa */}
+        
           <View style={styles.header}>
             <EvilIcons name="calendar" size={50} color="#27D5E8"/>
             <Text style={styles.headerTitle}>
@@ -36,18 +36,18 @@ export default function CalendarScreen() {
             </Text>
           </View>
 
-          {/* ScrollView para conteúdo scrollável */}
+         
           <ScrollView 
             style={styles.scrollContent}
             contentContainerStyle={styles.scrollContentContainer}
             showsVerticalScrollIndicator={false}
           >
-            {/* Calendar Component */}
+           
             <View style={styles.calendarContainer}>
               <CalendarCompontent />
             </View>
 
-            {/* Gradient Divider */}
+            
             <LinearGradient
               colors={["black", "white", "black"]}
               start={{ x: 0, y: 0.5 }}
@@ -55,14 +55,14 @@ export default function CalendarScreen() {
               style={styles.gradientDivider}
             />
              
-            {/* Slider Component */}
+            
             <View style={styles.sliderContainer}>
               <SliderComponent />
             </View>
           </ScrollView>
         </View>
 
-        {/* BottomNavigation SEMPRE visível */}
+   
         <BottomNavigation />
       </View>
     </SafeAreaView>
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   contentArea: {
     flex: 1,
-    paddingBottom: BOTTOM_NAV_HEIGHT + 10, // Espaço reservado para BottomNavigation
+    paddingBottom: BOTTOM_NAV_HEIGHT + 10, 
   },
   header: {
     flexDirection: 'row',
@@ -105,13 +105,13 @@ const styles = StyleSheet.create({
   },
   scrollContentContainer: {
     flexGrow: 1,
-    paddingBottom: 20, // Padding extra para scroll
+    paddingBottom: 20, 
   },
   calendarContainer: {
     backgroundColor: '#FFFFFF',
     marginBottom: 20,
     paddingHorizontal: 10,
-    minHeight: 350, // Altura mínima em vez de maxHeight
+    minHeight: 350, 
   },
   gradientDivider: {
     height: 1,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sliderContainer: {
-    minHeight: 180, // Altura mínima garantida
+    minHeight: 180, 
     paddingHorizontal: 10,
   },
 });

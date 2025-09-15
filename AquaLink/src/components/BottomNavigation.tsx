@@ -19,11 +19,11 @@ interface MenuItem {
   iconActiveName: string;
 }
 
-type Key = "calendar" | "info" | "home" | "profile" | "achievements";
+type Key = "calendar" | "dashboard" | "home" | "profile" | "achievements";
 
-const ROUTE_MAP: Record<Key, keyof RootStackParamList> = {
+const ROUTE_MAP: Record<Key, string> = {
   calendar: "Calendar",
-  info: "Info",
+  dashboard: "Dashboard",
   home: "Home",
   profile: "Profile",
   achievements: "Achievements",
@@ -31,7 +31,7 @@ const ROUTE_MAP: Record<Key, keyof RootStackParamList> = {
 
 const items: MenuItem[] = [
   { key: "calendar", iconName: "calendar-outline", iconActiveName: "calendar", type: "ion", label: "Calendário" },
-  { key: "info", iconName: "info", iconActiveName: "info", type: "oct", label: "Info" },
+  { key: "dashboard", iconName: "water-outline", iconActiveName: "water", type: "mci", label: "Dashboard" },
   { key: "home", iconName: "home-outline", iconActiveName: "home", type: "ion", label: "Home" },
   { key: "profile", iconName: "user-o", iconActiveName: "user", type: "fa", label: "Perfil" },
   { key: "achievements", iconName: "trophy-outline", iconActiveName: "trophy", type: "ion", label: "Conquistas" },
@@ -41,7 +41,7 @@ const BottomMenu: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute();
   
-  // Criar mapeamento reverso usando useMemo para otimização
+ 
   const reverseRouteMap = useMemo(() => {
     return Object.entries(ROUTE_MAP).reduce<Record<string, Key>>((acc, [k, v]) => {
       acc[v as string] = k as Key;
@@ -56,17 +56,12 @@ const BottomMenu: React.FC = () => {
     return key;
   }, [route.name, reverseRouteMap]);
 
-  const items: MenuItem[] = [
-    { key: "calendar", iconName: "calendar-outline", iconActiveName: "calendar", type: "ion", label: "Calendário" },
-    { key: "dashboard", iconName: "water", iconActiveName: "water-outline", type: "mci", label: "Info" },
-    { key: "home", iconName: "home-outline", iconActiveName: "home", type: "ion", label: "Home" },
-    { key: "profile", iconName: "user-o", iconActiveName: "user", type: "fa", label: "Perfil" },
-    { key: "achievements", iconName: "trophy-outline", iconActiveName: "trophy", type: "ion", label: "Conquistas" },
-  ];
-
-  const handlePress = (key: string) => {
-    setActiveKey(key);
-    navigation.navigate(key.charAt(0).toUpperCase() + key.slice(1) as never);
+  
+  const handlePress = (key: Key) => {
+    const routeName = ROUTE_MAP[key];
+    if (routeName) {
+      navigation.navigate(routeName as never);
+    }
   };
 
   const renderIcon = (item: MenuItem, isActive: boolean) => {

@@ -35,5 +35,7 @@
     "javascript.preferences.importModuleSpecifier": "relative",
     "typescript.preferences.importModuleSpecifier": "relative",
     "java.dependency.packagePresentation": "hierarchical",
-    "problems.decorations.enabled": false
+    "problems.decorations.enabled": false,
+    "java.errors.incompleteClasspath.severity": "ignore",
+    "java.import.generatesMetadataFilesAtProjectRoot": false
 }

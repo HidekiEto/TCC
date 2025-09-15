@@ -1,8 +1,10 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { Text, View, TouchableOpacity, ScrollView, Dimensions, StatusBar, ActivityIndicator, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BottomNavigation from "../components/BottomNavigation";
 import AvatarComponent from "../components/ProfileComponents/Avatar";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "../config/firebase";
 
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -22,6 +24,51 @@ const Graphic = React.lazy(() =>
 );
 
 export default function Profile() {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Função para extrair o nome do usuário
+  const getUserName = () => {
+    if (user?.displayName) {
+      const nameParts = user.displayName.trim().split(' ');
+      
+      if (nameParts.length === 1) {
+        // Se só tem um nome, retorna apenas ele
+        return nameParts[0];
+      } else if (nameParts.length >= 2) {
+        // Se tem 2 ou mais nomes, retorna o primeiro e o último
+        const firstName = nameParts[0];
+        const lastName = nameParts[nameParts.length - 1];
+        return `${firstName} ${lastName}`;
+      }
+    }
+    
+    if (user?.email) {
+      // Extrai o nome do email (parte antes do @)
+      const emailName = user.email.split('@')[0];
+      const emailParts = emailName.split('.');
+      
+      if (emailParts.length === 1) {
+        // Se só tem uma parte, capitaliza e retorna
+        return emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1).toLowerCase();
+      } else if (emailParts.length >= 2) {
+        // Se tem 2 ou mais partes, pega a primeira e última
+        const firstName = emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1).toLowerCase();
+        const lastName = emailParts[emailParts.length - 1].charAt(0).toUpperCase() + emailParts[emailParts.length - 1].slice(1).toLowerCase();
+        return `${firstName} ${lastName}`;
+      }
+    }
+    
+    return "Usuário";
+  };
+
   return (
     <LinearGradient
       colors={["#1081C7", "#27D5E8", "#FFFFFF"]}
@@ -43,10 +90,10 @@ export default function Profile() {
               
               <View style={styles.userInfo}>
                 <Text style={styles.userName}>
-                  Henry & BiBi
+                  {getUserName()}
                 </Text>
                 <Text style={styles.userEmail}>
-                  henryebibi@gmail.com
+                  {user?.email || "henryebibi@gmail.com"}
                 </Text>
 
                 <TouchableOpacity style={styles.editButton}>

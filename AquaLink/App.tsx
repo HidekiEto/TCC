@@ -1,20 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import Navigation from "./src/navigation/NavigationContainer";
 import { useAppFonts } from "./src/hooks/useAppFonts";
-import { Text, View, StyleSheet } from "react-native";
+import { Text, View, StyleSheet, Animated } from "react-native";
 import SplashScreen from "./src/screens/SplashScreen";
 import Slides from "./src/components/InitialSlider";
 import { BLEProvider } from "./src/contexts/BLEProvider";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "./src/types/navigation";
 
 export default function App() {
   const fontsLoaded = useAppFonts();
   const [showSplash, setShowSplash] = useState(true);
   const [showNav, setShowNav] = useState(false);
   const [appReady, setAppReady] = useState(false);
+  const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList>("Welcome");
+  const navigationOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Initialize app when fonts are loaded
+    
     if (fontsLoaded) {
       const timer = setTimeout(() => {
         setAppReady(true);
@@ -24,7 +28,7 @@ export default function App() {
     }
   }, [fontsLoaded]);
 
-  // Show loading screen while fonts are loading or app is initializing
+  
   if (!fontsLoaded || !appReady) {
     return (
       <View style={styles.loadingContainer}>
@@ -33,21 +37,62 @@ export default function App() {
     );
   }
 
-  // Show splash screen first
+ 
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
   }
 
-  // Show navigation with BLE provider or initial slides
+  const handleNavigateToWelcome = () => {
+    console.log("Welcome slide reached");
+  };
+
+  const handleNavigateToRegister = () => {
+    console.log("✅ Iniciando navegação para Register...");
+    setInitialRoute("Register");
+    setShowNav(true);
+    
+    Animated.timing(navigationOpacity, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      console.log("✅ Navegação para Register completada!");
+    });
+  };
+
+  const handleNavigateToLogin = () => {
+    console.log("✅ Iniciando navegação para Login...");
+    setInitialRoute("Login");
+    setShowNav(true);
+    
+    Animated.timing(navigationOpacity, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      console.log("✅ Navegação para Login completada!");
+    });
+  };
+
+  
   return showNav ? (
-    <BLEProvider>
-      <NavigationContainer>
-        <Navigation />
-      </NavigationContainer>
-    </BLEProvider>
+    <Animated.View style={{ flex: 1, opacity: navigationOpacity }}>
+      <BLEProvider>
+        <NavigationContainer>
+          <Navigation initialRouteName={initialRoute} />
+        </NavigationContainer>
+      </BLEProvider>
+    </Animated.View>
   ) : (
     <View style={styles.fullScreen}>
-      <Slides onDone={() => setShowNav(true)} />
+      <Slides 
+        onDone={() => {
+          console.log("Slides done");
+        }}
+        onNavigateToWelcome={handleNavigateToWelcome}
+        onNavigateToRegister={handleNavigateToRegister}
+        onNavigateToLogin={handleNavigateToLogin}
+      />
     </View>
   );
 }

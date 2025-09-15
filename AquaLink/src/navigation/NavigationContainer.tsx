@@ -9,24 +9,17 @@ import CalendarScreen from "../screens/Calendar";
 import Achievements from "../screens/Achievements";
 import Dashboard from "../screens/Dashboard";
 import Profile from "../screens/Profile";
-
-// Definindo todas as rotas e seus parâmetros
-export type RootStackParamList = {
-  Welcome: undefined;
-  Register: undefined;
-  Home: undefined;
-  Login: undefined;
-  Calendar: undefined;
-  Profile: undefined;
-  Achievements: undefined;
-  Dashboard: undefined;
-};
+import type { RootStackParamList } from "../types/navigation";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export default function Navigation() {
+interface NavigationProps {
+  initialRouteName?: keyof RootStackParamList;
+}
+
+export default function Navigation({ initialRouteName = "Welcome" }: NavigationProps) {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator initialRouteName={initialRouteName}>
       <Stack.Screen
         name="Welcome"
         component={Welcome}

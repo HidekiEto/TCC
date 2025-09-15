@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StatusBar, StyleSheet, Dimensions, Image } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, Text, TouchableOpacity, StatusBar, StyleSheet, Dimensions, Image, Animated } from "react-native";
 import * as Animatable from "react-native-animatable";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -10,54 +10,76 @@ const { width, height } = Dimensions.get('window');
 
 export default function Welcome() {
   const navigation = useNavigation<NavigationProp<RootStackParamList, "Welcome">>();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   return (
-    <LinearGradient
-      colors={["#084F8C", "#27D5E8"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      style={styles.container}
-    >
-      <StatusBar backgroundColor="#084F8C" barStyle="light-content" />
+    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      <LinearGradient
+        colors={["#084F8C", "#27D5E8"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.container}
+      >
+        <StatusBar backgroundColor="#084F8C" barStyle="light-content" />
 
-      <View style={styles.content}>
-        {/* Header - exatamente como na imagem */}
-        <View style={styles.headerContainer}>
-          <Text style={styles.title}>Bem-vindo!</Text>
-          <Text style={styles.subtitle}>
-            Sua experiência com{'\n'}
-            <Text style={styles.aquaLinkText}>AquaLink</Text> acaba de começar.
-          </Text>
-        </View>
-
-        {/* Botões - exatamente como na imagem */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Register")}
-            style={styles.primaryButton}
+        <View style={styles.content}>
+          <Animatable.View 
+            style={styles.headerContainer}
+            animation="fadeInUp"
+            duration={1000}
+            delay={200}
           >
-            <Text style={styles.primaryButtonText}>Nova Conta</Text>
-          </TouchableOpacity>
+            <Text style={styles.title}>Bem-vindo!</Text>
+            <Text style={styles.subtitle}>
+              Sua experiência com{'\n'}
+              <Text style={styles.aquaLinkText}>AquaLink</Text> acaba de começar.
+            </Text>
+          </Animatable.View>
 
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Login")}
-            style={styles.secondaryButton}
+          <Animatable.View 
+            style={styles.buttonContainer}
+            animation="fadeInUp"
+            duration={1000}
+            delay={400}
           >
-            <Text style={styles.secondaryButtonText}>Já possuo uma Conta</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Register")}
+              style={styles.primaryButton}
+            >
+              <Text style={styles.primaryButtonText}>Nova Conta</Text>
+            </TouchableOpacity>
 
-        <View style={styles.imageContainer}>
-          
-            <Animatable.Image
-              animation="flipInY"
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Login")}
+              style={styles.secondaryButton}
+            >
+              <Text style={styles.secondaryButtonText}>Já possuo uma Conta</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+
+          <Animatable.View 
+            style={styles.imageContainer}
+            animation="fadeInUp"
+            duration={1200}
+            delay={600}
+          >
+            <Image
               source={require("../assets/fitFemale.png")}
               resizeMode="contain"
               style={styles.image}
             />
+          </Animatable.View>
         </View>
-      </View>
-    </LinearGradient>
+      </LinearGradient>
+    </Animated.View>
   );
 }
 

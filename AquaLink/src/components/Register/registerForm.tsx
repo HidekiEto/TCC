@@ -36,13 +36,14 @@ export default function RegisterForm({
         onChangeText={setName}
       />
 
-      <Input
-        label="Data de Nascimento"
-        placeholder="Data de Nascimento"
-        value={birthdateFormatted}
-        editable={false}
-        onFocus={onBirthdateFocus}
-      />
+      <TouchableOpacity onPress={onBirthdateFocus}>
+        <Input
+          label="Data de Nascimento"
+          placeholder="Data de Nascimento"
+          value={birthdateFormatted}
+          editable={false}
+        />
+      </TouchableOpacity>
 
       <Input
         label="Email"

@@ -6,5 +6,6 @@ export type RootStackParamList = {
   Calendar: undefined;
   Profile: undefined;
   Achievements: undefined;
+  Dashboard: undefined;
   Info: undefined;
 };

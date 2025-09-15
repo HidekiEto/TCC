@@ -44,29 +44,40 @@ export default function WeekDays() {
           const isSelected = selectedDay === item.date;
 
           return (
-            <View
-              style={[
-                styles.dayButton,
-                isSelected ? styles.selectedButton : styles.unselectedButton
-              ]}
+            <TouchableOpacity 
+              style={styles.dayContainer}
+              onPress={() => setSelectedDay(item.date)}
             >
-              <Text
-                style={[
-                  styles.dayNumber,
-                  isSelected ? styles.selectedText : styles.unselectedText
-                ]}
-              >
-                {item.date}
-              </Text>
-              <Text
-                style={[
-                  styles.dayWeek,
-                  isSelected ? styles.selectedText : styles.unselectedText
-                ]}
-              >
-                {item.week}
-              </Text>
-            </View>
+              {isSelected ? (
+                // Componente ativo com efeito de pílula
+                <View style={styles.activeContainer}>
+                  <View style={styles.activePillBackground}>
+                    <View style={styles.activeCircle}>
+                      <Text style={styles.activeNumber}>
+                        {item.date.toString().padStart(2, '0')}
+                      </Text>
+                    </View>
+                    <View style={styles.activeLabelContainer}>
+                      <Text style={styles.activeLabel}>
+                        {item.week}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                // Componente inativo
+                <View style={styles.inactiveContainer}>
+                  <View style={styles.inactiveCircle}>
+                    <Text style={styles.inactiveNumber}>
+                      {item.date.toString().padStart(2, '0')}
+                    </Text>
+                  </View>
+                  <Text style={styles.inactiveLabel}>
+                    {item.week}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
           );
         }}
       />
@@ -79,50 +90,86 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 5,
-    marginBottom: 10,
+    marginBottom: 0,
   },
   listContainer: {
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  dayButton: {
+  dayContainer: {
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+  // Estilos para estado ativo
+  activeContainer: {
+    alignItems: 'center',
+  },
+  activePillBackground: {
+    backgroundColor: '#1E3A8A',
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+    width: 50,
+    height: 65,
+    alignItems: 'center',
+    paddingTop: 0,
+    paddingBottom: 12,
+    marginTop: 25,
+  },
+  activeCircle: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 12,
-    borderRadius: 25,
-    borderWidth: 1,
     width: 50,
     height: 50,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  selectedButton: {
-    backgroundColor: '#084F8C',
-    borderColor: '#084F8C',
-  },
-  unselectedButton: {
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#60A5FA',
     backgroundColor: 'white',
-    borderColor: '#084F8C',
+    position: 'absolute',
+    top: -25,
+    zIndex: 2,
   },
-  dayNumber: {
+  activeNumber: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 2,
+    fontWeight: '600',
+    color: '#60A5FA',
   },
-  dayWeek: {
-    fontSize: 11,
+  activeLabelContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingBottom: 4,
+  },
+  activeLabel: {
+    fontSize: 14,
     fontWeight: '500',
+    color: 'white',
     textTransform: 'capitalize',
   },
-  selectedText: {
-    color: 'white',
+  // Estilos para estado inativo
+  inactiveContainer: {
+    alignItems: 'center',
   },
-  unselectedText: {
-    color: '#084F8C',
+  inactiveCircle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#60A5FA',
+    backgroundColor: 'white',
+    marginBottom: 8,
+  },
+  inactiveNumber: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#60A5FA',
+  },
+  inactiveLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#60A5FA',
+    textTransform: 'capitalize',
   },
 });

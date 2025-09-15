@@ -6,7 +6,8 @@ import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "../types/navigation";
 import { LinearGradient } from "expo-linear-gradient";
 import { CheckBox } from "react-native-elements";
-import { registerUser } from "../services/firebaseService";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "../config/firebase";
 
 const { width, height } = Dimensions.get('window');
 
@@ -56,16 +57,30 @@ export default function Register() {
     if (!confirmPasswords()) return;
 
     try {
-      const user = await registerUser(email, password, {
-        name,
-        email,
-        birthdate: birthdate?.toISOString(),
+      // Criar usuário com email e senha
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Atualizar o perfil do usuário com o nome
+      await updateProfile(userCredential.user, {
+        displayName: name,
       });
-      console.log("Usuário criado com sucesso:", user.uid);
+      
+      console.log("Usuário criado com sucesso:", userCredential.user.uid);
+      Alert.alert("Sucesso", "Conta criada com sucesso!");
       navigation.navigate("Home");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao criar usuário:", error);
-      Alert.alert("Erro", "Não foi possível criar a conta. Verifique os dados.");
+      let errorMessage = "Não foi possível criar a conta. Verifique os dados.";
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "Este email já está em uso.";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Email inválido.";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "A senha é muito fraca.";
+      }
+      
+      Alert.alert("Erro", errorMessage);
     }
   };
 
@@ -107,11 +122,13 @@ export default function Register() {
             <DateTimePicker
               value={birthdate ?? new Date(2000, 0, 1)}
               mode="date"
-              display="default"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               maximumDate={new Date()}
-              onChange={(_e, d) => {
+              onChange={(event, selectedDate) => {
                 setShowDatePicker(Platform.OS === "ios");
-                if (d) setBirthdate(d);
+                if (selectedDate) {
+                  setBirthdate(selectedDate);
+                }
               }}
             />
           )}
@@ -182,7 +199,8 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     backgroundColor: 'transparent',
     borderWidth: 0,
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    alignSelf: 'center',
     marginTop: 10,
     marginBottom: 25,
     paddingLeft: 0,
