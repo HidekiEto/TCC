@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '100',
     fontSize: 18,
-    marginBottom: 0,
+    marginTop: -20,
     textAlign: 'center',
     width: '100%',
   },
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     alignItems: 'center',
     alignSelf: 'center',
-    marginTop: 20,
+    marginTop: 5,
     marginBottom: 0,
     paddingLeft: 0,
     marginLeft: 0,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     alignItems: 'center',
-    marginTop: 30,
+    marginTop: 20,
   },
   nextButton: {
     backgroundColor: '#084F8C',

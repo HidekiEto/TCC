@@ -1,5 +1,6 @@
 import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Text } from "react-native";
+import { Picker } from '@react-native-picker/picker';
 import Input from "../Input";
 
 interface Step2FormProps {
@@ -42,12 +43,18 @@ export default function Step2Form({
         />
       </TouchableOpacity>
 
-      <Input
-        label="Gênero"
-        placeholder="Gênero"
-        value={gender}
-        onChangeText={setGender}
-      />
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={gender}
+          onValueChange={setGender}
+          style={styles.picker}
+        >
+          <Picker.Item label="Gênero" value="" />
+          <Picker.Item label="Masculino" value="Masculino" />
+          <Picker.Item label="Feminino" value="Feminino" />
+          <Picker.Item label="Outro" value="Outro" />
+        </Picker>
+      </View>
 
       <Input
         label="Peso"
@@ -63,5 +70,25 @@ export default function Step2Form({
 const styles = StyleSheet.create({
   container: {
     gap: 20,
+  },
+  pickerContainer: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#084F8C',
+    marginBottom: 10,
+    overflow: 'hidden',
+  },
+  pickerLabel: {
+    fontSize: 13,
+    color: '#084F8C',
+    marginLeft: 10,
+    marginTop: 8,
+    marginBottom: -2,
+  },
+  picker: {
+    height: 50,
+    color: '#084F8C',
+    marginHorizontal: 10,
   },
 });
