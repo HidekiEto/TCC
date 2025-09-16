@@ -64,7 +64,7 @@ export default function Home() {
       <StatusBar backgroundColor="#F8F9FA" barStyle="dark-content" />
 
       <View style={styles.container}>
-       
+      
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>Olá, {getFirstName()},</Text>
@@ -96,9 +96,9 @@ export default function Home() {
               config={{
                 circleColor: "#E0E0E0", 
                 waveColor: "#1976D2", 
-                textColor: "#1976D2",
-                waveTextColor: "#FFFFFF",
-                circleThickness: 0.05,
+                textColor: "#1976D2", 
+                waveTextColor: "#FFFFFF", 
+                circleThickness: 0.05, 
                 circleFillGap: 0.05, 
                 waveHeight: 0.05, 
                 waveCount: 1, 
@@ -118,9 +118,9 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
-      
+       
         <View style={styles.bottomCards}>
-         
+          
           <ModalComponent
             title="Bateria"
             icon="battery"
@@ -141,7 +141,8 @@ export default function Home() {
               </View>
             </View>
           </ModalComponent>
-   
+          
+          
           <ModalComponent
             title="Lembretes"
             icon="clock-outline"
@@ -171,7 +172,7 @@ export default function Home() {
           </ModalComponent>
         </View>
 
-     
+        
         <BottomNavigation />
       </View>
     </PaperProvider>

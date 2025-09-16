@@ -154,7 +154,7 @@ export const LiquidGauge = ({
   const translateYPercent = useSharedValue(0);
   const translateXProgress = useSharedValue(0);
 
- 
+  // Progresso da borda (animado)
   const progressValue = useSharedValue(fillPercent);
 
   useEffect(() => {
@@ -211,7 +211,7 @@ export const LiquidGauge = ({
     { translateY: textRiseScaleY(mergedConfig.textVertPosition) - textPixels },
   ];
 
-
+  // path animado da borda
   const borderPath = useDerivedValue(() => {
     const p = Skia.Path.Make();
     const sweepAngle = 360 * progressValue.value;
