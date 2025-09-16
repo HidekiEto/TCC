@@ -8,7 +8,7 @@ import { useState } from "react";
 
 
 export default function Dashboard() {
-  const { scanForDevices, isScanning, isConnected, connectedDevice, foundDevices, connectToDevice } = useBLE();
+  const { scanForDevices, isScanning, isConnected, connectedDevice, foundDevices, connectToDevice, disconnectDevice } = useBLE();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleScan = () => {
@@ -189,17 +189,26 @@ export default function Dashboard() {
                 <Text style={styles.garrafaInfoText}>Capacidade:</Text>
               </View>
               <Text style={styles.garrafaInfoValue}>2000 mL</Text>
-
-              <TouchableOpacity
-                style={styles.resincronizarButton}
-                onPress={handleScan}
-                disabled={isScanning}
-              >
-                <MaterialCommunityIcons name="bluetooth" size={16} color="white" />
-                <Text style={styles.resincronizarText}>
-                  {isScanning ? "Procurando..." : "Ressincronizar"}
-                </Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                <TouchableOpacity
+                  style={styles.resincronizarButton}
+                  onPress={handleScan}
+                  disabled={isScanning}
+                >
+                  <MaterialCommunityIcons name="bluetooth" size={16} color="white" />
+                  <Text style={styles.resincronizarText}>
+                    {isScanning ? "Procurando..." : "Ressincronizar"}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.resincronizarButton, { backgroundColor: '#F44336' }]}
+                  onPress={disconnectDevice}
+                  disabled={!isConnected}
+                >
+                  <MaterialCommunityIcons name="bluetooth-off" size={16} color="white" />
+                  <Text style={styles.resincronizarText}>Desconectar</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>

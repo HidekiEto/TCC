@@ -8,6 +8,8 @@ import Slides from "./src/components/InitialSlider";
 import BLEProvider from "./src/contexts/BLEProvider";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "./src/types/navigation";
+import { DataProvider } from "./src/contexts/DataContext";
+import { DbProvider } from "./src/contexts/DbContext";
 
 export default function App() {
   const fontsLoaded = useAppFonts();
@@ -18,7 +20,7 @@ export default function App() {
   const navigationOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    
+
     if (fontsLoaded) {
       const timer = setTimeout(() => {
         setAppReady(true);
@@ -28,7 +30,7 @@ export default function App() {
     }
   }, [fontsLoaded]);
 
-  
+
   if (!fontsLoaded || !appReady) {
     return (
       <View style={styles.loadingContainer}>
@@ -37,7 +39,7 @@ export default function App() {
     );
   }
 
- 
+
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
   }
@@ -50,7 +52,7 @@ export default function App() {
     console.log(" Iniciando navegação para Register...");
     setInitialRoute("Register");
     setShowNav(true);
-    
+
     Animated.timing(navigationOpacity, {
       toValue: 1,
       duration: 500,
@@ -64,7 +66,7 @@ export default function App() {
     console.log(" Iniciando navegação para Login...");
     setInitialRoute("Login");
     setShowNav(true);
-    
+
     Animated.timing(navigationOpacity, {
       toValue: 1,
       duration: 500,
@@ -74,18 +76,22 @@ export default function App() {
     });
   };
 
-  
+
   return showNav ? (
     <Animated.View style={{ flex: 1, opacity: navigationOpacity }}>
-      <BLEProvider>
-        <NavigationContainer>
-          <Navigation initialRouteName={initialRoute} />
-        </NavigationContainer>
-      </BLEProvider>
+      <DataProvider>
+        <BLEProvider>
+          <DbProvider>
+            <NavigationContainer>
+              <Navigation initialRouteName={initialRoute} />
+            </NavigationContainer>
+          </DbProvider>
+        </BLEProvider>
+      </DataProvider>
     </Animated.View>
   ) : (
     <View style={styles.fullScreen}>
-      <Slides 
+      <Slides
         onDone={() => {
           console.log("Slides done");
         }}
