@@ -49,7 +49,6 @@ export default function WeekDays() {
               onPress={() => setSelectedDay(item.date)}
             >
               {isSelected ? (
-                // Componente ativo com efeito de pílula
                 <View style={styles.activeContainer}>
                   <View style={styles.activePillBackground}>
                     <View style={styles.activeCircle}>
@@ -65,7 +64,7 @@ export default function WeekDays() {
                   </View>
                 </View>
               ) : (
-                // Componente inativo
+               
                 <View style={styles.inactiveContainer}>
                   <View style={styles.inactiveCircle}>
                     <Text style={styles.inactiveNumber}>
@@ -100,7 +99,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 8,
   },
-  // Estilos para estado ativo
+ 
   activeContainer: {
     alignItems: 'center',
   },
@@ -146,7 +145,7 @@ const styles = StyleSheet.create({
     color: 'white',
     textTransform: 'capitalize',
   },
-  // Estilos para estado inativo
+
   inactiveContainer: {
     alignItems: 'center',
   },

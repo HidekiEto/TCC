@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 export const BarChartComponent = () => {
     const barData = [
-        // Semana 1
+       
         {
           value: 15,
           label: 'Semana 1',
@@ -17,7 +17,7 @@ export const BarChartComponent = () => {
           topColor: '#4EF0E0',
         },
         {value: 12, frontColor: '#082862', sideColor: '#061B4A', topColor: '#1C3A75'},
-        // Semana 2
+       
         {
           value: 18,
           label: 'Semana 2',
@@ -29,7 +29,7 @@ export const BarChartComponent = () => {
           topColor: '#4EF0E0',
         },
         {value: 16, frontColor: '#082862', sideColor: '#061B4A', topColor: '#1C3A75'},
-        // Semana 3
+       
         {
           value: 14,
           label: 'Semana 3',
@@ -41,7 +41,7 @@ export const BarChartComponent = () => {
           topColor: '#4EF0E0',
         },
         {value: 13, frontColor: '#082862', sideColor: '#061B4A', topColor: '#1C3A75'},
-        // Semana 4
+      
         {
           value: 17,
           label: 'Semana 4',

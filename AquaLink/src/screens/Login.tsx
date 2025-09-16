@@ -4,7 +4,6 @@ import { CheckBox } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-// import { signInUser } from "../services/firebaseService";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { RootStackParamList } from "../types/navigation";

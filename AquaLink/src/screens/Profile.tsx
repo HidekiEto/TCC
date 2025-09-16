@@ -11,7 +11,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const { width, height } = Dimensions.get("window");
 
-// carregamento dinâmico robusto para módulos com export default ou export nomeado
+
 const Graphic = React.lazy(() =>
   import("../components/ProfileComponents/Graphic").then((mod) => {
     const comp =
@@ -25,6 +25,7 @@ const Graphic = React.lazy(() =>
 
 export default function Profile() {
   const [user, setUser] = useState<User | null>(null);
+  const [triggerImagePicker, setTriggerImagePicker] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -34,16 +35,28 @@ export default function Profile() {
     return () => unsubscribe();
   }, []);
 
-  // Função para extrair o nome do usuário
+  
+  const handleImageSelect = (imageUri: string) => {
+    console.log('Nova imagem selecionada:', imageUri);
+  
+ 
+  };
+
+ 
+  const handleEditProfile = () => {
+    setTriggerImagePicker(true);
+  };
+
+ 
   const getUserName = () => {
     if (user?.displayName) {
       const nameParts = user.displayName.trim().split(' ');
       
       if (nameParts.length === 1) {
-        // Se só tem um nome, retorna apenas ele
+       
         return nameParts[0];
       } else if (nameParts.length >= 2) {
-        // Se tem 2 ou mais nomes, retorna o primeiro e o último
+       
         const firstName = nameParts[0];
         const lastName = nameParts[nameParts.length - 1];
         return `${firstName} ${lastName}`;
@@ -51,15 +64,15 @@ export default function Profile() {
     }
     
     if (user?.email) {
-      // Extrai o nome do email (parte antes do @)
+      
       const emailName = user.email.split('@')[0];
       const emailParts = emailName.split('.');
       
       if (emailParts.length === 1) {
-        // Se só tem uma parte, capitaliza e retorna
+       
         return emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1).toLowerCase();
       } else if (emailParts.length >= 2) {
-        // Se tem 2 ou mais partes, pega a primeira e última
+     
         const firstName = emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1).toLowerCase();
         const lastName = emailParts[emailParts.length - 1].charAt(0).toUpperCase() + emailParts[emailParts.length - 1].slice(1).toLowerCase();
         return `${firstName} ${lastName}`;
@@ -83,10 +96,14 @@ export default function Profile() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContainer}
         >
-          {/* Header Section with Avatar and User Info */}
+        
           <View style={styles.headerSection}>
             <View style={styles.headerContent}>
-              <AvatarComponent />
+              <AvatarComponent 
+                onImageSelect={handleImageSelect}
+                triggerImagePicker={triggerImagePicker}
+                onTriggerReset={() => setTriggerImagePicker(false)}
+              />
               
               <View style={styles.userInfo}>
                 <Text style={styles.userName}>
@@ -96,7 +113,10 @@ export default function Profile() {
                   {user?.email || "henryebibi@gmail.com"}
                 </Text>
 
-                <TouchableOpacity style={styles.editButton}>
+                <TouchableOpacity 
+                  style={styles.editButton}
+                  onPress={handleEditProfile}
+                >
                   <MaterialCommunityIcons
                     name="account-edit"
                     size={18}
@@ -111,7 +131,7 @@ export default function Profile() {
             </View>
           </View>
 
-          {/* Performance Overview Section */}
+  
           <View style={styles.performanceSection}>
             <Text style={styles.performanceTitle}>
               Visão Geral da performance
@@ -121,7 +141,7 @@ export default function Profile() {
             </Text>
           </View>
 
-          {/* Chart Section */}
+       
           <View style={styles.chartSection}>
             <Suspense
               fallback={

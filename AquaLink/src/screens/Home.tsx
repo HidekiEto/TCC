@@ -64,7 +64,7 @@ export default function Home() {
       <StatusBar backgroundColor="#F8F9FA" barStyle="dark-content" />
 
       <View style={styles.container}>
-        {/* Header - EXATAMENTE como na imagem */}
+       
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>Olá, {getFirstName()},</Text>
@@ -94,16 +94,16 @@ export default function Home() {
               width={250}
               height={250}
               config={{
-                circleColor: "#E0E0E0", // Cinza claro para o fundo
-                waveColor: "#1976D2", // Azul da água
-                textColor: "#1976D2", // Azul do texto
-                waveTextColor: "#FFFFFF", // Texto branco sobre a água
-                circleThickness: 0.05, // Borda mais grossa
-                circleFillGap: 0.05, // Gap menor
-                waveHeight: 0.05, // Ondas suaves
-                waveCount: 1, // Duas ondas
+                circleColor: "#E0E0E0", 
+                waveColor: "#1976D2", 
+                textColor: "#1976D2",
+                waveTextColor: "#FFFFFF",
+                circleThickness: 0.05,
+                circleFillGap: 0.05, 
+                waveHeight: 0.05, 
+                waveCount: 1, 
                 waveAnimate: true,
-                waveAnimateTime: 4000, // Animação mais lenta
+                waveAnimateTime: 4000, 
               }}
             />
           </Suspense>
@@ -118,9 +118,9 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
-        {/* Bottom Cards - EXATAMENTE como na imagem */}
+      
         <View style={styles.bottomCards}>
-          {/* Card Bateria - EXATAMENTE como na imagem */}
+         
           <ModalComponent
             title="Bateria"
             icon="battery"
@@ -141,8 +141,7 @@ export default function Home() {
               </View>
             </View>
           </ModalComponent>
-          
-          {/* Card Lembretes - EXATAMENTE como na imagem */}
+   
           <ModalComponent
             title="Lembretes"
             icon="clock-outline"
@@ -172,7 +171,7 @@ export default function Home() {
           </ModalComponent>
         </View>
 
-        {/* Bottom Navigation - Agora parte da View principal mas fixo no rodapé */}
+     
         <BottomNavigation />
       </View>
     </PaperProvider>

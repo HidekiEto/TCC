@@ -76,7 +76,7 @@ export default function SliderComponent() {
 
 const styles = StyleSheet.create({
   container: {
-    minHeight: 160, // Altura mínima em vez de fixa
+    minHeight: 160,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 10,

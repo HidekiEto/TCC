@@ -3,7 +3,7 @@ import { View, StyleSheet, Dimensions } from "react-native";
 
 const { width } = Dimensions.get("window");
 
-// 🎨 Paleta de cores centralizada
+
 const COLORS = {
   primary: "#27D5E8",
   secundary: "#084F8C", 
@@ -24,7 +24,7 @@ export const Graphic = () => {
     { value: 2000, label: "Dom" },
   ];
 
-  // Labels do eixo Y
+
   const yLabels = ["0", "500", "1000", "1500", "2000", "2500"];
 
   return (

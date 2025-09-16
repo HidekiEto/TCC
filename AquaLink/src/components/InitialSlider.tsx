@@ -49,12 +49,63 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const [isTransitioning, setIsTransitioning] = useState(false);
   const slideTransitionAnim = useRef(new Animated.Value(0)).current;
+  const [hasReachedSlide4, setHasReachedSlide4] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+ 
+  useEffect(() => {
+    if (hasReachedSlide4) {
+      setCurrentIndex(3);
+     
+      slideTransitionAnim.setValue(1);
+      scrollViewRef.current?.scrollTo({
+        x: width * 3,
+        animated: false
+      });
+    }
+  }, [hasReachedSlide4]);
+
+
+  const forceStayOnSlide4 = () => {
+    if (hasReachedSlide4) {
+      scrollViewRef.current?.scrollTo({
+        x: width * 3,
+        animated: false
+      });
+      setCurrentIndex(3);
+     
+      slideTransitionAnim.setValue(1);
+    }
+  };
 
   const handleScroll = (event: any) => {
     if (isTransitioning) return;
     
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const index = Math.round(scrollPosition / width);
+    
+   
+    if (index === 3 && !hasReachedSlide4) {
+      setHasReachedSlide4(true);
+      
+      slideTransitionAnim.setValue(1);
+    }
+    
+   
+    if (hasReachedSlide4) {
+      
+      if (scrollPosition < width * 3) {
+        forceStayOnSlide4();
+        return;
+      }
+      
+      if (index !== 3) {
+        forceStayOnSlide4();
+        return;
+      }
+      setCurrentIndex(3);
+      return;
+    }
     
     const slide3Position = width * 2;
     const slide4Position = width * 3;
@@ -64,7 +115,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
       slideTransitionAnim.setValue(progress);
       
       if (progress >= 0.9 && index === 3) {
-        console.log("Chegou no Welcome slide");
+        console.log("chegou no Welcome slide");
       }
     }
     
@@ -95,7 +146,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
               style={[
                 styles.transitionOverlay,
                 {
-                  opacity: slideTransitionAnim.interpolate({
+                  opacity: hasReachedSlide4 ? 0 : slideTransitionAnim.interpolate({
                     inputRange: [0, 0.3, 1],
                     outputRange: [1, 0.7, 0],
                     extrapolate: 'clamp',
@@ -109,7 +160,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
               style={[
                 styles.welcomeContent,
                 {
-                  transform: [{
+                  transform: hasReachedSlide4 ? [] : [{
                     translateY: slideTransitionAnim.interpolate({
                       inputRange: [0, 1],
                       outputRange: [30, 0],
@@ -122,7 +173,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
                       extrapolate: 'clamp',
                     })
                   }],
-                  opacity: slideTransitionAnim.interpolate({
+                  opacity: hasReachedSlide4 ? 1 : slideTransitionAnim.interpolate({
                     inputRange: [0, 0.5, 1],
                     outputRange: [0, 0.5, 1],
                     extrapolate: 'clamp',
@@ -316,7 +367,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
                 duration={2000}
                 delay={1000}
               >
-                Deslize para continuar →
+                Deslize para iniciar a experiência →
               </Animatable.Text>
             )}
           </Animated.View>
@@ -332,8 +383,10 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         pagingEnabled
+        scrollEnabled={!hasReachedSlide4} // Desabilita o scroll quando chegou no slide 4
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}

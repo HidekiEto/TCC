@@ -47,7 +47,7 @@ export default function App() {
   };
 
   const handleNavigateToRegister = () => {
-    console.log("✅ Iniciando navegação para Register...");
+    console.log(" Iniciando navegação para Register...");
     setInitialRoute("Register");
     setShowNav(true);
     
@@ -56,12 +56,12 @@ export default function App() {
       duration: 500,
       useNativeDriver: true,
     }).start(() => {
-      console.log("✅ Navegação para Register completada!");
+      console.log(" Navegação para Register completada!");
     });
   };
 
   const handleNavigateToLogin = () => {
-    console.log("✅ Iniciando navegação para Login...");
+    console.log(" Iniciando navegação para Login...");
     setInitialRoute("Login");
     setShowNav(true);
     
@@ -70,7 +70,7 @@ export default function App() {
       duration: 500,
       useNativeDriver: true,
     }).start(() => {
-      console.log("✅ Navegação para Login completada!");
+      console.log(" Navegação para Login completada!");
     });
   };
 

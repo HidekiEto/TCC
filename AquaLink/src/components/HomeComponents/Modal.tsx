@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   triggerButton: {
-    // Estilo base do botão trigger (será sobrescrito pelos cards)
+  
   },
 });
 

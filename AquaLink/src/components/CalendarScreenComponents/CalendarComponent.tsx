@@ -25,10 +25,10 @@ const CalendarComponent: React.FC = () => {
     <Calendar
       theme={{
         calendarBackground: '#ffffff',
-        textSectionTitleColor: '#1976D2', // Azul consistente
+        textSectionTitleColor: '#1976D2', 
         selectedDayBackgroundColor: '#1976D2',
         selectedDayTextColor: '#ffffff',
-        todayTextColor: '#27D5E8', // Azul claro para hoje
+        todayTextColor: '#27D5E8', 
         arrowColor: '#1976D2',
         monthTextColor: '#333333',
         dayTextColor: '#333333',
@@ -40,7 +40,7 @@ const CalendarComponent: React.FC = () => {
         textDayFontSize: 16,
         textDayHeaderFontSize: 14,
         textMonthFontFamily: "Poppins-Regular",
-        // Melhor espaçamento
+      
         
       }}
       onDayPress={(day: DateData) => {

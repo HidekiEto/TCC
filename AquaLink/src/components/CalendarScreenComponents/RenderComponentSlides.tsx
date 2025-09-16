@@ -1,4 +1,4 @@
-// RenderComponentSlides.tsx
+
 import React from "react";
 import { View, Text, Dimensions, StyleSheet } from "react-native";
 import { LinearGradient, LinearGradientProps } from "expo-linear-gradient";
@@ -77,7 +77,7 @@ export const RenderComponentSlides: React.FC<RenderComponentSlidesProps> = ({ it
 const styles = StyleSheet.create({
   container: {
     width, 
-    height: 140, // Altura fixa em vez de flex
+    height: 140, 
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,

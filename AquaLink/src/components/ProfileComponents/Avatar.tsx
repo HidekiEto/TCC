@@ -1,22 +1,146 @@
 import * as React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Alert, Modal, Text, Pressable } from "react-native";
 import { Avatar } from "react-native-paper";
-import { Entypo } from "@expo/vector-icons";
+import { Entypo, MaterialIcons } from "@expo/vector-icons";
+import * as ImagePicker from 'expo-image-picker';
+import { useState } from "react";
 
 const AVATAR_SIZE = 100;
 
-const AvatarComponent: React.FC = React.memo(() => (
-  <View style={styles.container}>
-    <Avatar.Image
-      size={AVATAR_SIZE}
-      source={require("../../assets/avatar.jpeg")}
-      style={styles.avatar}
-    />
-    <TouchableOpacity style={styles.iconWrapper}>
-      <Entypo name="camera" size={18} color="#084F8C" />
-    </TouchableOpacity>
-  </View>
-));
+interface AvatarComponentProps {
+  onImageSelect?: (imageUri: string) => void;
+  triggerImagePicker?: boolean;
+  onTriggerReset?: () => void;
+}
+
+const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({ 
+  onImageSelect, 
+  triggerImagePicker, 
+  onTriggerReset 
+}) => {
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+ 
+  React.useEffect(() => {
+    if (triggerImagePicker) {
+      setModalVisible(true);
+      onTriggerReset?.();
+    }
+  }, [triggerImagePicker, onTriggerReset]);
+
+ 
+  const requestPermissions = async () => {
+    const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+    const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (cameraPermission.status !== 'granted' || mediaLibraryPermission.status !== 'granted') {
+      Alert.alert(
+        'Permissões necessárias',
+        'Precisamos de permissão para acessar a câmera e galeria.',
+        [{ text: 'OK' }]
+      );
+      return false;
+    }
+    return true;
+  };
+
+
+  const openCamera = async () => {
+    setModalVisible(false);
+    
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const newImageUri = result.assets[0].uri;
+        setImageUri(newImageUri);
+        onImageSelect?.(newImageUri);
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível abrir a câmera.');
+    }
+  };
+
+
+  const openGallery = async () => {
+    setModalVisible(false);
+    
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const newImageUri = result.assets[0].uri;
+        setImageUri(newImageUri);
+        onImageSelect?.(newImageUri);
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível abrir a galeria.');
+    }
+  };
+
+
+  const handleAvatarPress = () => {
+    setModalVisible(true);
+  };
+
+  return (
+    <View style={styles.container}>
+      <Avatar.Image
+        size={AVATAR_SIZE}
+        source={imageUri ? { uri: imageUri } : require("../../assets/avatar.png")}
+        style={styles.avatar}
+      />
+      <TouchableOpacity style={styles.iconWrapper} onPress={handleAvatarPress}>
+        <Entypo name="camera" size={18} color="#084F8C" />
+      </TouchableOpacity>
+
+  
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Selecionar Foto</Text>
+            
+            <TouchableOpacity style={styles.optionButton} onPress={openCamera}>
+              <MaterialIcons name="camera-alt" size={24} color="#084F8C" />
+              <Text style={styles.optionText}>Câmera</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.optionButton} onPress={openGallery}>
+              <MaterialIcons name="photo-library" size={24} color="#084F8C" />
+              <Text style={styles.optionText}>Galeria</Text>
+            </TouchableOpacity>
+            
+            <Pressable style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.cancelText}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -45,6 +169,52 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#333',
+  },
+  optionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    marginVertical: 5,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  optionText: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+  cancelButton: {
+    paddingVertical: 15,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  cancelText: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '500',
   },
 });
 

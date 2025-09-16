@@ -4,13 +4,13 @@ import { Ionicons, FontAwesome, Octicons, MaterialCommunityIcons } from "@expo/v
 import { useNavigation, useRoute, NavigationProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../types/navigation";
 
-// Tipos para nomes de ícones
+
 type IonIconNames = keyof typeof Ionicons.glyphMap;
 type FaIconNames = keyof typeof FontAwesome.glyphMap;
 type OctIconNames = keyof typeof Octicons.glyphMap;
 type MciIconNames = keyof typeof MaterialCommunityIcons.glyphMap;
 
-// Tipagem do item do menu
+
 interface MenuItem {
   key: string;
   type: "ion" | "fa" | "oct" | "mci";
@@ -31,7 +31,7 @@ const ROUTE_MAP: Record<Key, string> = {
 
 const items: MenuItem[] = [
   { key: "calendar", iconName: "calendar-outline", iconActiveName: "calendar", type: "ion", label: "Calendário" },
-  { key: "dashboard", iconName: "water-outline", iconActiveName: "water", type: "mci", label: "Dashboard" },
+  { key: "dashboard", iconName: "water-outline", iconActiveName: "water", type: "mci", label: "Aqualink" },
   { key: "home", iconName: "home-outline", iconActiveName: "home", type: "ion", label: "Home" },
   { key: "profile", iconName: "user-o", iconActiveName: "user", type: "fa", label: "Perfil" },
   { key: "achievements", iconName: "trophy-outline", iconActiveName: "trophy", type: "ion", label: "Conquistas" },
@@ -49,7 +49,7 @@ const BottomMenu: React.FC = () => {
     }, {});
   }, []);
   
-  // Calcular activeKey diretamente baseado na rota atual
+ 
   const activeKey = useMemo(() => {
     const currentRouteName = route.name ?? "Home";
     const key = reverseRouteMap[currentRouteName] || "home";

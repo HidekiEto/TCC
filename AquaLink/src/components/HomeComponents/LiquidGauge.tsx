@@ -46,24 +46,24 @@ function liquidFillGaugeDefaultSettings(): GaugeConfig {
   return {
     minValue: 0,
     maxValue: 100,
-    circleThickness: 0.08, // Aumentei para ser mais visível como na imagem
-    circleFillGap: 0.02, // Diminui o gap para ficar mais próximo
-    circleColor: "#E0E0E0", // Cor cinza clara para o fundo como na imagem
-    waveHeight: 0.03, // Ondas mais suaves
-    waveCount: 2, // Mais ondas para efeito mais natural
-    waveRiseTime: 2000, // Animação mais lenta
-    waveAnimateTime: 4000, // Animação das ondas mais lenta
+    circleThickness: 0.08, 
+    circleFillGap: 0.02, 
+    circleColor: "#E0E0E0", 
+    waveHeight: 0.03, 
+    waveCount: 2, 
+    waveRiseTime: 2000, 
+    waveAnimateTime: 4000, 
     waveRise: true,
-    waveHeightScaling: false, // Altura constante das ondas
+    waveHeightScaling: false, 
     waveAnimate: true,
-    waveColor: "#1976D2", // Azul mais próximo da imagem
+    waveColor: "#1976D2", 
     waveOffset: 0,
     textVertPosition: 0.5,
-    textSize: 1, // Texto um pouco menor
+    textSize: 1, 
     valueCountUp: true,
     textSuffix: "%",
-    textColor: "#1976D2", // Azul escuro para o texto
-    waveTextColor: "#FFFFFF", // Texto branco sobre a água
+    textColor: "#1976D2", 
+    waveTextColor: "#FFFFFF", 
     toFixed: 0,
   };
 }
@@ -154,7 +154,7 @@ export const LiquidGauge = ({
   const translateYPercent = useSharedValue(0);
   const translateXProgress = useSharedValue(0);
 
-  // Progresso da borda (animado)
+ 
   const progressValue = useSharedValue(fillPercent);
 
   useEffect(() => {
@@ -211,7 +211,7 @@ export const LiquidGauge = ({
     { translateY: textRiseScaleY(mergedConfig.textVertPosition) - textPixels },
   ];
 
-  // path animado da borda
+
   const borderPath = useDerivedValue(() => {
     const p = Skia.Path.Make();
     const sweepAngle = 360 * progressValue.value;

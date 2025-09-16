@@ -10,9 +10,7 @@ export function useAppFonts(): boolean {
     (async () => {
       let SplashScreen: any = null;
       try {
-        // use require to avoid TypeScript static resolution issues in environments
-        // where expo-splash-screen isn't installed
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
         SplashScreen = require("expo-splash-screen");
         if (SplashScreen && SplashScreen.preventAutoHideAsync) {
           await SplashScreen.preventAutoHideAsync();
