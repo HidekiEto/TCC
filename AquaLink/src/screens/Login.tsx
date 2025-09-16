@@ -9,6 +9,7 @@ import { auth } from "../config/firebase";
 import { RootStackParamList } from "../types/navigation";
 
 import Input from "../components/Input";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,15 +23,17 @@ export default function Login() {
   const [checked, setChecked] = useState<boolean>(false);
 
   const handleLogin = async (e: GestureResponderEvent) => {
-    e.preventDefault?.(); 
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      console.log("User logged in successfully");
-      navigation.navigate("Home");
-    } catch (error) {
-      console.error("Error logging in:", error);
-    }
-  };
+  e.preventDefault?.(); 
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+    await AsyncStorage.setItem('userUID', uid); // persiste o UID localmente
+    console.log("User logged in successfully");
+    navigation.navigate("Home");
+  } catch (error) {
+    console.error("Error logging in:", error);
+  }
+};
 
   return (
     <LinearGradient

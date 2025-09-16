@@ -5,7 +5,7 @@ import { useAppFonts } from "./src/hooks/useAppFonts";
 import { Text, View, StyleSheet, Animated } from "react-native";
 import SplashScreen from "./src/screens/SplashScreen";
 import Slides from "./src/components/InitialSlider";
-import { BLEProvider } from "./src/contexts/BLEProvider";
+import BLEProvider from "./src/contexts/BLEProvider";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "./src/types/navigation";
 

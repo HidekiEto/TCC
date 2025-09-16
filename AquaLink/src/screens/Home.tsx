@@ -5,7 +5,6 @@ import { PaperProvider } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../config/firebase";
-
 import WeekDays from "../components/HomeComponents/CalendarStrip";
 import ModalComponent from "../components/HomeComponents/Modal";
 
@@ -26,10 +25,13 @@ const LiquidGauge = React.lazy(() =>
   })
 );
 import BottomNavigation from "../components/BottomNavigation";
+import { useBLE } from "../contexts/BLEProvider";
 
 export default function Home() {
   const [waterValue, setWaterValue] = useState(44);
   const [user, setUser] = useState<User | null>(null);
+
+  const { writeToDevice, isConnected } = useBLE();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -44,137 +46,145 @@ export default function Home() {
       const nameParts = user.displayName.trim().split(' ');
       return nameParts[0];
     }
-    
+
     if (user?.email) {
       const emailName = user.email.split('@')[0];
       const emailParts = emailName.split('.');
       const firstName = emailParts[0];
       return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
     }
-    
+
     return "Usuário";
   };
 
   const waterIncrement = () => {
     setWaterValue((prev) => Math.min(prev + 30, 100));
+    if (isConnected) {
+      writeToDevice("1"); // Envia o comando "1" para o ESP
+    } else {
+      console.log("Nenhuma garrafa conectada.");
+    }
   };
 
   return (
-    <PaperProvider>
-      <StatusBar backgroundColor="#F8F9FA" barStyle="dark-content" />
-
-      <View style={styles.container}>
-       
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.greeting}>Olá, {getFirstName()},</Text>
-            <Text style={styles.subGreeting}>Bem vindo ao AquaLink.</Text>
-          </View>
-          <View style={styles.notificationButton}>
-            <FontAwesome5 name="bell" size={20} color="white" />
-          </View>
-        </View>
-
-        <View style={styles.calendarSection}>
-          <WeekDays />
-        </View>
-
-        <View style={styles.mainContent}>
-          <Text style={styles.goalTitle}>Meta diária</Text>
-
-          <Suspense
-            fallback={
-              <View style={styles.fallback}>
-                <ActivityIndicator size="large" color="#084F8C" />
-              </View>
-            }
-          > 
-            <LiquidGauge 
-              value={waterValue} 
-              width={250}
-              height={250}
-              config={{
-                circleColor: "#E0E0E0", 
-                waveColor: "#1976D2", 
-                textColor: "#1976D2",
-                waveTextColor: "#FFFFFF",
-                circleThickness: 0.05,
-                circleFillGap: 0.05, 
-                waveHeight: 0.05, 
-                waveCount: 1, 
-                waveAnimate: true,
-                waveAnimateTime: 4000, 
-              }}
-            />
-          </Suspense>
-
-          <TouchableOpacity
-            style={styles.addWaterButton}
-            onPress={waterIncrement}
-          >
-            <Text style={styles.addWaterButtonText}>
-              Adicionar Água
-            </Text>
-          </TouchableOpacity>
-        </View>
-
+    <>
       
-        <View style={styles.bottomCards}>
-         
-          <ModalComponent
-            title="Bateria"
-            icon="battery"
-            info1="Status da bateria: 53%"
-            info2="Água restante na garrafa: 160 mL"
-            info3="Tempo estimado de uso: 8 horas"
-            buttonStyle={styles.batteryCard}
-          >
-            <View style={styles.cardContent}>
-              <View style={styles.batteryContent}>
-                <MaterialCommunityIcons name="battery-60" size={60} color="#1976D2" style={styles.batteryIcon} />
-                <View style={styles.batteryTextContent}>
-                  <Text style={styles.batteryTitle}>Bateria:</Text>
-                  <Text style={styles.batteryPercentage}>53%</Text>
-                  <Text style={styles.batterySubtext}>Água restante na garrafa:</Text>
-                  <Text style={styles.batterySubtext}>160 mL</Text>
+      <PaperProvider>
+        <StatusBar backgroundColor="#F8F9FA" barStyle="dark-content" />
+
+        <View style={styles.container}>
+
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.greeting}>Olá, {getFirstName()},</Text>
+              <Text style={styles.subGreeting}>Bem vindo ao AquaLink.</Text>
+            </View>
+            <View style={styles.notificationButton}>
+              <FontAwesome5 name="bell" size={20} color="white" />
+            </View>
+          </View>
+
+          <View style={styles.calendarSection}>
+            <WeekDays />
+          </View>
+
+          <View style={styles.mainContent}>
+            <Text style={styles.goalTitle}>Meta diária</Text>
+
+            <Suspense
+              fallback={
+                <View style={styles.fallback}>
+                  <ActivityIndicator size="large" color="#084F8C" />
+                </View>
+              }
+            >
+              <LiquidGauge
+                value={waterValue}
+                width={250}
+                height={250}
+                config={{
+                  circleColor: "#E0E0E0",
+                  waveColor: "#1976D2",
+                  textColor: "#1976D2",
+                  waveTextColor: "#FFFFFF",
+                  circleThickness: 0.05,
+                  circleFillGap: 0.05,
+                  waveHeight: 0.05,
+                  waveCount: 1,
+                  waveAnimate: true,
+                  waveAnimateTime: 4000,
+                }}
+              />
+            </Suspense>
+
+            <TouchableOpacity
+              style={styles.addWaterButton}
+              onPress={waterIncrement}
+            >
+              <Text style={styles.addWaterButtonText}>
+                Adicionar Água
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+
+          <View style={styles.bottomCards}>
+
+            <ModalComponent
+              title="Bateria"
+              icon="battery"
+              info1="Status da bateria: 53%"
+              info2="Água restante na garrafa: 160 mL"
+              info3="Tempo estimado de uso: 8 horas"
+              buttonStyle={styles.batteryCard}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.batteryContent}>
+                  <MaterialCommunityIcons name="battery-60" size={60} color="#1976D2" style={styles.batteryIcon} />
+                  <View style={styles.batteryTextContent}>
+                    <Text style={styles.batteryTitle}>Bateria:</Text>
+                    <Text style={styles.batteryPercentage}>53%</Text>
+                    <Text style={styles.batterySubtext}>Água restante na garrafa:</Text>
+                    <Text style={styles.batterySubtext}>160 mL</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </ModalComponent>
-   
-          <ModalComponent
-            title="Lembretes"
-            icon="clock-outline"
-            info1="Próximo lembrete: 12:30h"
-            info2="Lembretes configurados: 3"
-            info3="Frequência: A cada 4 horas"
-            buttonStyle={styles.reminderCard}
-          >
-            <View style={styles.cardContent}>
-              <Text style={styles.reminderTitle}>Lembretes</Text>
-              <View style={styles.reminderItem}>
-                <Text style={styles.reminderBullet}>•</Text>
-                <Text style={styles.reminderTime}>12h30</Text>
-                <FontAwesome5 name="bell" size={12} color="white" />
-              </View>
-              <View style={styles.reminderItem}>
-                <Text style={styles.reminderBullet}>•</Text>
-                <Text style={styles.reminderTime}>16h00</Text>
-                <FontAwesome5 name="bell" size={12} color="white" />
-              </View>
-              <View style={styles.reminderItem}>
-                <Text style={styles.reminderBullet}>•</Text>
-                <Text style={styles.reminderTime}>20h30</Text>
-                <FontAwesome5 name="bell" size={12} color="white" />
-              </View>
-            </View>
-          </ModalComponent>
-        </View>
+            </ModalComponent>
 
-     
-        <BottomNavigation />
-      </View>
-    </PaperProvider>
+            <ModalComponent
+              title="Lembretes"
+              icon="clock-outline"
+              info1="Próximo lembrete: 12:30h"
+              info2="Lembretes configurados: 3"
+              info3="Frequência: A cada 4 horas"
+              buttonStyle={styles.reminderCard}
+            >
+              <View style={styles.cardContent}>
+                <Text style={styles.reminderTitle}>Lembretes</Text>
+                <View style={styles.reminderItem}>
+                  <Text style={styles.reminderBullet}>•</Text>
+                  <Text style={styles.reminderTime}>12h30</Text>
+                  <FontAwesome5 name="bell" size={12} color="white" />
+                </View>
+                <View style={styles.reminderItem}>
+                  <Text style={styles.reminderBullet}>•</Text>
+                  <Text style={styles.reminderTime}>16h00</Text>
+                  <FontAwesome5 name="bell" size={12} color="white" />
+                </View>
+                <View style={styles.reminderItem}>
+                  <Text style={styles.reminderBullet}>•</Text>
+                  <Text style={styles.reminderTime}>20h30</Text>
+                  <FontAwesome5 name="bell" size={12} color="white" />
+                </View>
+              </View>
+            </ModalComponent>
+          </View>
+
+
+          <BottomNavigation />
+        </View>
+      </PaperProvider>
+    </>
   );
 }
 
@@ -255,7 +265,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-    
+
   },
   bottomCards: {
     flexDirection: 'row',
