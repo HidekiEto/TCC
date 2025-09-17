@@ -89,23 +89,14 @@ export const DbProvider = ({ children }: { children: React.ReactNode }) => {
       await push(ref(db, `bottles/${bottleId}/readings`), leitura);
     }
 
-    // Salva o consumo acumulado diário
-    for (const leitura of leituras) {
-      if (typeof leitura.consumo === "number" && leitura.timestamp) {
-        const dia = dayjs(leitura.timestamp).format("YYYY-MM-DD");
-        consumoPorDia[dia] = (consumoPorDia[dia] || 0) + leitura.consumo;
-      }
-      // Salva cada leitura individualmente
-      await push(ref(db, `bottles/${bottleId}/readings`), leitura);
-    }
-
     // Para cada dia, busque o valor atual, some e salve de volta
     for (const dia in consumoPorDia) {
       const acumuladoRef = ref(db, `bottles/${bottleId}/readings/consumoAcumulado/${dia}`);
       const snapshot = await get(acumuladoRef);
       const valorAtual = snapshot.exists() ? snapshot.val() : 0;
       const novoValor = valorAtual + consumoPorDia[dia];
-      await set(acumuladoRef, novoValor);
+      const valorArredondado = Math.round(novoValor * 10) / 10;
+      await set(acumuladoRef, valorArredondado);
     }
 
     await set(ref(db, `bottles/${bottleId}/connectedUser`), uid);
