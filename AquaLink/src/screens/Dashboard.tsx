@@ -5,9 +5,11 @@ import { MaterialIcons, MaterialCommunityIcons, Ionicons } from "@expo/vector-ic
 import { BarChartComponent } from "../components/DashboardComponents/BarChart";
 import { useBLE } from "../contexts/BLEProvider";
 import { useState } from "react";
+import { useDbContext } from "../hooks/useDbContext";
 
 
 export default function Dashboard() {
+  const { sincronizarCacheComBanco } = useDbContext();
   const { scanForDevices, isScanning, isConnected, connectedDevice, foundDevices, connectToDevice, disconnectDevice } = useBLE();
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -201,12 +203,18 @@ export default function Dashboard() {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.resincronizarButton, { backgroundColor: '#F44336' }]}
-                  onPress={disconnectDevice}
+                  style={[styles.resincronizarButton, { backgroundColor: '#2196F3' }]}
+                  onPress={() => {
+                    if (connectedDevice?.id) {
+                      sincronizarCacheComBanco();
+                    } else {
+                      alert("Nenhuma garrafa conectada.");
+                    }
+                  }}
                   disabled={!isConnected}
                 >
-                  <MaterialCommunityIcons name="bluetooth-off" size={16} color="white" />
-                  <Text style={styles.resincronizarText}>Desconectar</Text>
+                  <MaterialCommunityIcons name="cloud-upload" size={15} color="white" />
+                  <Text style={styles.resincronizarText}>Sincronizar Leituras</Text>
                 </TouchableOpacity>
               </View>
             </View>

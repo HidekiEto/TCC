@@ -11,6 +11,7 @@ import type { RootStackParamList } from "./src/types/navigation";
 import { DataProvider } from "./src/contexts/DataContext";
 import { DbProvider } from "./src/contexts/DbContext";
 
+
 export default function App() {
   const fontsLoaded = useAppFonts();
   const [showSplash, setShowSplash] = useState(true);
@@ -80,13 +81,13 @@ export default function App() {
   return showNav ? (
     <Animated.View style={{ flex: 1, opacity: navigationOpacity }}>
       <DataProvider>
-        <BLEProvider>
-          <DbProvider>
+        <DbProvider>
+          <BLEProvider>
             <NavigationContainer>
               <Navigation initialRouteName={initialRoute} />
             </NavigationContainer>
-          </DbProvider>
-        </BLEProvider>
+          </BLEProvider>
+        </DbProvider>
       </DataProvider>
     </Animated.View>
   ) : (

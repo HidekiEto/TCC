@@ -2,9 +2,10 @@ import React, { createContext, useContext, useState, ReactNode, useRef, useEffec
 import { Alert, Platform, PermissionsAndroid } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
-import { DataContext } from './DataContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { useDataContext } from '../hooks/useDataContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDbContext } from '../hooks/useDbContext';
 
 const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
 const CHARACTERISTIC_UUID = "abcd1234-ab12-cd34-ef56-1234567890ab";
@@ -35,6 +36,8 @@ async function requestAndroidPermissions() {
     PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
     PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
   ]);
+
+  
   return (
     granted['android.permission.ACCESS_FINE_LOCATION'] === 'granted' ||
     granted['android.permission.BLUETOOTH_SCAN'] === 'granted'
@@ -48,40 +51,43 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
 
 
-  const scanTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dataContext = useDataContext();
+  const dbContext = useDbContext();
+
+
+  const scanTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const volumeAnteriorRef = useRef<number | null>(null);
   const consumoAcumuladoRef = useRef<number>(0);
 
 
   useEffect(() => {
-  const tryReconnect = async () => {
-    const lastDeviceId = await AsyncStorage.getItem('lastDeviceId');
-    if (lastDeviceId) {
-      try {
-        await connectToDevice(lastDeviceId);
-      } catch (e) {
-        // Se não conseguir conectar, limpe o estado
-        setIsConnected(false);
-        setConnectedDevice(null);
+    const tryReconnect = async () => {
+      const lastDeviceId = await AsyncStorage.getItem('lastDeviceId');
+      if (lastDeviceId) {
+        try {
+          await connectToDevice(lastDeviceId);
+        } catch (e) {
+          // Se não conseguir conectar, limpe o estado
+          setIsConnected(false);
+          setConnectedDevice(null);
+        }
       }
-    }
-  };
-  tryReconnect();
-}, []);
+    };
+    tryReconnect();
+  }, []);
 
-useEffect(() => {
-  if (!connectedDevice) return;
-  const interval = setInterval(() => {
-    bleManager.isDeviceConnected(connectedDevice.id).then((connected) => {
-      if (!connected) {
-        setIsConnected(false);
-        setConnectedDevice(null);
-      }
-    });
-  }, 3000);
-  return () => clearInterval(interval);
-}, [connectedDevice]);
+  useEffect(() => {
+    if (!connectedDevice) return;
+    const interval = setInterval(() => {
+      bleManager.isDeviceConnected(connectedDevice.id).then((connected) => {
+        if (!connected) {
+          setIsConnected(false);
+          setConnectedDevice(null);
+        }
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [connectedDevice]);
 
   const writeToDevice = async (data: string) => {
     if (!connectedDevice) {
@@ -199,11 +205,20 @@ useEffect(() => {
                     consumoAcumuladoRef.current = Math.round((consumoAcumuladoRef.current + (consumo > 0 ? consumo : 0)) * 10) / 10;
                     dataContext.setConsumoAcumulado(consumoAcumuladoRef.current);
 
+                    if (dbContext) {
+                      const leitura = {
+                        timestamp: Date.now(),
+                        volume,
+                        volumeAnterior: volumeAnteriorRef.current,
+                        consumo,
+                      };
+                      dbContext.salvarLeituraNoCache(leitura);
+                    }
+
                     console.log("==== DADOS ATUALIZADOS ====");
                     console.log("Volume anterior:", volumeAnteriorRef.current);
                     console.log("Volume atual:", volume);
-                    console.log("Consumo calculado:", consumo);
-                    console.log("Consumo acumulado:", consumoAcumuladoRef.current);
+                    console.log("Consumo calculado:", consumo);             
                     console.log("=================================");
                   } else {
                     dataContext.setVolumeAnterior(volume);
@@ -211,7 +226,19 @@ useEffect(() => {
                     consumoAcumuladoRef.current = 0;
                     dataContext.setConsumoAcumulado(0); // Zera o acumulado na primeira leitura
                     console.log("Primeira leitura: volume anterior inicializado como o volume recebido.");
+
+                    if (dbContext) {
+                      const leitura = {
+                        timestamp: Date.now(),
+                        volume,
+                        volumeAnterior: volume,
+                        consumo: 0,
+                        consumoAcumulado: 0,
+                      };
+                      dbContext.salvarLeituraNoCache(leitura);
+                    }
                   }
+
                   volumeAnteriorRef.current = volume;
                   dataContext.setVolume(volume);
                 }

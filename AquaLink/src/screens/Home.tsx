@@ -14,6 +14,9 @@ const BOTTOM_NAV_HEIGHT = 60;
 const HEADER_HEIGHT = 120;
 const CALENDAR_SECTION_HEIGHT = 60;
 
+const DAILY_GOAL = 2500;
+
+
 const LiquidGauge = React.lazy(() =>
   import("../components/HomeComponents/LiquidGauge").then((mod) => {
     const comp =
@@ -26,20 +29,52 @@ const LiquidGauge = React.lazy(() =>
 );
 import BottomNavigation from "../components/BottomNavigation";
 import { useBLE } from "../contexts/BLEProvider";
+import { useDbContext } from "../hooks/useDbContext";
 
 export default function Home() {
-  const [waterValue, setWaterValue] = useState(44);
+
+  const [percent, setPercent] = useState(0);
+
+
+  const { getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia } = useDbContext();
+  const [consumoAcumulado, setConsumoAcumulado] = useState(0);
+
+  const [waterValue, setWaterValue] = useState(0);
   const [user, setUser] = useState<User | null>(null);
+
+  
 
   const { writeToDevice, isConnected } = useBLE();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    getConsumoAcumuladoNoCache().then((acumulado) => {
+      setWaterValue(acumulado);
+      setConsumoAcumulado(acumulado);
     });
+  }, [getConsumoAcumuladoNoCache]);
 
-    return () => unsubscribe();
-  }, []);
+  useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    setUser(currentUser);
+  });
+  return () => unsubscribe();
+}, []);
+
+useEffect(() => {
+  async function atualizarConsumo() {
+    const [cache, banco] = await Promise.all([
+      getConsumoAcumuladoNoCache(),
+      getConsumoAcumuladoDoDia()
+    ]);
+    const total = cache + banco;
+    setWaterValue(total);
+    setConsumoAcumulado(total);
+    setPercent(Math.round((total / DAILY_GOAL) * 100)); 
+    console.log("Consumo atualizado: ", percent);
+  }
+  atualizarConsumo();
+}, [getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia]);
+   
 
   const getFirstName = () => {
     if (user?.displayName) {
@@ -58,7 +93,6 @@ export default function Home() {
   };
 
   const waterIncrement = () => {
-    setWaterValue((prev) => Math.min(prev + 30, 100));
     if (isConnected) {
       writeToDevice("1"); // Envia o comando "1" para o ESP
     } else {
@@ -68,7 +102,7 @@ export default function Home() {
 
   return (
     <>
-      
+
       <PaperProvider>
         <StatusBar backgroundColor="#F8F9FA" barStyle="dark-content" />
 
@@ -99,10 +133,11 @@ export default function Home() {
               }
             >
               <LiquidGauge
-                value={waterValue}
+                value={percent}
                 width={250}
                 height={250}
                 config={{
+                  maxValue: 100,
                   circleColor: "#E0E0E0",
                   waveColor: "#1976D2",
                   textColor: "#1976D2",
@@ -115,6 +150,9 @@ export default function Home() {
                   waveAnimateTime: 4000,
                 }}
               />
+              <Text style={{ fontSize: 18, color: "#1976D2", marginTop: 8 }}>
+ Você bebeu {waterValue} mL hoje
+</Text>
             </Suspense>
 
             <TouchableOpacity
