@@ -89,6 +89,8 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, [connectedDevice]);
 
+
+
   const writeToDevice = async (data: string) => {
     if (!connectedDevice) {
       Alert.alert('Erro', 'Nenhum dispositivo conectado');
@@ -148,117 +150,145 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
     }, 10000);
   };
 
-  const connectToDevice = async (deviceId: string) => {
-    try {
-      setIsScanning(false);
-      bleManager.stopDeviceScan();
-      const device = await bleManager.connectToDevice(deviceId);
+  const connectToDevice = async (deviceId: string, tentativa = 1) => {
+  setIsScanning(false);
+  bleManager.stopDeviceScan();
 
-      await device.requestMTU(517);
+  let timeoutId: NodeJS.Timeout | null = null;
+  let connected = false;
 
-      await device.discoverAllServicesAndCharacteristics();
-      setConnectedDevice(device);
-      setIsConnected(true);
-
-      // Listener de desconexão BLE em tempo real
-      device.onDisconnected((error, disconnectedDevice) => {
-        console.log("BLE desconectado!", error);
-        setIsConnected(false);
-        setConnectedDevice(null);
-        Alert.alert('Info', 'A garrafa foi desconectada!');
-      });
-
-
-      // Monitorar notificações
-      device.monitorCharacteristicForService(
-        SERVICE_UUID,
-        CHARACTERISTIC_UUID,
-        (error, characteristic) => {
-          if (error) {
-            console.log("Erro ao monitorar notify:", error);
-            return;
-          }
-          if (characteristic?.value) {
-            const decoded = Buffer.from(characteristic.value, 'base64').toString('utf-8');
-            console.log("Notify recebido da garrafa:", decoded);
-
-            try {
-              if (decoded.trim().startsWith("{")) {
-                const data = JSON.parse(decoded);
-                const volume = typeof data.volume === "number" ? data.volume : null;
-
-                console.log(dataContext);
-                if (dataContext && volume !== null) {
-                  if (volumeAnteriorRef.current !== null) {
-                    dataContext.setVolumeAnterior(volumeAnteriorRef.current);
-                    let consumo = volumeAnteriorRef.current - volume;
-
-                    if (consumo < 0) {
-                      console.log("Consumo negativo detectado, ajustando para 0");
-                      consumo = 0;
-                    }
-
-                    consumo = Math.round(consumo * 10) / 10;
-                    dataContext.setConsumo(consumo);
-
-                    // Calcule o novo acumulado usando a ref local
-                    consumoAcumuladoRef.current = Math.round((consumoAcumuladoRef.current + (consumo > 0 ? consumo : 0)) * 10) / 10;
-                    dataContext.setConsumoAcumulado(consumoAcumuladoRef.current);
-
-                    if (dbContext) {
-                      const leitura = {
-                        timestamp: Date.now(),
-                        volume,
-                        volumeAnterior: volumeAnteriorRef.current,
-                        consumo,
-                      };
-                      dbContext.salvarLeituraNoCache(leitura);
-                    }
-
-                    console.log("==== DADOS ATUALIZADOS ====");
-                    console.log("Volume anterior:", volumeAnteriorRef.current);
-                    console.log("Volume atual:", volume);
-                    console.log("Consumo calculado:", consumo);             
-                    console.log("=================================");
-                  } else {
-                    dataContext.setVolumeAnterior(volume);
-                    dataContext.setConsumo(0);
-                    consumoAcumuladoRef.current = 0;
-                    dataContext.setConsumoAcumulado(0); // Zera o acumulado na primeira leitura
-                    console.log("Primeira leitura: volume anterior inicializado como o volume recebido.");
-
-                    if (dbContext) {
-                      const leitura = {
-                        timestamp: Date.now(),
-                        volume,
-                        volumeAnterior: volume,
-                        consumo: 0,
-                        consumoAcumulado: 0,
-                      };
-                      dbContext.salvarLeituraNoCache(leitura);
-                    }
-                  }
-
-                  volumeAnteriorRef.current = volume;
-                  dataContext.setVolume(volume);
-                }
-              } else {
-                console.log("Mensagem recebida:", decoded);
-              }
-            } catch (e) {
-              console.log("Erro ao processar notify:", e);
-            }
-          }
+  try {
+    await new Promise<void>((resolve, reject) => {
+      timeoutId = setTimeout(() => {
+        if (!connected) {
+          reject(new Error("Timeout na conexão BLE. Tentando novamente..."));
         }
-      );
+      }, 3000); // 3 segundos de timeout
 
-      Alert.alert('Sucesso', `Conectado ao dispositivo ${device.name || device.id}`);
-    } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Erro ao conectar');
-      setIsConnected(false);
-      setConnectedDevice(null);
-    }
-  };
+      bleManager.connectToDevice(deviceId)
+        .then(async (device) => {
+          connected = true;
+          if (timeoutId) clearTimeout(timeoutId);
+
+          await device.requestMTU(517);
+          await device.discoverAllServicesAndCharacteristics();
+          setConnectedDevice(device);
+          setIsConnected(true);
+
+          // Listener de desconexão BLE em tempo real
+          device.onDisconnected((error, disconnectedDevice) => {
+            console.log("BLE desconectado!", error);
+            setIsConnected(false);
+            setConnectedDevice(null);
+            Alert.alert('Info', 'A garrafa foi desconectada!');
+          });
+
+          // Monitorar notificações
+          device.monitorCharacteristicForService(
+            SERVICE_UUID,
+            CHARACTERISTIC_UUID,
+            (error, characteristic) => {
+              if (error) {
+                console.log("Erro ao monitorar notify:", error);
+                return;
+              }
+              if (characteristic?.value) {
+                const decoded = Buffer.from(characteristic.value, 'base64').toString('utf-8');
+                console.log("Notify recebido da garrafa:", decoded);
+
+                try {
+                  if (decoded.trim().startsWith("{")) {
+                    const data = JSON.parse(decoded);
+                    const volume = typeof data.volume === "number" ? data.volume : null;
+
+                    if (dataContext && volume !== null) {
+                      if (volumeAnteriorRef.current !== null) {
+                        dataContext.setVolumeAnterior(volumeAnteriorRef.current);
+                        let consumo = volumeAnteriorRef.current - volume;
+
+                        if (consumo < 0) {
+                          console.log("Consumo negativo detectado, ajustando para 0");
+                          consumo = 0;
+                        }
+
+                        consumo = Math.round(consumo * 10) / 10;
+                        dataContext.setConsumo(consumo);
+
+                        // Calcule o novo acumulado usando a ref local
+                        consumoAcumuladoRef.current = Math.round((consumoAcumuladoRef.current + (consumo > 0 ? consumo : 0)) * 10) / 10;
+                        dataContext.setConsumoAcumulado(consumoAcumuladoRef.current);
+
+                        if (dbContext) {
+                          const leitura = {
+                            timestamp: Date.now(),
+                            volume,
+                            volumeAnterior: volumeAnteriorRef.current,
+                            consumo,
+                          };
+                          dbContext.salvarLeituraNoCache(leitura);
+                        }
+
+                        console.log("==== DADOS ATUALIZADOS ====");
+                        console.log("Volume anterior:", volumeAnteriorRef.current);
+                        console.log("Volume atual:", volume);
+                        console.log("Consumo calculado:", consumo);             
+                        console.log("=================================");
+                      } else {
+                        dataContext.setVolumeAnterior(volume);
+                        dataContext.setConsumo(0);
+                        consumoAcumuladoRef.current = 0;
+                        dataContext.setConsumoAcumulado(0); // Zera o acumulado na primeira leitura
+                        console.log("Primeira leitura: volume anterior inicializado como o volume recebido.");
+
+                        if (dbContext) {
+                          const leitura = {
+                            timestamp: Date.now(),
+                            volume,
+                            volumeAnterior: volume,
+                            consumo: 0,
+                            consumoAcumulado: 0,
+                          };
+                          dbContext.salvarLeituraNoCache(leitura);
+                        }
+                      }
+
+                      volumeAnteriorRef.current = volume;
+                      dataContext.setVolume(volume);
+                    }
+                  } else {
+                    console.log("Mensagem recebida:", decoded);
+                  }
+                } catch (e) {
+                  console.log("Erro ao processar notify:", e);
+                }
+              }
+            }
+          );
+
+          Alert.alert('Sucesso', `Conectado ao dispositivo ${device.name || device.id}`);
+          resolve();
+        })
+        .catch((error) => {
+          if (timeoutId) clearTimeout(timeoutId);
+          reject(error);
+        });
+    });
+  } catch (error: any) {
+    setIsConnected(false);
+    setConnectedDevice(null);
+    Alert.alert('Erro', error.message || 'Erro ao conectar');
+
+    // Tenta de novo automaticamente após pequeno delay
+    if (tentativa < 2) {
+  try {
+    await bleManager.cancelDeviceConnection(deviceId);
+  } catch (e) {
+    // Ignora erro se já estiver desconectado
+  }
+  setTimeout(() => connectToDevice(deviceId, tentativa + 1), 2000); // 2 segundos de delay
+}
+  }
+};
 
   const disconnectDevice = async () => {
     if (connectedDevice) {

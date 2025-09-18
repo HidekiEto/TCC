@@ -2,11 +2,11 @@ import React, { Suspense, useState, useEffect } from "react";
 import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, StatusBar, Dimensions, ScrollView } from "react-native";
 import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { PaperProvider } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../config/firebase";
 import WeekDays from "../components/HomeComponents/CalendarStrip";
 import ModalComponent from "../components/HomeComponents/Modal";
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -45,6 +45,7 @@ export default function Home() {
   
 
   const { writeToDevice, isConnected } = useBLE();
+
 
   useEffect(() => {
     getConsumoAcumuladoNoCache().then((acumulado) => {
