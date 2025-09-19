@@ -13,6 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { CheckBox } from "react-native-elements";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "../config/firebase";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
@@ -123,20 +124,29 @@ export default function Register() {
       await updateProfile(userCredential.user, {
         displayName: name,
       });
-      
+
+      // Se o checkbox estiver marcado, salva o UID/token
+          if (checked && userCredential.user?.uid) {
+        await AsyncStorage.setItem('userToken', userCredential.user.uid);
+              await AsyncStorage.setItem('keepLoggedIn', 'true');
+      }
+          if (!checked) {
+              await AsyncStorage.setItem('keepLoggedIn', 'false');
+          }
+
       console.log("Usuário criado com sucesso:", userCredential.user.uid);
-      
+
       setTimeout(() => {
         setIsLoading(false);
         Alert.alert("Sucesso", "Conta criada com sucesso!");
         navigation.navigate("Home");
       }, 2000);
-      
+
     } catch (error: any) {
       setIsLoading(false);
       console.error("Erro ao criar usuário:", error);
       let errorMessage = "Não foi possível criar a conta. Verifique os dados.";
-      
+
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = "Este email já está em uso.";
       } else if (error.code === 'auth/invalid-email') {
@@ -144,7 +154,7 @@ export default function Register() {
       } else if (error.code === 'auth/weak-password') {
         errorMessage = "A senha é muito fraca.";
       }
-      
+
       Alert.alert("Erro", errorMessage);
     }
   };
@@ -238,6 +248,8 @@ export default function Register() {
                 setGender={setGender}
                 weight={weight}
                 setWeight={setWeight}
+                keepConnected={checked}
+                setKeepConnected={setChecked}
               />
             )}
 

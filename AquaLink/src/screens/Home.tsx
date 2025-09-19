@@ -2,6 +2,8 @@ import React, { Suspense, useState, useEffect } from "react";
 import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, StatusBar, Dimensions, ScrollView } from "react-native";
 import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { PaperProvider } from "react-native-paper";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import InitialSlider from '../components/InitialSlider';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../config/firebase";
@@ -26,32 +28,84 @@ const LiquidGauge = React.lazy(() =>
   })
 );
 import BottomNavigation from "../components/BottomNavigation";
+import { calcularMetaDiariaAgua } from '../components/GoalInsume';
 
 export default function Home() {
-  const [waterValue, setWaterValue] = useState(44);
-  const [user, setUser] = useState<User | null>(null);
+  // Exemplo de dados do usuário (substitua por dados reais do contexto/autenticação)
+  const userData = {
+    peso: 70,
+    altura: 175,
+    genero: 'masculino' as 'masculino',
+    idade: 30,
+  };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
+    const checkKeepLoggedIn = async () => {
+      try {
+        const keepLoggedIn = await AsyncStorage.getItem('keepLoggedIn');
+        // Verifica o estado do usuário autenticado pelo Firebase
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          if (keepLoggedIn === 'true' && currentUser) {
+            console.log('Função manter conectado está funcionando: usuário está autenticado automaticamente.');
+          } else if (keepLoggedIn === 'true' && !currentUser) {
+            console.log('Função manter conectado está ATIVADA, mas nenhum usuário está autenticado.');
+          } else {
+            console.log('Função manter conectado está DESATIVADA ou usuário não está autenticado.');
+          }
+        });
+        // Limpa o listener ao desmontar
+        return unsubscribe;
+      } catch (e) {
+        console.log('Erro ao verificar manter conectado:', e);
+      }
+    };
+    checkKeepLoggedIn();
+  }, []);
+  const [waterValue, setWaterValue] = useState(44); // porcentagem
+  const goalMl = calcularMetaDiariaAgua(userData); // meta diária dinâmica
+  const [user, setUser] = useState<User | null>(null);
+  const [showInitialSlides, setShowInitialSlides] = useState<boolean>(false);
+  const [loadingSlides, setLoadingSlides] = useState(true);
+  const [keepLoggedIn, setKeepLoggedIn] = useState<string | null>(null);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      try {
+        const value = await AsyncStorage.getItem('slidesVistos');
+        const keep = await AsyncStorage.getItem('keepLoggedIn');
+        setKeepLoggedIn(keep);
+        // Só mostra os slides se NÃO estiver autenticado, ou manter conectado estiver desativado, ou slidesVistos não for 'true'
+        if (!currentUser || keep !== 'true' || value !== 'true') {
+          setShowInitialSlides(true);
+        } else {
+          setShowInitialSlides(false);
+        }
+      } catch (e) {
+        setShowInitialSlides(true);
+      } finally {
+        setLoadingSlides(false);
+      }
+    });
     return () => unsubscribe();
   }, []);
+
+  const handleSlidesDone = async () => {
+    await AsyncStorage.setItem('slidesVistos', 'true');
+    setShowInitialSlides(false);
+  };
 
   const getFirstName = () => {
     if (user?.displayName) {
       const nameParts = user.displayName.trim().split(' ');
       return nameParts[0];
     }
-    
     if (user?.email) {
       const emailName = user.email.split('@')[0];
       const emailParts = emailName.split('.');
       const firstName = emailParts[0];
       return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
     }
-    
     return "Usuário";
   };
 
@@ -59,12 +113,26 @@ export default function Home() {
     setWaterValue((prev) => Math.min(prev + 30, 100));
   };
 
+  if (loadingSlides) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#084F8C" />
+      </View>
+    );
+  }
+
+  if (showInitialSlides) {
+    return (
+      <InitialSlider onDone={handleSlidesDone} onNavigateToWelcome={handleSlidesDone} onNavigateToRegister={handleSlidesDone} onNavigateToLogin={handleSlidesDone} />
+    );
+  }
+
   return (
     <PaperProvider>
       <StatusBar backgroundColor="#F8F9FA" barStyle="dark-content" />
 
       <View style={styles.container}>
-      
+        {/* ...existing code... */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>Olá, {getFirstName()},</Text>
@@ -93,6 +161,7 @@ export default function Home() {
               value={waterValue} 
               width={250}
               height={250}
+              goalMl={goalMl}
               config={{
                 circleColor: "#E0E0E0", 
                 waveColor: "#1976D2", 
@@ -118,9 +187,7 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
-       
         <View style={styles.bottomCards}>
-          
           <ModalComponent
             title="Bateria"
             icon="battery"
@@ -141,8 +208,6 @@ export default function Home() {
               </View>
             </View>
           </ModalComponent>
-          
-          
           <ModalComponent
             title="Lembretes"
             icon="clock-outline"
@@ -172,7 +237,6 @@ export default function Home() {
           </ModalComponent>
         </View>
 
-        
         <BottomNavigation />
       </View>
     </PaperProvider>

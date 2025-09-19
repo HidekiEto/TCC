@@ -1,5 +1,6 @@
-import React from "react";
-import { View, TouchableOpacity, StyleSheet, Text } from "react-native";
+import React, { useState } from "react";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { CheckBox } from 'react-native-elements';
 import { Picker } from '@react-native-picker/picker';
 import Input from "../Input";
 
@@ -12,6 +13,8 @@ interface Step2FormProps {
   setGender: (v: string) => void;
   weight: string;
   setWeight: (v: string) => void;
+  keepConnected?: boolean;
+  setKeepConnected?: (v: boolean) => void;
 }
 
 export default function Step2Form({
@@ -23,7 +26,14 @@ export default function Step2Form({
   setGender,
   weight,
   setWeight,
+  keepConnected,
+  setKeepConnected,
 }: Step2FormProps) {
+  // Se não vier do pai, cria local
+  const [checked, setChecked] = useState(false);
+  const isChecked = keepConnected !== undefined ? keepConnected : checked;
+  const setIsChecked = setKeepConnected !== undefined ? setKeepConnected : setChecked;
+
   return (
     <View style={styles.container}>
       <Input
@@ -62,6 +72,16 @@ export default function Step2Form({
         value={weight}
         onChangeText={setWeight}
         keyboardType="numeric"
+      />
+
+      <CheckBox
+        title="Manter conectado"
+        checked={isChecked}
+        onPress={() => setIsChecked(!isChecked)}
+        checkedColor="#084F8C"
+        uncheckedColor="#084F8C"
+        containerStyle={{ backgroundColor: 'transparent', borderWidth: 0, padding: 0, margin: 0 }}
+        textStyle={{ fontSize: 14, color: '#084F8C' }}
       />
     </View>
   );

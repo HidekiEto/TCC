@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from "../types/navigation";
 
 import Input from "../components/Input";
@@ -24,7 +25,18 @@ export default function Login() {
   const handleLogin = async (e: GestureResponderEvent) => {
     e.preventDefault?.(); 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      // Se o checkbox estiver marcado, salva o token
+      if (checked && user?.uid) {
+        // Salva o UID e token de acesso
+        await AsyncStorage.setItem('userToken', user.uid);
+        await AsyncStorage.setItem('keepLoggedIn', 'true');
+        console.log('Manter conectado está ATIVADO');
+      } else {
+        await AsyncStorage.setItem('keepLoggedIn', 'false');
+        console.log('Manter conectado está DESATIVADO');
+      }
       console.log("User logged in successfully");
       navigation.navigate("Home");
     } catch (error) {
@@ -76,7 +88,7 @@ export default function Login() {
 
           <View style={styles.optionsContainer}>
             <CheckBox
-              title="Lembrar senha"
+              title="Manter Conectado"
               checked={checked}
               onPress={() => setChecked(!checked)}
               checkedColor="#1081C7"
