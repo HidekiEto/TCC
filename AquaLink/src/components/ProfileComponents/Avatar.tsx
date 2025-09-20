@@ -3,7 +3,10 @@ import { View, StyleSheet, TouchableOpacity, Alert, Modal, Text, Pressable } fro
 import { Avatar } from "react-native-paper";
 import { Entypo, MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { storage, db, auth } from "../../config/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const AVATAR_SIZE = 100;
 
@@ -20,20 +23,36 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
 }) => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
- 
-  React.useEffect(() => {
+  // Busca avatar do usuário ao carregar
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.avatarUrl) {
+            setImageUri(data.avatarUrl);
+          }
+        }
+      }
+    };
+    fetchAvatar();
+  }, []);
+
+  useEffect(() => {
     if (triggerImagePicker) {
       setModalVisible(true);
       onTriggerReset?.();
     }
   }, [triggerImagePicker, onTriggerReset]);
 
- 
   const requestPermissions = async () => {
     const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
     const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
     if (cameraPermission.status !== 'granted' || mediaLibraryPermission.status !== 'granted') {
       Alert.alert(
         'Permissões necessárias',
@@ -45,13 +64,32 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
     return true;
   };
 
+  // Função para upload da imagem
+  const uploadImageAsync = async (uri: string) => {
+    setLoading(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error("Usuário não autenticado");
+      // Busca o blob da imagem
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const storageRef = ref(storage, `avatars/${user.uid}.jpg`);
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+      // Salva URL no Firestore
+      await setDoc(doc(db, "users", user.uid), { avatarUrl: downloadURL }, { merge: true });
+      setImageUri(downloadURL);
+      onImageSelect?.(downloadURL);
+    } catch (error: any) {
+      Alert.alert('Erro', 'Não foi possível salvar a imagem.');
+    }
+    setLoading(false);
+  };
 
   const openCamera = async () => {
     setModalVisible(false);
-    
     const hasPermission = await requestPermissions();
     if (!hasPermission) return;
-
     try {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -59,24 +97,19 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
         aspect: [1, 1],
         quality: 0.8,
       });
-
       if (!result.canceled && result.assets && result.assets[0]) {
         const newImageUri = result.assets[0].uri;
-        setImageUri(newImageUri);
-        onImageSelect?.(newImageUri);
+        await uploadImageAsync(newImageUri);
       }
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível abrir a câmera.');
     }
   };
 
-
   const openGallery = async () => {
     setModalVisible(false);
-    
     const hasPermission = await requestPermissions();
     if (!hasPermission) return;
-
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -84,17 +117,14 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
         aspect: [1, 1],
         quality: 0.8,
       });
-
       if (!result.canceled && result.assets && result.assets[0]) {
         const newImageUri = result.assets[0].uri;
-        setImageUri(newImageUri);
-        onImageSelect?.(newImageUri);
+        await uploadImageAsync(newImageUri);
       }
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível abrir a galeria.');
     }
   };
-
 
   const handleAvatarPress = () => {
     setModalVisible(true);
@@ -107,11 +137,14 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
         source={imageUri ? { uri: imageUri } : require("../../assets/avatar.png")}
         style={styles.avatar}
       />
+      {loading && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: AVATAR_SIZE/2 }}>
+          <Text>Salvando...</Text>
+        </View>
+      )}
       <TouchableOpacity style={styles.iconWrapper} onPress={handleAvatarPress}>
         <Entypo name="camera" size={18} color="#084F8C" />
       </TouchableOpacity>
-
-  
       <Modal
         animationType="slide"
         transparent={true}
