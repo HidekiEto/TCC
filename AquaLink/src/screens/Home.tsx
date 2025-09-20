@@ -7,18 +7,15 @@ import InitialSlider from '../components/InitialSlider';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../config/firebase";
+
 import WeekDays from "../components/HomeComponents/CalendarStrip";
 import ModalComponent from "../components/HomeComponents/Modal";
-
 
 const { width, height } = Dimensions.get('window');
 
 const BOTTOM_NAV_HEIGHT = 60;
 const HEADER_HEIGHT = 120;
 const CALENDAR_SECTION_HEIGHT = 60;
-
-const DAILY_GOAL = 2500;
-
 
 const LiquidGauge = React.lazy(() =>
   import("../components/HomeComponents/LiquidGauge").then((mod) => {
@@ -31,25 +28,30 @@ const LiquidGauge = React.lazy(() =>
   })
 );
 import BottomNavigation from "../components/BottomNavigation";
-
 import { calcularMetaDiariaAgua } from '../components/GoalInsume';
 import { useBLE } from "../contexts/BLEProvider";
 import { useDbContext } from "../hooks/useDbContext";
 
- 
-
 export default function Home() {
-  // Exemplo de dados do usuário (substitua por dados reais do contexto/autenticação)
-   const [percent, setPercent] = useState(0);
+
+  const [percent, setPercent] = useState(0);
   const { getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia } = useDbContext();
   const [consumoAcumulado, setConsumoAcumulado] = useState(0);
-  const [waterValue, setWaterValue] = useState(0);
+   const { writeToDevice, isConnected } = useBLE();
+
   const userData = {
     peso: 70,
     altura: 175,
     genero: 'masculino' as 'masculino',
     idade: 30,
   };
+
+   useEffect(() => {
+    getConsumoAcumuladoNoCache().then((acumulado) => {
+      setWaterValue(acumulado);
+      setConsumoAcumulado(acumulado);
+    });
+  }, [getConsumoAcumuladoNoCache]);
 
   useEffect(() => {
     const checkKeepLoggedIn = async () => {
@@ -80,42 +82,7 @@ export default function Home() {
   const [loadingSlides, setLoadingSlides] = useState(true);
   const [keepLoggedIn, setKeepLoggedIn] = useState<string | null>(null);
 
-  
-
-  const { writeToDevice, isConnected } = useBLE();
-
-
   useEffect(() => {
-
-    getConsumoAcumuladoNoCache().then((acumulado) => {
-      setWaterValue(acumulado);
-      setConsumoAcumulado(acumulado);
-    });
-  }, [getConsumoAcumuladoNoCache]);
-
-  useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-    setUser(currentUser);
-  });
-  return () => unsubscribe();
-}, []);
-
-useEffect(() => {
-  async function atualizarConsumo() {
-    const [cache, banco] = await Promise.all([
-      getConsumoAcumuladoNoCache(),
-      getConsumoAcumuladoDoDia()
-    ]);
-    const total = cache + banco;
-    setWaterValue(total);
-    setConsumoAcumulado(total);
-    setPercent(Math.round((total / DAILY_GOAL) * 100)); 
-    console.log("Consumo atualizado: ", percent);
-  }
-  atualizarConsumo();
-}, [getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia]);
-   
-
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       try {
@@ -137,6 +104,20 @@ useEffect(() => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+  async function atualizarConsumo() {
+    const [cache, banco] = await Promise.all([
+      getConsumoAcumuladoNoCache(),
+      getConsumoAcumuladoDoDia()
+    ]);
+    const total = cache + banco;
+    setWaterValue(total);
+    setConsumoAcumulado(total);
+      setPercent(Math.round((total / goalMl) * 100)); 
+    console.log("Consumo atualizado: ", percent);
+  }
+  atualizarConsumo();
+}, [getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia]);
 
   const handleSlidesDone = async () => {
     await AsyncStorage.setItem('slidesVistos', 'true');
@@ -154,16 +135,11 @@ useEffect(() => {
       const firstName = emailParts[0];
       return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
     }
-
     return "Usuário";
   };
 
   const waterIncrement = () => {
-    if (isConnected) {
-      writeToDevice("1"); // Envia o comando "1" para o ESP
-    } else {
-      console.log("Nenhuma garrafa conectada.");
-    }
+    setWaterValue((prev) => Math.min(prev + 30, 100));
   };
 
   if (loadingSlides) {
@@ -181,7 +157,6 @@ useEffect(() => {
   }
 
   return (
-
     <PaperProvider>
       <StatusBar backgroundColor="#F8F9FA" barStyle="dark-content" />
 
@@ -191,118 +166,109 @@ useEffect(() => {
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>Olá, {getFirstName()},</Text>
             <Text style={styles.subGreeting}>Bem vindo ao AquaLink.</Text>
-
           </View>
-
-          <View style={styles.calendarSection}>
-            <WeekDays />
+          <View style={styles.notificationButton}>
+            <FontAwesome5 name="bell" size={20} color="white" />
           </View>
+        </View>
 
-          <View style={styles.mainContent}>
-            <Text style={styles.goalTitle}>Meta diária</Text>
+        <View style={styles.calendarSection}>
+          <WeekDays />
+        </View>
 
-            <Suspense
-              fallback={
-                <View style={styles.fallback}>
-                  <ActivityIndicator size="large" color="#084F8C" />
-                </View>
-              }
-            >
-              <LiquidGauge
-                value={percent}
-                width={250}
-                height={250}
-                goalMl={goalMl}
-                config={{
-                  maxValue: 100,
-                  circleColor: "#E0E0E0",
-                  waveColor: "#1976D2",
-                  textColor: "#1976D2",
-                  waveTextColor: "#FFFFFF",
-                  circleThickness: 0.05,
-                  circleFillGap: 0.05,
-                  waveHeight: 0.05,
-                  waveCount: 1,
-                  waveAnimate: true,
-                  waveAnimateTime: 4000,
-                }}
-              />
-              <Text style={{ fontSize: 18, color: "#1976D2", marginTop: 8 }}>
- Você bebeu {waterValue} mL hoje
-</Text>
-            </Suspense>
+        <View style={styles.mainContent}>
+          <Text style={styles.goalTitle}>Meta diária</Text>
 
+          <Suspense
+            fallback={
+              <View style={styles.fallback}>
+                <ActivityIndicator size="large" color="#084F8C" />
+              </View>
+            }
+          > 
+            <LiquidGauge 
+              value={percent} 
+              width={250}
+              height={250}
+              goalMl={goalMl}
+              config={{
+                circleColor: "#E0E0E0", 
+                waveColor: "#1976D2", 
+                textColor: "#1976D2", 
+                waveTextColor: "#FFFFFF", 
+                circleThickness: 0.05, 
+                circleFillGap: 0.05, 
+                waveHeight: 0.05, 
+                waveCount: 1, 
+                waveAnimate: true,
+                waveAnimateTime: 4000, 
+              }}
+            />
+          </Suspense>
 
-            <TouchableOpacity
-              style={styles.addWaterButton}
-              onPress={waterIncrement}
-            >
-              <Text style={styles.addWaterButtonText}>
-                Adicionar Água
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.addWaterButton}
+            onPress={waterIncrement}
+          >
+            <Text style={styles.addWaterButtonText}>
+              Adicionar Água
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-
-          <View style={styles.bottomCards}>
-
-            <ModalComponent
-              title="Bateria"
-              icon="battery"
-              info1="Status da bateria: 53%"
-              info2="Água restante na garrafa: 160 mL"
-              info3="Tempo estimado de uso: 8 horas"
-              buttonStyle={styles.batteryCard}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.batteryContent}>
-                  <MaterialCommunityIcons name="battery-60" size={60} color="#1976D2" style={styles.batteryIcon} />
-                  <View style={styles.batteryTextContent}>
-                    <Text style={styles.batteryTitle}>Bateria:</Text>
-                    <Text style={styles.batteryPercentage}>53%</Text>
-                    <Text style={styles.batterySubtext}>Água restante na garrafa:</Text>
-                    <Text style={styles.batterySubtext}>160 mL</Text>
-                  </View>
+        <View style={styles.bottomCards}>
+          <ModalComponent
+            title="Bateria"
+            icon="battery"
+            info1="Status da bateria: 53%"
+            info2="Água restante na garrafa: 160 mL"
+            info3="Tempo estimado de uso: 8 horas"
+            buttonStyle={styles.batteryCard}
+          >
+            <View style={styles.cardContent}>
+              <View style={styles.batteryContent}>
+                <MaterialCommunityIcons name="battery-60" size={60} color="#1976D2" style={styles.batteryIcon} />
+                <View style={styles.batteryTextContent}>
+                  <Text style={styles.batteryTitle}>Bateria:</Text>
+                  <Text style={styles.batteryPercentage}>53%</Text>
+                  <Text style={styles.batterySubtext}>Água restante na garrafa:</Text>
+                  <Text style={styles.batterySubtext}>160 mL</Text>
                 </View>
               </View>
-            </ModalComponent>
-
-            <ModalComponent
-              title="Lembretes"
-              icon="clock-outline"
-              info1="Próximo lembrete: 12:30h"
-              info2="Lembretes configurados: 3"
-              info3="Frequência: A cada 4 horas"
-              buttonStyle={styles.reminderCard}
-            >
-              <View style={styles.cardContent}>
-                <Text style={styles.reminderTitle}>Lembretes</Text>
-                <View style={styles.reminderItem}>
-                  <Text style={styles.reminderBullet}>•</Text>
-                  <Text style={styles.reminderTime}>12h30</Text>
-                  <FontAwesome5 name="bell" size={12} color="white" />
-                </View>
-                <View style={styles.reminderItem}>
-                  <Text style={styles.reminderBullet}>•</Text>
-                  <Text style={styles.reminderTime}>16h00</Text>
-                  <FontAwesome5 name="bell" size={12} color="white" />
-                </View>
-                <View style={styles.reminderItem}>
-                  <Text style={styles.reminderBullet}>•</Text>
-                  <Text style={styles.reminderTime}>20h30</Text>
-                  <FontAwesome5 name="bell" size={12} color="white" />
-                </View>
-
+            </View>
+          </ModalComponent>
+          <ModalComponent
+            title="Lembretes"
+            icon="clock-outline"
+            info1="Próximo lembrete: 12:30h"
+            info2="Lembretes configurados: 3"
+            info3="Frequência: A cada 4 horas"
+            buttonStyle={styles.reminderCard}
+          >
+            <View style={styles.cardContent}>
+              <Text style={styles.reminderTitle}>Lembretes</Text>
+              <View style={styles.reminderItem}>
+                <Text style={styles.reminderBullet}>•</Text>
+                <Text style={styles.reminderTime}>12h30</Text>
+                <FontAwesome5 name="bell" size={12} color="white" />
               </View>
-            </ModalComponent>
-          </View>
-
-
+              <View style={styles.reminderItem}>
+                <Text style={styles.reminderBullet}>•</Text>
+                <Text style={styles.reminderTime}>16h00</Text>
+                <FontAwesome5 name="bell" size={12} color="white" />
+              </View>
+              <View style={styles.reminderItem}>
+                <Text style={styles.reminderBullet}>•</Text>
+                <Text style={styles.reminderTime}>20h30</Text>
+                <FontAwesome5 name="bell" size={12} color="white" />
+              </View>
+            </View>
+          </ModalComponent>
+        </View>
 
         <BottomNavigation />
       </View>
     </PaperProvider>
-
   );
 }
 
@@ -383,7 +349,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-
+    
   },
   bottomCards: {
     flexDirection: 'row',
