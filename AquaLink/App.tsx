@@ -14,12 +14,6 @@ import { DbProvider } from "./src/contexts/DbContext";
 
 export default function App() {
   const fontsLoaded = useAppFonts();
-  const [showSplash, setShowSplash] = useState(true);
-  const [showNav, setShowNav] = useState(false);
-  const [appReady, setAppReady] = useState(false);
-  const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList>("Welcome");
-  const navigationOpacity = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
 
     if (fontsLoaded) {
@@ -33,12 +27,14 @@ export default function App() {
 
 
   if (!fontsLoaded || !appReady) {
+
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>Carregando AquaLink...</Text>
       </View>
     );
   }
+
 
 
   if (showSplash) {
@@ -84,7 +80,7 @@ export default function App() {
         <DbProvider>
           <BLEProvider>
             <NavigationContainer>
-              <Navigation initialRouteName={initialRoute} />
+              <Navigation/>
             </NavigationContainer>
           </BLEProvider>
         </DbProvider>
@@ -101,6 +97,7 @@ export default function App() {
         onNavigateToLogin={handleNavigateToLogin}
       />
     </View>
+
   );
 }
 

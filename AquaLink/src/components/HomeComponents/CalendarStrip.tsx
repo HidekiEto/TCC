@@ -93,11 +93,11 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 14,
   },
   dayContainer: {
     alignItems: 'center',
-    marginHorizontal: 8,
+    marginHorizontal: 12,
   },
  
   activeContainer: {

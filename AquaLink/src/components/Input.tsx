@@ -32,7 +32,7 @@ const Input: React.FC<InputProps> = ({
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor="#999"
+        placeholderTextColor="#084F8C"
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: '#084F8C',
     color: '#333',
     height: 50,
   },

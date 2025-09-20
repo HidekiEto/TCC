@@ -1,4 +1,8 @@
+  InitialSlidesScreen: undefined;
+  SplashScreen: undefined;
 export type RootStackParamList = {
+  SplashScreen: undefined;
+  InitialSlidesScreen: undefined;
   Welcome: undefined;
   Register: undefined;
   Home: undefined;

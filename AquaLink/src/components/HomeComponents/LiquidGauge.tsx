@@ -72,7 +72,8 @@ type Props = {
   config?: Partial<GaugeConfig>;
   width?: number;
   height?: number;
-  value?: number;
+  value?: number; // porcentagem
+  goalMl: number; // meta diária em mL
 };
 
 export const LiquidGauge = ({
@@ -80,6 +81,7 @@ export const LiquidGauge = ({
   width = 250,
   height = 250,
   value = 50,
+  goalMl,
 }: Props) => {
   const defaultConfig = liquidFillGaugeDefaultSettings();
   const mergedConfig = { ...defaultConfig, ...config };
@@ -111,7 +113,8 @@ export const LiquidGauge = ({
   const waveClipWidth = waveLength * waveClipCount;
   const waveHeight = fillCircleRadius * waveHeightScale(fillPercent * 100);
 
-  const textPixels = (mergedConfig.textSize * radius) / 2;
+  // Aumentar o tamanho do número em porcentagem
+  const textPixels = (mergedConfig.textSize * radius) * 0.55;
   const textFinalValue = Number(value.toFixed(mergedConfig.toFixed));
   const textStartValue = mergedConfig.valueCountUp
     ? mergedConfig.minValue
@@ -149,12 +152,13 @@ export const LiquidGauge = ({
     fillCircleMargin + fillCircleRadius * 2 - waveClipWidth;
 
   const font = useFont(require("../../assets/fonts/Roboto-Bold.ttf"), textPixels);
+  const fontMl = useFont(require("../../assets/fonts/Roboto-Bold.ttf"), textPixels * 0.22);
 
   const textValue = useSharedValue(textStartValue);
   const translateYPercent = useSharedValue(0);
   const translateXProgress = useSharedValue(0);
 
- 
+  // Progresso da borda (animado)
   const progressValue = useSharedValue(fillPercent);
 
   useEffect(() => {
@@ -195,6 +199,18 @@ export const LiquidGauge = ({
     return radius - textWidth * 0.5;
   }, [text, radius, font]);
 
+  // Calcula valor atual em mL baseado na porcentagem
+  const currentMl = Math.floor((value / 100) * goalMl);
+  const mlLabel = `${currentMl} / ${goalMl} mL`;
+  const mlLabelTranslateX = (() => {
+    if (!fontMl) return radius;
+    const mlLabelWidth = fontMl.getTextWidth(mlLabel);
+    return radius - mlLabelWidth * 0.5;
+  })();
+
+  // Posição vertical da label mL: logo abaixo do número em porcentagem
+  const mlLabelY = textPixels + (font ? font.getSize() : textPixels) + (fontMl ? fontMl.getSize() : textPixels * 0.32) * 0.2 + 40;
+
   const clipSVGString = clipArea(data)!;
   const path = useDerivedValue(() => {
     const p = Skia.Path.MakeFromSVGString(clipSVGString)!;
@@ -211,7 +227,7 @@ export const LiquidGauge = ({
     { translateY: textRiseScaleY(mergedConfig.textVertPosition) - textPixels },
   ];
 
-
+  // path animado da borda
   const borderPath = useDerivedValue(() => {
     const p = Skia.Path.Make();
     const sweepAngle = 360 * progressValue.value;
@@ -232,7 +248,6 @@ export const LiquidGauge = ({
     <View>
       <Canvas style={{ width, height }}>
         <Group>
-         
           <Circle
             cx={radius}
             cy={radius}
@@ -241,8 +256,6 @@ export const LiquidGauge = ({
             style="stroke"
             strokeWidth={circleThickness}
           />
-
-         
           <Path
             path={borderPath}
             style="stroke"
@@ -250,8 +263,7 @@ export const LiquidGauge = ({
             color="#178BCA"
             strokeCap="round"
           />
-
-          
+          {/* Porcentagem */}
           <Text
             x={textTranslateX}
             y={textPixels}
@@ -260,8 +272,17 @@ export const LiquidGauge = ({
             color={mergedConfig.textColor}
             transform={textTransform}
           />
-
-         
+          {/* Label mL abaixo da porcentagem */}
+          {goalMl !== undefined && fontMl && (
+            <Text
+              x={mlLabelTranslateX}
+              y={mlLabelY}
+              text={mlLabel}
+              font={fontMl}
+              color="#666"
+              opacity={0.9}
+            />
+          )}
           <Group clip={path}>
             <Circle
               cx={radius}
@@ -277,6 +298,17 @@ export const LiquidGauge = ({
               color={mergedConfig.waveTextColor}
               transform={textTransform}
             />
+            {/* Label mL dentro do recorte da onda */}
+            {goalMl !== undefined && fontMl && (
+              <Text
+                x={mlLabelTranslateX}
+                y={mlLabelY}
+                text={mlLabel}
+                font={fontMl}
+                color={mergedConfig.waveTextColor}
+                opacity={0.9}
+              />
+            )}
           </Group>
         </Group>
       </Canvas>
