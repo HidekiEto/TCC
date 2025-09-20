@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from "../types/navigation";
 
 import Input from "../components/Input";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,6 +24,7 @@ export default function Login() {
   const [checked, setChecked] = useState<boolean>(false);
 
   const handleLogin = async (e: GestureResponderEvent) => {
+
     e.preventDefault?.(); 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);

@@ -1,6 +1,19 @@
 import 'dotenv/config';
 
 export default () => ({
+
+  "expo": {
+    "plugins": [
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["peripheral", "central"],
+          "bluetoothAlwaysPermission": "Allow AquaLink to connect to bluetooth devices"
+        }
+      ]
+    ]
+  },
   expo: {
     name: "AquaLink",
     slug: "aqualink",
@@ -24,7 +37,9 @@ export default () => ({
         "BLUETOOTH_ADMIN",
         "BLUETOOTH_SCAN",
         "BLUETOOTH_CONNECT",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "BLUETOOTH_ADVERTISE"
+
       ]
     },
     web: { bundler: "metro" },

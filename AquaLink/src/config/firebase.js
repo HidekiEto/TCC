@@ -1,9 +1,12 @@
 import { initializeApp } from "firebase/app";
+import { getDatabase } from "firebase/database";
 import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import Constants from 'expo-constants';
+
+
 
 const {
   FIREBASE_API_KEY,
@@ -29,9 +32,15 @@ const app = initializeApp(firebaseConfig);
 
 console.log('Firebase app initialized:', app.name);
 
+// <<<<<<< bluetooth
+// export const auth = getAuth(app);
+// export const db = getDatabase(app);
+// =======
+
 // Configura persistência do Auth usando AsyncStorage
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 });
 export const db = getFirestore(app);
+
 export const storage = getStorage(app);

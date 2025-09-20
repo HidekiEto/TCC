@@ -5,31 +5,99 @@ import { useAppFonts } from "./src/hooks/useAppFonts";
 import { Text, View, StyleSheet, Animated } from "react-native";
 import SplashScreen from "./src/screens/SplashScreen";
 import Slides from "./src/components/InitialSlider";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BLEProvider } from "./src/contexts/BLEProvider";
+import BLEProvider from "./src/contexts/BLEProvider";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "./src/types/navigation";
+import { DataProvider } from "./src/contexts/DataContext";
+import { DbProvider } from "./src/contexts/DbContext";
+
 
 export default function App() {
   const fontsLoaded = useAppFonts();
   useEffect(() => {
-    console.log("[App] fontsLoaded:", fontsLoaded);
+
+    if (fontsLoaded) {
+      const timer = setTimeout(() => {
+        setAppReady(true);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
   }, [fontsLoaded]);
-  if (!fontsLoaded) {
-    console.log("[App] Carregando fontes...");
+
+
+  if (!fontsLoaded || !appReady) {
+
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>Carregando AquaLink...</Text>
       </View>
     );
   }
-  console.log("[App] Fontes carregadas, renderizando Navigation...");
-  return (
-    <BLEProvider>
-      <NavigationContainer>
-        <Navigation />
-      </NavigationContainer>
-    </BLEProvider>
+
+
+
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
+
+  const handleNavigateToWelcome = () => {
+    console.log("Welcome slide reached");
+  };
+
+  const handleNavigateToRegister = () => {
+    console.log(" Iniciando navegação para Register...");
+    setInitialRoute("Register");
+    setShowNav(true);
+
+    Animated.timing(navigationOpacity, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      console.log(" Navegação para Register completada!");
+    });
+  };
+
+  const handleNavigateToLogin = () => {
+    console.log(" Iniciando navegação para Login...");
+    setInitialRoute("Login");
+    setShowNav(true);
+
+    Animated.timing(navigationOpacity, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      console.log(" Navegação para Login completada!");
+    });
+  };
+
+
+  return showNav ? (
+    <Animated.View style={{ flex: 1, opacity: navigationOpacity }}>
+      <DataProvider>
+        <DbProvider>
+          <BLEProvider>
+            <NavigationContainer>
+              <Navigation/>
+            </NavigationContainer>
+          </BLEProvider>
+        </DbProvider>
+      </DataProvider>
+    </Animated.View>
+  ) : (
+    <View style={styles.fullScreen}>
+      <Slides
+        onDone={() => {
+          console.log("Slides done");
+        }}
+        onNavigateToWelcome={handleNavigateToWelcome}
+        onNavigateToRegister={handleNavigateToRegister}
+        onNavigateToLogin={handleNavigateToLogin}
+      />
+    </View>
+
   );
 }
 
