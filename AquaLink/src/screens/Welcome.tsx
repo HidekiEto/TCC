@@ -8,6 +8,7 @@ import type { RootStackParamList } from "../types/navigation";
 
 const { width, height } = Dimensions.get('window');
 
+
 export default function Welcome() {
   const navigation = useNavigation<NavigationProp<RootStackParamList, "Welcome">>();
   const fadeAnim = useRef(new Animated.Value(0)).current;

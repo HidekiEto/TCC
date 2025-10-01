@@ -8,20 +8,43 @@ import dayjs from "dayjs";
 interface DbContextType {
   salvarLeituraNoCache: (leitura: any) => Promise<void>;
   sincronizarCacheComBanco: (bottleId: string) => Promise<void>;
-  getConsumoAcumuladoNoCache: () => Promise<number>; 
+  getConsumoAcumuladoNoCache: () => Promise<number>;
   getConsumoAcumuladoDoDia: () => Promise<number>;
+  adicionarLeituraSimulada: (consumo: number) => Promise<void>;
 }
 
 export const DbContext = createContext<DbContextType | undefined>(undefined);
 
 export const DbProvider = ({ children }: { children: React.ReactNode }) => {
+  // Função para simular leitura do ESP
+  const adicionarLeituraSimulada = useCallback(async (consumo: number) => {
+    try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) throw new Error('Usuário não autenticado');
+      const cacheKey = `leiturasCache_${uid}`;
+      const novaLeitura = {
+        consumo,
+        timestamp: new Date().toISOString(),
+      };
+      const cache = await AsyncStorage.getItem(cacheKey);
+      let leituras = cache ? JSON.parse(cache) : [];
+      leituras.push(novaLeitura);
+      await AsyncStorage.setItem(cacheKey, JSON.stringify(leituras));
+      console.log('Leitura simulada adicionada:', novaLeitura);
+    } catch (e) {
+      console.log('Erro ao adicionar leitura simulada:', e);
+    }
+  }, []);
   // Salva uma leitura no cache local
   const salvarLeituraNoCache = useCallback(async (leitura: any) => {
     try {
-      const cache = await AsyncStorage.getItem('leiturasCache');
+      const uid = auth.currentUser?.uid;
+      if (!uid) throw new Error('Usuário não autenticado');
+      const cacheKey = `leiturasCache_${uid}`;
+      const cache = await AsyncStorage.getItem(cacheKey);
       let leituras = cache ? JSON.parse(cache) : [];
       leituras.push(leitura);
-      await AsyncStorage.setItem('leiturasCache', JSON.stringify(leituras));
+      await AsyncStorage.setItem(cacheKey, JSON.stringify(leituras));
       console.log("Leitura salva no cache local.");
     } catch (e) {
       console.log("Erro ao salvar leitura no cache:", e);
@@ -29,7 +52,10 @@ export const DbProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const getConsumoAcumuladoNoCache = useCallback(async () => {
-    const cache = await AsyncStorage.getItem('leiturasCache');
+    const uid = auth.currentUser?.uid;
+    if (!uid) return 0;
+    const cacheKey = `leiturasCache_${uid}`;
+    const cache = await AsyncStorage.getItem(cacheKey);
     let leituras = cache ? JSON.parse(cache) : [];
     let soma = 0;
     for (const leitura of leituras) {
@@ -109,7 +135,7 @@ export const DbProvider = ({ children }: { children: React.ReactNode }) => {
 }, []);
 
   return (
-    <DbContext.Provider value={{ salvarLeituraNoCache, sincronizarCacheComBanco, getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia }}>
+  <DbContext.Provider value={{ salvarLeituraNoCache, sincronizarCacheComBanco, getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia, adicionarLeituraSimulada }}>
       {children}
     </DbContext.Provider>
   );

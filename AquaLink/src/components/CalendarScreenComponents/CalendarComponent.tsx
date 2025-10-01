@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Calendar, LocaleConfig, DateData } from 'react-native-calendars';
+import { Dimensions } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 
 LocaleConfig.locales['pt'] = {
   monthNames: [

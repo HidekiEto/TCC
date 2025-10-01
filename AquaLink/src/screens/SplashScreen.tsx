@@ -1,12 +1,14 @@
 import React, { useEffect } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Dimensions, StatusBar } from "react-native";
 import Title from "../components/Title";
 import { LinearGradient } from "expo-linear-gradient";
 
 
 import { NavigationProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../types/navigation';
+
+const { width, height } = Dimensions.get('window');
 
 interface SplashScreenProps {
   navigation: NavigationProp<RootStackParamList>;
@@ -51,6 +53,11 @@ export default function SplashScreen({ navigation }: SplashScreenProps) {
       end={{ x: 0, y: 1 }}
       style={styles.container}
     >
+      <StatusBar 
+        backgroundColor="#084F8C" 
+        barStyle="light-content" 
+        translucent={false}
+      />
       <Title />
     </LinearGradient>
   );

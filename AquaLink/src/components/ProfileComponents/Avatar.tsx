@@ -1,14 +1,16 @@
 import * as React from "react";
-import { View, StyleSheet, TouchableOpacity, Alert, Modal, Text, Pressable } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Alert, Modal, Text, Pressable, Dimensions } from "react-native";
 import { Avatar } from "react-native-paper";
 import { Entypo, MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import { useState, useEffect } from "react";
-import { storage, db, auth } from "../../config/firebase";
+import { storage, firestore, auth } from "../../config/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
-const AVATAR_SIZE = 100;
+const { width, height } = Dimensions.get('window');
+
+const AVATAR_SIZE = Math.round(width * 0.28);
 
 interface AvatarComponentProps {
   onImageSelect?: (imageUri: string) => void;
@@ -30,7 +32,7 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
     const fetchAvatar = async () => {
       const user = auth.currentUser;
       if (user) {
-        const docRef = doc(db, "users", user.uid);
+        const docRef = doc(firestore, "users", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -77,7 +79,7 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
       await uploadBytes(storageRef, blob);
       const downloadURL = await getDownloadURL(storageRef);
       // Salva URL no Firestore
-      await setDoc(doc(db, "users", user.uid), { avatarUrl: downloadURL }, { merge: true });
+  await setDoc(doc(firestore, "users", user.uid), { avatarUrl: downloadURL }, { merge: true });
       setImageUri(downloadURL);
       onImageSelect?.(downloadURL);
     } catch (error: any) {
@@ -181,7 +183,7 @@ const styles = StyleSheet.create({
     height: AVATAR_SIZE,
     justifyContent: "center",
     alignItems: "center",
-    left: -10,
+    left: -width * 0.025,
   },
   avatar: {
     borderWidth: 1,
@@ -189,11 +191,11 @@ const styles = StyleSheet.create({
   },
   iconWrapper: {
     position: "absolute",
-    bottom: -2,
-    right: -2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    bottom: -width * 0.005,
+    right: -width * 0.005,
+    width: width * 0.07,
+    height: width * 0.07,
+    borderRadius: width * 0.035,
     backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
@@ -210,10 +212,10 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: 40,
+    borderTopLeftRadius: width * 0.05,
+    borderTopRightRadius: width * 0.05,
+    padding: width * 0.05,
+    paddingBottom: height * 0.05,
   },
   modalTitle: {
     fontSize: 18,
@@ -225,27 +227,27 @@ const styles = StyleSheet.create({
   optionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    marginVertical: 5,
+    paddingVertical: height * 0.018,
+    paddingHorizontal: width * 0.05,
+    marginVertical: height * 0.006,
     backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+    borderRadius: width * 0.03,
     borderWidth: 1,
     borderColor: '#e9ecef',
   },
   optionText: {
-    fontSize: 16,
-    marginLeft: 15,
+    fontSize: Math.round(width * 0.04),
+    marginLeft: width * 0.04,
     color: '#333',
     fontWeight: '500',
   },
   cancelButton: {
-    paddingVertical: 15,
-    marginTop: 10,
+    paddingVertical: height * 0.018,
+    marginTop: height * 0.012,
     alignItems: 'center',
   },
   cancelText: {
-    fontSize: 16,
+    fontSize: Math.round(width * 0.04),
     color: '#666',
     fontWeight: '500',
   },

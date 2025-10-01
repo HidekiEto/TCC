@@ -36,18 +36,32 @@ export default function Step2Form({
 
   return (
     <View style={styles.container}>
-      <Input
-        label="Altura"
-        placeholder="Altura (cm)"
-        value={height}
-        onChangeText={setHeight}
-        keyboardType="numeric"
-      />
+      {/* Linha com Altura e Peso lado a lado */}
+      <View style={styles.rowContainer}>
+        <View style={styles.halfWidth}>
+          <Input
+            label="Altura"
+            placeholder="Altura (cm)"
+            value={height}
+            onChangeText={setHeight}
+            keyboardType="numeric"
+          />
+        </View>
+        <View style={styles.halfWidth}>
+          <Input
+            label="Peso"
+            placeholder="Peso (kg)"
+            value={weight}
+            onChangeText={setWeight}
+            keyboardType="numeric"
+          />
+        </View>
+      </View>
 
-      <TouchableOpacity onPress={onBirthdateFocus}>
+      <TouchableOpacity onPress={onBirthdateFocus} activeOpacity={0.7}>
         <Input
           label="Data de Nascimento"
-          placeholder="Data de Nascimento"
+          placeholder="DD/MM/AAAA"
           value={birthdateFormatted}
           editable={false}
         />
@@ -59,29 +73,28 @@ export default function Step2Form({
           onValueChange={setGender}
           style={styles.picker}
         >
-          <Picker.Item label="Gênero" value="" />
+          <Picker.Item label="Selecione o Gênero" value="" />
           <Picker.Item label="Masculino" value="Masculino" />
           <Picker.Item label="Feminino" value="Feminino" />
           <Picker.Item label="Outro" value="Outro" />
         </Picker>
       </View>
 
-      <Input
-        label="Peso"
-        placeholder="Peso (kg)"
-        value={weight}
-        onChangeText={setWeight}
-        keyboardType="numeric"
-      />
-
       <CheckBox
         title="Manter conectado"
         checked={isChecked}
         onPress={() => setIsChecked(!isChecked)}
-        checkedColor="#084F8C"
-        uncheckedColor="#084F8C"
-        containerStyle={{ backgroundColor: 'transparent', borderWidth: 0, padding: 0, margin: 0 }}
-        textStyle={{ fontSize: 14, color: '#084F8C' }}
+        checkedColor="#666666"
+        uncheckedColor="#999999"
+        containerStyle={{ 
+          backgroundColor: 'transparent', 
+          borderWidth: 0, 
+          padding: 0, 
+          margin: 0,
+          alignSelf: 'center',
+          marginTop: 5,
+        }}
+        textStyle={{ fontSize: 14, color: '#666666', fontWeight: '400' }}
       />
     </View>
   );
@@ -89,15 +102,24 @@ export default function Step2Form({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 20,
+    gap: 16,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  halfWidth: {
+    flex: 1,
   },
   pickerContainer: {
     backgroundColor: 'white',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#084F8C',
-    marginBottom: 10,
     overflow: 'hidden',
+    height: 50,
+    justifyContent: 'center',
   },
   pickerLabel: {
     fontSize: 13,
@@ -109,6 +131,5 @@ const styles = StyleSheet.create({
   picker: {
     height: 50,
     color: '#084F8C',
-    marginHorizontal: 10,
   },
 });

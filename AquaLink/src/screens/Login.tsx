@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Image, GestureResponderEvent, StyleSheet, Dimensions } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, Image, GestureResponderEvent, StyleSheet, Dimensions, StatusBar, Keyboard, Animated, Platform } from "react-native";
 import { CheckBox } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,7 +13,6 @@ import Input from "../components/Input";
 
 const { width, height } = Dimensions.get('window');
 
-
 export default function Login() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
@@ -21,6 +20,57 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
   const [checked, setChecked] = useState<boolean>(false);
+
+  // Animação para o header quando o teclado aparece
+  const [headerOpacity] = useState(new Animated.Value(1));
+  const [headerHeight] = useState(new Animated.Value(1));
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Listener para detectar quando o teclado aparece/desaparece
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        setIsKeyboardVisible(true);
+        Animated.parallel([
+          Animated.timing(headerOpacity, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: false,
+          }),
+          Animated.timing(headerHeight, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: false,
+          }),
+        ]).start();
+      }
+    );
+
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setIsKeyboardVisible(false);
+        Animated.parallel([
+          Animated.timing(headerOpacity, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: false,
+          }),
+          Animated.timing(headerHeight, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: false,
+          }),
+        ]).start();
+      }
+    );
+
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
+  }, []);
 
   const handleLogin = async (e: GestureResponderEvent) => {
     e.preventDefault?.(); 
@@ -46,17 +96,37 @@ export default function Login() {
 
   return (
     <LinearGradient
-      colors={["#084F8C", "#27D5E8", "#FFFFFF"]}
-      locations={[0.2, 0.8, 1]}
+      colors={["#1B5E8C", "#1A7BA8", "#1995BC", "#1BAFC8", "#E8F7FA", "#FFFFFF"]}
+      locations={[0, 0.05, 0.10, 0.18, 0.25, 0.30]}
       start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 0.20 }}
+      end={{ x: 0, y: 1 }}
       style={styles.container}
     >
+      <StatusBar 
+        backgroundColor="#1B5E8C" 
+        barStyle="light-content" 
+        translucent={false}
+      />
       <View style={styles.content}>
-        <View style={styles.headerContainer}>
+        <Animated.View 
+          style={[
+            styles.headerContainer,
+            {
+              opacity: headerOpacity,
+              height: headerHeight.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, height * 0.15],
+              }),
+              marginBottom: headerHeight.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 40],
+              }),
+            }
+          ]}
+        >
           <Text style={styles.title}>Acesse</Text>
           <Text style={styles.subtitle}>com E-mail e senha</Text>
-        </View>
+        </Animated.View>
 
         <View style={styles.formContainer}>
           <Input

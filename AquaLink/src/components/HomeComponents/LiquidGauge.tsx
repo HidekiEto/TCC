@@ -1,4 +1,7 @@
 import React, { useEffect } from "react";
+import { useContext } from "react";
+import { DbContext } from "../../contexts/DbContext";
+import { Button } from "react-native";
 import { View } from "react-native";
 import {
   Canvas,

@@ -1,8 +1,10 @@
 import React from 'react';
 import Slider from 'react-native-app-intro-slider';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { RenderComponentSlides } from './RenderComponentSlides';
 import { useAppFonts } from '../../hooks/useAppFonts';
+
+const { width, height } = Dimensions.get('window');
 
 interface Slide {
   key: string;

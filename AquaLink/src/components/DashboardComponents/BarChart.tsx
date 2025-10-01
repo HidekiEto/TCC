@@ -1,126 +1,73 @@
+
 import React from 'react';
 import { BarChart } from "react-native-gifted-charts";
-import { View, Text } from "react-native";
+import { View, Text, Dimensions } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+import { calcularMetaSemanalAgua, useConsumoUltimasSemanas } from '../Goals/WeeklyIntake';
 
-export const BarChartComponent = () => {
-    const barData = [
-       
-        {
-          value: 15,
-          label: 'Semana 1',
-          spacing: 2,
-          labelWidth: 70,
-          labelTextStyle: {color: 'gray'},
-          frontColor: '#29EBD5',
-          sideColor: '#20D0BC',
-          topColor: '#4EF0E0',
-        },
-        {value: 12, frontColor: '#082862', sideColor: '#061B4A', topColor: '#1C3A75'},
-       
-        {
-          value: 18,
-          label: 'Semana 2',
-          spacing: 2,
-          labelWidth: 70,
-          labelTextStyle: {color: 'gray'},
-          frontColor: '#29EBD5',
-          sideColor: '#20D0BC',
-          topColor: '#4EF0E0',
-        },
-        {value: 16, frontColor: '#082862', sideColor: '#061B4A', topColor: '#1C3A75'},
-       
-        {
-          value: 14,
-          label: 'Semana 3',
-          spacing: 2,
-          labelWidth: 70,
-          labelTextStyle: {color: 'gray'},
-          frontColor: '#29EBD5',
-          sideColor: '#20D0BC',
-          topColor: '#4EF0E0',
-        },
-        {value: 13, frontColor: '#082862', sideColor: '#061B4A', topColor: '#1C3A75'},
-      
-        {
-          value: 17,
-          label: 'Semana 4',
-          spacing: 2,
-          labelWidth: 70,
-          labelTextStyle: {color: 'gray'},
-          frontColor: '#29EBD5',
-          sideColor: '#20D0BC',
-          topColor: '#4EF0E0',
-        },
-        {value: 19, frontColor: '#082862', sideColor: '#061B4A', topColor: '#1C3A75'},
-    ];
+export const BarChartComponent: React.FC<{ userData?: any }> = ({ userData }) => {
+  const { width, height } = Dimensions.get('window');
+  // Consumo real das últimas 4 semanas
+  const consumoSemanal = useConsumoUltimasSemanas(userData?.uid);
+  // Meta semanal do usuário
+  const metaSemanal = userData ? calcularMetaSemanalAgua(userData) : 0;
 
-    const renderTitle = () => {
-        return(
-          <View style={{alignItems: 'center', marginTop: 10}}>
+  // Log para depuração
+  console.log('[BarChart] ConsumoSemanal:', consumoSemanal);
+  console.log('[BarChart] MetaSemanal:', metaSemanal);
+
+  const renderTitle = () => (
+    <View style={{ alignItems: 'center', marginTop: 10 }}>
+      <Text
+        style={{
+          color: '#082862',
+          fontSize: 18,
+          fontWeight: 'bold',
+          textAlign: 'center',
+        }}>
+        <Ionicons name="water" size={20} color="#082862" />
+        Relatório de Hidratação
+      </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-evenly',
+          marginTop: 15,
+        }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          
           <Text
             style={{
-              color: '#082862',
-              fontSize: 18,
+              color: '#666',
+              fontSize: 12,
               fontWeight: 'bold',
-              textAlign: 'center',
             }}>
-            <Ionicons name="water" size={20} color="#082862" />    
-            Relatório de Hidratação
+            Meta semanal: <Text style={{ color: '#084F8C', fontWeight: 'bold' }}>{metaSemanal ? `${metaSemanal.toFixed(0)} ML` : '--'}</Text>
           </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-evenly',
-              marginTop: 15,
-            }}>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <View
-                style={{
-                  height: 10,
-                  width: 10,
-                  borderRadius: 5,
-                  backgroundColor: '#29EBD5',
-                  marginRight: 8,
-                }}
-              />
-              <Text
-                style={{
-                  width: 80,
-                  height: 16,
-                  color: '#666',
-                  fontSize: 12,
-                }}>
-                Meta Semanal
-              </Text>
-            </View>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <View
-                style={{
-                  height: 10,
-                  width: 10,
-                  borderRadius: 5,
-                  backgroundColor: '#082862',
-                  marginRight: 8,
-                }}
-              />
-              <Text
-                style={{
-                  width: 80,
-                  height: 16,
-                  color: '#666',
-                  fontSize: 12,
-                }}>
-                Desempenho
-              </Text>
-            </View>
-          </View>
         </View>
-        )
-    }
+      </View>
+    </View>
+  );
 
-    return (
-        <View style={{
+  // Dados para o gráfico: cada barra representa uma semana
+  const barData = consumoSemanal.map((v: number, i: number) => {
+    const litros = v / 1000;
+    return {
+      value: litros,
+      label: `Semana ${i + 1}`,
+      frontColor: '#177AD5',
+      topLabelComponent: () => (
+        <Text style={{ color: '#177AD5', fontSize: 12, fontWeight: 'bold', marginBottom: 4 }}>
+          {`${Math.round(litros)}L`}
+        </Text>
+      ),
+    };
+  });
+
+  return (
+     <View style={{
           paddingBottom: 30,
           backgroundColor: 'white',
               borderRadius: 12,
@@ -140,17 +87,19 @@ export const BarChartComponent = () => {
             <BarChart
             showFractionalValues
             showYAxisIndices
-            hideRules
-            noOfSections={4}
-            maxValue={20}
+            // hideRules
+            noOfSections={3}
+            maxValue={30}
             data={barData}
-            barWidth={25}
-            spacing={15}
-            isThreeD 
+            barWidth={width * 0.08}
+            spacing={width * 0.05}
             side="right"
-            height={180}
-            yAxisLabelSuffix=" L"
+            height={height * 0.25}
+            yAxisLabelTexts={["0L", "10L", "20L", "30L"]}
+            width={width * 0.7}
+            xAxisLabelTextStyle={{ fontSize: Math.round(width * 0.028), color: '#000', width: width * 0.15, textAlign: 'center', transform: [{ rotate: '-20deg' }] }}
             />
+         
         </View>
-    );
+  );
 }

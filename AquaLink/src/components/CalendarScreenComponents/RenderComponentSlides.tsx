@@ -1,4 +1,3 @@
-
 import React from "react";
 import { View, Text, Dimensions, StyleSheet } from "react-native";
 import { LinearGradient, LinearGradientProps } from "expo-linear-gradient";
@@ -14,7 +13,7 @@ interface RenderComponentSlidesProps {
   item: SlideItem;
 }
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
 export const RenderComponentSlides: React.FC<RenderComponentSlidesProps> = ({ item }) => {
   const gradientColors: LinearGradientProps["colors"] =

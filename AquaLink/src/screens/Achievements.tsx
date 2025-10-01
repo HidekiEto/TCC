@@ -1,20 +1,21 @@
-import { Text, View, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { Text, View, TouchableOpacity, StyleSheet, Alert, Dimensions } from "react-native";
 import BottomMenu from "../components/BottomNavigation";
 import { getAuth, signOut } from "firebase/auth";
+
+const { width, height } = Dimensions.get('window');
 
 export default function Achievements() {
     const handleLogout = async () => {
         try {
             const auth = getAuth();
             await signOut(auth);
-            Alert.alert("Logout", "Você saiu do aplicativo.");
+            Alert.alert("Logout", "Você saiu da sua conta.");
         } catch (e) {
             Alert.alert("Erro", "Não foi possível sair.");
         }
     };
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Conquistas</Text>
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                 <Text style={styles.logoutText}>LOGOUT</Text>
             </TouchableOpacity>
@@ -31,13 +32,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#fff',
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginBottom: 40,
-        marginTop: 40,
-        color: '#084F8C',
     },
     logoutButton: {
         backgroundColor: '#E53935',

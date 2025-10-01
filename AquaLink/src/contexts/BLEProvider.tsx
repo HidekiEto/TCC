@@ -19,6 +19,7 @@ interface BLEContextType {
   foundDevices: Device[];
   connectedDevice: Device | null;
   writeToDevice: (data: string) => Promise<void>;
+  batteryLevel: number | null; 
 }
 
 const BLEContext = createContext<BLEContextType | undefined>(undefined);
@@ -49,7 +50,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [foundDevices, setFoundDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null); 
 
   const dataContext = useDataContext();
   const dbContext = useDbContext();
@@ -200,6 +201,12 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
                   if (decoded.trim().startsWith("{")) {
                     const data = JSON.parse(decoded);
                     const volume = typeof data.volume === "number" ? data.volume : null;
+                    const battery = typeof data.battery === "number" ? data.battery : null; // NOVO
+
+                    if (battery !== null) {
+                      setBatteryLevel(battery); // NOVO
+                      console.log("Nível da bateria recebido:", battery);
+                    }
 
                     if (dataContext && volume !== null) {
                       if (volumeAnteriorRef.current !== null) {
@@ -310,6 +317,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
     foundDevices,
     connectedDevice,
     writeToDevice,
+    batteryLevel,
   };
 
   return <BLEContext.Provider value={value}>{children}</BLEContext.Provider>;

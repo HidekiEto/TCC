@@ -1,4 +1,4 @@
-  InitialSlidesScreen: undefined;
+InitialSlidesScreen: undefined;
   SplashScreen: undefined;
 export type RootStackParamList = {
   SplashScreen: undefined;
@@ -12,4 +12,5 @@ export type RootStackParamList = {
   Achievements: undefined;
   Dashboard: undefined;
   Info: undefined;
+  EditProfile: undefined;
 };

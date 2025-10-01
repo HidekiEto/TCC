@@ -1,16 +1,91 @@
 import React, { useCallback } from "react";
-import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity, Modal, ActivityIndicator } from "react-native";
+import { useEffect, useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import dayjs from 'dayjs';
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../config/firebase";
+import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity, Modal, ActivityIndicator, Dimensions } from "react-native";
+const { width, height } = Dimensions.get("window");
 import BottomNavigation from "../components/BottomNavigation";
 import { MaterialIcons, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { BarChartComponent } from "../components/DashboardComponents/BarChart";
+import { calcularMetaSemanalAgua, useConsumoUltimasSemanas } from '../components/Goals/WeeklyIntake';
 import { useBLE } from "../contexts/BLEProvider";
-import { useState } from "react";
 import { useDbContext } from "../hooks/useDbContext";
 
 
 export default function Dashboard() {
+  // Relatório semanal de hidratação
+  const [profileData, setProfileData] = useState<any>(null);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        try {
+          const { doc, getDoc } = await import('firebase/firestore');
+          const { firestore } = await import('../config/firebase');
+          const docRef = doc(firestore, "users", currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          let data = docSnap.exists() ? docSnap.data() : {};
+          setProfileData({
+            peso: Number(data.weight) || 70,
+            altura: Number(data.height) || 170,
+            genero: (data.gender || 'masculino').toLowerCase(),
+            idade: data.birthdate ? (new Date().getFullYear() - new Date(data.birthdate).getFullYear()) : 30,
+            uid: currentUser.uid,
+          });
+        } catch (e) {
+          setProfileData(null);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Atualiza gráfico ao voltar para tela
+  const { useFocusEffect } = require('@react-navigation/native');
+  useFocusEffect(
+    React.useCallback(() => {
+      // Força atualização do BarChartComponent ao voltar para tela
+      setProfileData((prev: any) => prev ? { ...prev } : prev);
+    }, [profileData?.uid])
+  );
+
+
+  // Consumo mensal e comparação
+  const [consumoMensal, setConsumoMensal] = useState(0);
+  const [consumoMensalAnterior, setConsumoMensalAnterior] = useState(0);
+
+  useEffect(() => {
+    async function calcularConsumoMensal() {
+      if (!profileData?.uid) return;
+      let leituras = [];
+      try {
+        const cacheStr = await AsyncStorage.getItem(`leiturasCache_${profileData.uid}`);
+        leituras = cacheStr ? JSON.parse(cacheStr) : [];
+      } catch (e) {
+        leituras = [];
+      }
+      const mesAtual = dayjs().format('YYYY-MM');
+      const mesAnterior = dayjs().subtract(1, 'month').format('YYYY-MM');
+      let somaAtual = 0;
+      let somaAnterior = 0;
+      for (const leitura of leituras) {
+        if (typeof leitura.consumo === 'number' && leitura.timestamp) {
+          const mesLeitura = dayjs(leitura.timestamp).format('YYYY-MM');
+          if (mesLeitura === mesAtual) {
+            somaAtual += leitura.consumo;
+          } else if (mesLeitura === mesAnterior) {
+            somaAnterior += leitura.consumo;
+          }
+        }
+      }
+      setConsumoMensal(somaAtual);
+      setConsumoMensalAnterior(somaAnterior);
+    }
+    calcularConsumoMensal();
+  }, [profileData]);
   const { sincronizarCacheComBanco } = useDbContext();
-  const { scanForDevices, isScanning, isConnected, connectedDevice, foundDevices, connectToDevice, disconnectDevice } = useBLE();
+  const { scanForDevices, isScanning, isConnected, connectedDevice, foundDevices, connectToDevice, disconnectDevice, batteryLevel } = useBLE();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleScan = () => {
@@ -90,7 +165,9 @@ export default function Dashboard() {
           <Text style={styles.dashboardText}>
             Dashboard
             <Text style={styles.dashboardSubtext}> / Visão Geral</Text>
-            <Text style={styles.periodText}> Últimos 30 dias </Text>
+            <Text style={styles.periodText}>
+              {`Últimos ${dayjs().daysInMonth()} dias`}
+            </Text>
             <MaterialCommunityIcons name="dots-vertical" size={24} color="black" />
           </Text>
         </View>
@@ -101,13 +178,18 @@ export default function Dashboard() {
             <Ionicons name="water" size={20} color="#082862" />
             <Text style={styles.cardTitle}>Total Ingerido</Text>
           </View>
-          <Text style={styles.totalValue}>37.396 mL</Text>
-          <Text style={styles.comparison}>24,5 mL mais que passado</Text>
+          <Text style={styles.totalValue}>{consumoMensal} mL</Text>
+          <Text style={styles.comparison}>
+            {consumoMensalAnterior > 0
+              ? `${(consumoMensal - consumoMensalAnterior).toFixed(1)} mL ${consumoMensal >= consumoMensalAnterior ? 'mais' : 'menos'} que passado`
+              : '0 mL mais que passado'}
+          </Text>
         </View>
 
 
         <View style={styles.chartContainer}>
-          <BarChartComponent />
+          {/* Passa os dados do usuário para o BarChartComponent */}
+          <BarChartComponent userData={profileData} />
         </View>
 
 
@@ -164,10 +246,11 @@ export default function Dashboard() {
             <MaterialCommunityIcons name="information" size={20} color="#082862" />
             <Text style={styles.cardTitle}>Sua Garrafa</Text>
           </View>
-          <Text style={styles.garrafaSubtitle}>AquaLink Classic</Text>
+          
 
           <View style={styles.garrafaContent}>
             <View style={styles.bottleImageContainer}>
+              <Text style={styles.garrafaSubtitle}>AquaLink Classic</Text>
               <Image
                 source={require('../assets/bottle.png')}
                 style={styles.bottleImage}
@@ -176,10 +259,15 @@ export default function Dashboard() {
               <Text style={styles.cadastradaText}>Cadastrada em: 28/08/2025</Text>
             </View>
 
+            {/* Linha vertical separadora */}
+            <View style={styles.verticalSeparator} />
+
             <View style={styles.garrafaInfo}>
               <View style={styles.garrafaInfoRow}>
                 <View style={styles.statusIndicator} />
-                <Text style={styles.garrafaInfoText}>Bateria: 87%</Text>
+                <Text style={styles.garrafaInfoText}>
+                  Bateria: {batteryLevel !== null ? `${batteryLevel}%` : '---'}
+                </Text>
               </View>
               <View style={styles.garrafaInfoRow}>
                 <View style={[styles.statusIndicator, { backgroundColor: '#29EBD5' }]} />
@@ -206,7 +294,7 @@ export default function Dashboard() {
                   style={[styles.resincronizarButton, { backgroundColor: '#2196F3' }]}
                   onPress={() => {
                     if (connectedDevice?.id) {
-                      sincronizarCacheComBanco();
+                      sincronizarCacheComBanco(connectedDevice?.id);
                     } else {
                       alert("Nenhuma garrafa conectada.");
                     }
@@ -313,51 +401,57 @@ const modalStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+  verticalSeparator: {
+    width: 1,
+    backgroundColor: '#ccc',
+    marginHorizontal: width * 0.02,
+    alignSelf: 'stretch',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F5F7FA',
   },
   scrollContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: width * 0.04,
   },
   header: {
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingTop: height * 0.03,
+    paddingBottom: height * 0.012,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: Math.round(width * 0.045),
     fontWeight: '600',
     color: '#333',
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     fontWeight: '200',
     color: '#666',
   },
   dashboardTitle: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
-    paddingHorizontal: 20,
+    marginVertical: height * 0.025,
+    paddingHorizontal: width * 0.05,
   },
   dashboardText: {
-    fontSize: 16,
+    fontSize: Math.round(width * 0.04),
     fontWeight: '200',
-    marginLeft: 8,
+    marginLeft: width * 0.02,
     color: '#333',
   },
   dashboardSubtext: {
     fontWeight: '400',
   },
   periodText: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
   },
   card: {
     backgroundColor: 'white',
     borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
+    padding: width * 0.04,
+    marginVertical: height * 0.01,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -370,39 +464,39 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: height * 0.015,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: Math.round(width * 0.045),
     fontWeight: '600',
-    marginLeft: 8,
+    marginLeft: width * 0.02,
     color: '#082862',
   },
   totalValue: {
-    fontSize: 32,
+    fontSize: Math.round(width * 0.08),
     fontWeight: 'bold',
     color: '#082862',
     textAlign: 'center',
-    marginVertical: 8,
+    marginVertical: height * 0.01,
   },
   comparison: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     color: '#666',
     textAlign: 'center',
   },
   chartContainer: {
-    marginVertical: 8,
+    marginVertical: height * 0.01,
   },
   nextReminder: {
-    fontSize: 16,
+    fontSize: Math.round(width * 0.04),
     fontWeight: '500',
     color: '#333',
-    marginBottom: 8,
+    marginBottom: height * 0.01,
   },
   reminderSubtitle: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     color: '#666',
-    marginBottom: 12,
+    marginBottom: height * 0.015,
   },
   timeOptions: {
     flexDirection: 'row',
@@ -413,76 +507,77 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timeCircle: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: width * 0.02,
+    height: width * 0.02,
+    borderRadius: width * 0.01,
     backgroundColor: '#29EBD5',
-    marginRight: 6,
+    marginRight: width * 0.015,
   },
   timeText: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     color: '#333',
   },
   calculationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: height * 0.008,
   },
   calculationTime: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     color: '#666',
   },
   calculationValue: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     fontWeight: '500',
     color: '#333',
   },
   batteryInfo: {
-    marginBottom: 16,
+    marginBottom: height * 0.02,
   },
   batteryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: height * 0.01,
   },
   batteryText: {
-    fontSize: 14,
-    marginLeft: 6,
+    fontSize: Math.round(width * 0.035),
+    marginLeft: width * 0.015,
     color: '#4CAF50',
   },
   capacityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: height * 0.01,
   },
   capacityText: {
-    fontSize: 14,
-    marginLeft: 6,
+    fontSize: Math.round(width * 0.035),
+    marginLeft: width * 0.015,
     color: '#29EBD5',
   },
   capacityValue: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     color: '#666',
-    marginBottom: 4,
+    marginBottom: height * 0.005,
   },
   capacityAmount: {
-    fontSize: 18,
+    fontSize: Math.round(width * 0.045),
     fontWeight: '600',
     color: '#082862',
   },
   bottleImageContainer: {
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: height * 0.015,
   },
   bottleImage: {
-    width: 160,
-    height: 120,
+    width: width * 0.45,
+    height: height * 0.18,
   },
   garrafaSubtitle: {
-    fontSize: 16,
+    fontSize: Math.round(width * 0.04),
     fontWeight: '600',
     color: '#082862',
-    marginBottom: 16,
+    marginBottom: height * 0.02,
+    textAlign: 'center',
   },
   garrafaContent: {
     flexDirection: 'row',
@@ -490,87 +585,86 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   cadastradaText: {
-    fontSize: 12,
+    fontSize: Math.round(width * 0.03),
     color: '#999',
-    marginTop: 8,
+    marginTop: height * 0.01,
     textAlign: 'center',
   },
   garrafaInfo: {
     flex: 1,
-    marginLeft: 20,
+    marginLeft: width * 0.01,
   },
   garrafaInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: height * 0.01,
   },
   statusIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: width * 0.02,
+    height: width * 0.02,
+    borderRadius: width * 0.01,
     backgroundColor: '#082862',
-    marginRight: 8,
+    marginRight: width * 0.02,
   },
   garrafaInfoText: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     color: '#333',
     fontWeight: '500',
   },
   garrafaInfoValue: {
-    fontSize: 16,
+    fontSize: Math.round(width * 0.04),
     fontWeight: '600',
     color: '#082862',
-    marginLeft: 16,
-    marginBottom: 8,
+    marginLeft: width * 0.04,
+    marginBottom: height * 0.01,
   },
   resincronizarButton: {
     backgroundColor: '#082862',
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: width * 0.04,
+    paddingVertical: height * 0.01,
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    marginTop: 12,
+    marginTop: height * 0.015,
   },
   resincronizarText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     fontWeight: '500',
-    marginLeft: 6,
+    marginLeft: width * 0.015,
   },
   infoCard: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: height * 0.02,
     backgroundColor: '#F8F9FA',
     borderRadius: 8,
-    padding: 12,
+    padding: width * 0.03,
   },
   infoImagePlaceholder: {
-    width: 60,
-    height: 60,
+    width: width * 0.15,
+    height: width * 0.15,
     backgroundColor: '#E3F2FD',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: width * 0.03,
   },
   infoContent: {
     flex: 1,
   },
   infoTitle: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     fontWeight: '500',
     color: '#333',
-    marginBottom: 4,
-    lineHeight: 18,
+    marginBottom: height * 0.005,
+    lineHeight: Math.round(width * 0.045),
   },
   infoLink: {
-    fontSize: 12,
+    fontSize: Math.round(width * 0.03),
     color: '#29EBD5',
   },
   bottomSpace: {
-    height: 100,
+    height: height * 0.12,
   },
-
 });

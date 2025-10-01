@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, Image, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, Animated, Dimensions, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from "react-native-animatable";
 import Title from './Title';
-
 const { width, height } = Dimensions.get('window');
 
 interface SlidesProps {
@@ -137,7 +136,8 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
       return (
         <View key={item.key} style={styles.slide}>
           <LinearGradient
-            colors={["#084F8C", "#27D5E8"]}
+            colors={["#1B5E8C", "#1A7BA8", "#1995BC", "#1BAFC8", "#1DC7D4", "#20D5DF"]}
+            locations={[0, 0.1, 0.25, 0.45, 0.7, 1]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={styles.slideGradient}
@@ -253,12 +253,41 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
       );
     }
 
+    // Define a direção do gradiente para cada slide
+    const getGradientDirection = () => {
+      switch(index) {
+        case 0: // Slide 1: De cima para baixo (vertical)
+          return {
+            start: { x: 0, y: 0 },
+            end: { x: 0, y: 1 }
+          };
+        case 1: // Slide 2: Diagonal do topo-esquerda para baixo-direita
+          return {
+            start: { x: 0, y: 0 },
+            end: { x: 1, y: 1 }
+          };
+        case 2: // Slide 3: Diagonal do topo-direita para baixo-esquerda
+          return {
+            start: { x: 1, y: 0 },
+            end: { x: 0, y: 1 }
+          };
+        default:
+          return {
+            start: { x: 0, y: 0 },
+            end: { x: 0, y: 1 }
+          };
+      }
+    };
+
+    const gradientDirection = getGradientDirection();
+
     return (
       <View key={item.key} style={styles.slide}>
         <LinearGradient
-          colors={["#084F8C", "#27D5E8"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
+          colors={["#1B5E8C", "#1A7BA8", "#1995BC", "#1BAFC8", "#1DC7D4", "#20D5DF"]}
+          locations={[0, 0.1, 0.25, 0.45, 0.7, 1]}
+          start={gradientDirection.start}
+          end={gradientDirection.end}
           style={styles.slideGradient}
         >
           <Animated.View 
@@ -382,6 +411,11 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+      <StatusBar 
+        backgroundColor="#1B5E8C" 
+        barStyle="light-content" 
+        translucent={false}
+      />
       <ScrollView
         ref={scrollViewRef}
         horizontal

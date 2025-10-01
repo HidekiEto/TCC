@@ -11,7 +11,6 @@ import { useAppFonts } from "../hooks/useAppFonts";
 
 const { width, height } = Dimensions.get('window');
 
-
 const BOTTOM_NAV_HEIGHT = 60;
 const BOTTOM_NAV_PADDING = 30;
 const HEADER_HEIGHT = 100;

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { View, Text, TextInput, StyleSheet, Dimensions } from 'react-native';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 interface InputProps {
   label: string;

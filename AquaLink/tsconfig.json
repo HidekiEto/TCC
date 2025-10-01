@@ -13,7 +13,7 @@
     "**/*.ts",
     "**/*.tsx",
     "src/config/firebase.js"
-  ],
+, "src/components/Goals/DailyIntake.tsx"  ],
   "exclude": [
     "node_modules",
     "babel.config.js",

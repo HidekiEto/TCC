@@ -1,8 +1,7 @@
 import { LineChart } from "react-native-gifted-charts";
 import { View, StyleSheet, Dimensions } from "react-native";
 
-const { width } = Dimensions.get("window");
-
+const { width, height } = Dimensions.get("window");
 
 const COLORS = {
   primary: "#27D5E8",
@@ -13,33 +12,32 @@ const COLORS = {
   grid: "#E8E8E8",
 };
 
-export const Graphic = () => {
-  const data = [
-    { value: 2200, label: "Seg" },
-    { value: 2100, label: "Ter" },
-    { value: 2400, label: "Qua" },
-    { value: 2150, label: "Qui" },
-    { value: 2500, label: "Sex" },
-    { value: 2300, label: "Sáb" },
-    { value: 2000, label: "Dom" },
-  ];
+export const Graphic = ({ data = [], metaDiaria = 0 }) => {
+  // data: array de valores diários da semana, ex: [2200, 2100, ...]
+  const diasSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  const chartData = diasSemana.map((dia, i) => ({
+    value: data[i] || 0,
+    label: dia,
+  }));
 
-
-  const yLabels = ["0", "500", "1000", "1500", "2000", "2500"];
+  // Gera labels do eixo Y baseado na meta
+  const maxY = Math.max(metaDiaria, ...data, 2500);
+  const step = Math.ceil(maxY / 5 / 100) * 100;
+  const yLabels = Array.from({ length: 6 }, (_, i) => String(i * step));
 
   return (
     <View style={styles.container}>
       <LineChart
-        data={data}
-        height={220}
-        width={width - 40}
-        spacing={45}
-        initialSpacing={20}
+        data={chartData}
+        height={height * 0.28}
+        width={width * 0.92}
+        spacing={width * 0.11}
+        initialSpacing={width * 0.045}
         hideDataPoints={false}
-        dataPointsHeight={6}
-        dataPointsWidth={6}
+        dataPointsHeight={height * 0.008}
+        dataPointsWidth={height * 0.008}
         dataPointsColor={COLORS.secundary}
-        dataPointsRadius={3}
+        dataPointsRadius={height * 0.004}
         color={COLORS.primary}
         thickness={3}
         areaChart
@@ -51,8 +49,8 @@ export const Graphic = () => {
         xAxisLabelTextStyle={styles.axisText}
         yAxisTextStyle={styles.axisText}
         yAxisLabelTexts={yLabels}
-        maxValue={2600}
-        stepValue={500}
+        maxValue={maxY}
+        stepValue={step}
         noOfSections={5}
         hideYAxisText={false}
         yAxisThickness={0}
@@ -63,7 +61,7 @@ export const Graphic = () => {
           stroke: COLORS.grid,
         }}
         hideRules={false}
-        rulesLength={width - 80}
+        rulesLength={width * 0.85}
         isAnimated
         animateOnDataChange
         animationDuration={800}

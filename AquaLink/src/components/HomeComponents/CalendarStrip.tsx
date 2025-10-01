@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, FlatList, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Dimensions } from "react-native";
+
+const { width, height } = Dimensions.get('window');
 
 type DayItem = {
   id: string;
@@ -93,7 +95,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     alignItems: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 0,
   },
   dayContainer: {
     alignItems: 'center',
@@ -105,28 +107,28 @@ const styles = StyleSheet.create({
   },
   activePillBackground: {
     backgroundColor: '#1E3A8A',
-    borderTopLeftRadius: 5,
-    borderTopRightRadius: 5,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
-    width: 50,
-    height: 65,
+    borderTopLeftRadius: width * 0.012,
+    borderTopRightRadius: width * 0.012,
+    borderBottomLeftRadius: width * 0.06,
+    borderBottomRightRadius: width * 0.06,
+    width: width * 0.13,
+    height: height * 0.08,
     alignItems: 'center',
     paddingTop: 0,
-    paddingBottom: 12,
-    marginTop: 25,
+    paddingBottom: height * 0.015,
+    marginTop: height * 0.03,
   },
   activeCircle: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: width * 0.13,
+    height: width * 0.13,
+    borderRadius: width * 0.065,
     borderWidth: 1,
     borderColor: '#60A5FA',
     backgroundColor: 'white',
     position: 'absolute',
-    top: -25,
+    top: -height * 0.03,
     zIndex: 2,
   },
   activeNumber: {
@@ -152,13 +154,13 @@ const styles = StyleSheet.create({
   inactiveCircle: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: width * 0.13,
+    height: width * 0.13,
+    borderRadius: width * 0.065,
     borderWidth: 1,
     borderColor: '#60A5FA',
     backgroundColor: 'white',
-    marginBottom: 8,
+    marginBottom: height * 0.01,
   },
   inactiveNumber: {
     fontSize: 16,

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Modal, Portal, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { View, TouchableOpacity, ViewStyle, StyleProp, StyleSheet } from "react-native";
+import { View, TouchableOpacity, ViewStyle, StyleProp, StyleSheet, Dimensions } from "react-native";
+
+const { width, height } = Dimensions.get('window');
 
 interface ModalComponentProps {
   title: string;
@@ -81,10 +83,10 @@ const ModalComponent: React.FC<ModalComponentProps> = ({
 const styles = StyleSheet.create({
   modalContainer: {
     backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 16,
-    width: '90%',
-    maxWidth: 400,
+    padding: width * 0.05,
+    borderRadius: width * 0.04,
+    width: width * 0.9,
+    maxWidth: width * 0.95,
     alignSelf: 'center',
   },
   modalContent: {

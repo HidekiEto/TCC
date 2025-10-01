@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Text, StyleSheet, Dimensions } from "react-native";
 import { Ionicons, FontAwesome, Octicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute, NavigationProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../types/navigation";
@@ -36,6 +36,8 @@ const items: MenuItem[] = [
   { key: "profile", iconName: "user-o", iconActiveName: "user", type: "fa", label: "Perfil" },
   { key: "achievements", iconName: "trophy-outline", iconActiveName: "trophy", type: "ion", label: "Conquistas" },
 ];
+
+const { width, height } = Dimensions.get('window');
 
 const BottomMenu: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();

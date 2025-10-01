@@ -28,23 +28,41 @@ const LiquidGauge = React.lazy(() =>
   })
 );
 import BottomNavigation from "../components/BottomNavigation";
-import { calcularMetaDiariaAgua } from '../components/GoalInsume';
+import { calcularMetaDiariaAgua } from '../components/Goals/DailyIntake';
 import { useBLE } from "../contexts/BLEProvider";
 import { useDbContext } from "../hooks/useDbContext";
 
 export default function Home() {
 
   const [percent, setPercent] = useState(0);
-  const { getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia } = useDbContext();
+  const { getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia, adicionarLeituraSimulada } = useDbContext();
   const [consumoAcumulado, setConsumoAcumulado] = useState(0);
-   const { writeToDevice, isConnected } = useBLE();
+  const { writeToDevice, isConnected, batteryLevel } = useBLE();
 
-  const userData = {
-    peso: 70,
-    altura: 175,
-    genero: 'masculino' as 'masculino',
-    idade: 30,
-  };
+  const [profileData, setProfileData] = useState<any>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        try {
+          const { doc, getDoc } = await import('firebase/firestore');
+          const { firestore } = await import('../config/firebase');
+          const docRef = doc(firestore, "users", currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          let data = docSnap.exists() ? docSnap.data() : {};
+          setProfileData({
+            peso: Number(data.weight) || 70,
+            altura: Number(data.height) || 170,
+            genero: (data.gender || 'masculino').toLowerCase(),
+            idade: data.birthdate ? (new Date().getFullYear() - new Date(data.birthdate).getFullYear()) : 30,
+          });
+        } catch (e) {
+          setProfileData(null);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
    useEffect(() => {
     getConsumoAcumuladoNoCache().then((acumulado) => {
@@ -76,7 +94,7 @@ export default function Home() {
     checkKeepLoggedIn();
   }, []);
   const [waterValue, setWaterValue] = useState(44); // porcentagem
-  const goalMl = calcularMetaDiariaAgua(userData); // meta diária dinâmica
+  const goalMl = profileData ? calcularMetaDiariaAgua(profileData) : 2000; // meta diária dinâmica
   const [user, setUser] = useState<User | null>(null);
   const [showInitialSlides, setShowInitialSlides] = useState<boolean>(false);
   const [loadingSlides, setLoadingSlides] = useState(true);
@@ -138,8 +156,13 @@ export default function Home() {
     return "Usuário";
   };
 
-  const waterIncrement = () => {
-    setWaterValue((prev) => Math.min(prev + 30, 100));
+  const waterIncrement = async () => {
+    await adicionarLeituraSimulada(250); // Adiciona 250mL simulados
+    // Atualiza valores do cache e percentuais
+    const acumulado = await getConsumoAcumuladoNoCache();
+    setWaterValue(acumulado);
+    setConsumoAcumulado(acumulado);
+    setPercent(Math.round((acumulado / goalMl) * 100));
   };
 
   if (loadingSlides) {
@@ -220,17 +243,29 @@ export default function Home() {
           <ModalComponent
             title="Bateria"
             icon="battery"
-            info1="Status da bateria: 53%"
+            info1={`Status da bateria: ${batteryLevel !== null ? `${batteryLevel}%` : '---'}`}
             info2="Água restante na garrafa: 160 mL"
             info3="Tempo estimado de uso: 8 horas"
             buttonStyle={styles.batteryCard}
           >
             <View style={styles.cardContent}>
               <View style={styles.batteryContent}>
-                <MaterialCommunityIcons name="battery-60" size={60} color="#1976D2" style={styles.batteryIcon} />
+                <MaterialCommunityIcons name={
+                  batteryLevel !== null
+                    ? batteryLevel > 80
+                      ? "battery"
+                      : batteryLevel > 60
+                      ? "battery-80"
+                      : batteryLevel > 40
+                      ? "battery-60"
+                      : batteryLevel > 20
+                      ? "battery-40"
+                      : "battery-20"
+                    : "battery-alert"
+                } size={60} color="#1976D2" style={styles.batteryIcon} />
                 <View style={styles.batteryTextContent}>
                   <Text style={styles.batteryTitle}>Bateria:</Text>
-                  <Text style={styles.batteryPercentage}>53%</Text>
+                  <Text style={styles.batteryPercentage}>{batteryLevel !== null ? `${batteryLevel}%` : '---'}</Text>
                   <Text style={styles.batterySubtext}>Água restante na garrafa:</Text>
                   <Text style={styles.batterySubtext}>160 mL</Text>
                 </View>
@@ -272,6 +307,7 @@ export default function Home() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -281,8 +317,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingHorizontal: width * 0.06,
+    paddingTop: height * 0.025,
     paddingBottom: 0,
     backgroundColor: 'white',
   },
@@ -290,35 +326,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: 20,
+    fontSize: Math.round(width * 0.055),
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 2,
+    marginBottom: height * 0.003,
   },
   subGreeting: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     color: '#666',
   },
   notificationButton: {
     backgroundColor: '#27D5E8',
     borderRadius: 20,
-    width: 30,
-    height: 30,
+    width: width * 0.08,
+    height: width * 0.08,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 16,
+    marginLeft: width * 0.04,
   },
   calendarSection: {
     backgroundColor: 'white',
-    paddingHorizontal: 5,
-    paddingVertical: 10,
-    marginBottom: 5,
+    paddingHorizontal: width * 0.015,
+    paddingVertical: height * 0.012,
+    marginBottom: height * 0.007,
   },
   mainContent: {
     flex: 1,
     justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: width * 0.05,
     paddingTop: 0,
     backgroundColor: 'white',
   },

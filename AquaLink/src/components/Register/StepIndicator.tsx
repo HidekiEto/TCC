@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 
 interface StepIndicatorProps {
   currentStep: number;
@@ -7,25 +7,36 @@ interface StepIndicatorProps {
 }
 
 export default function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
-  const renderDot = (stepNumber: number) => {
+  const renderStep = (stepNumber: number) => {
     const isActive = stepNumber === currentStep;
     const isCompleted = stepNumber < currentStep;
     
     return (
-      <View
-        key={stepNumber}
-        style={[
-          styles.dot,
-          isActive ? styles.activeDot : styles.inactiveDot,
-          isCompleted ? styles.completedDot : {}
-        ]}
-      />
+      <React.Fragment key={stepNumber}>
+        {/* Linha conectora antes do step (exceto no primeiro) */}
+        {stepNumber > 1 && (
+          <View style={[
+            styles.line,
+            (isCompleted || isActive) ? styles.lineActive : styles.lineInactive
+          ]} />
+        )}
+        
+        {/* Circle do step */}
+        <View style={[
+          styles.circle,
+          isActive ? styles.circleActive : (isCompleted ? styles.circleCompleted : styles.circleInactive)
+        ]}>
+          {isActive && (
+            <Text style={styles.stepNumber}>{stepNumber}</Text>
+          )}
+        </View>
+      </React.Fragment>
     );
   };
 
   return (
     <View style={styles.container}>
-      {Array.from({ length: totalSteps }, (_, index) => renderDot(index + 1))}
+      {Array.from({ length: totalSteps }, (_, index) => renderStep(index + 1))}
     </View>
   );
 }
@@ -36,21 +47,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 20,
-    paddingTop: 40,
-    gap: 8,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  circle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  activeDot: {
-    backgroundColor: '#FFFFFF',
+  circleActive: {
+    backgroundColor: 'white',
+    borderWidth: 2,
+    borderColor: '#084F8C',
   },
-  inactiveDot: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  circleCompleted: {
+    backgroundColor: '#084F8C',
+    borderWidth: 0,
   },
-  completedDot: {
-    backgroundColor: '#FFFFFF',
+  circleInactive: {
+    backgroundColor: '#084F8C',
+    borderWidth: 0,
+  },
+  stepNumber: {
+    color: '#084F8C',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  line: {
+    width: 40,
+    height: 2,
+  },
+  lineActive: {
+    backgroundColor: '#084F8C',
+  },
+  lineInactive: {
+    backgroundColor: '#084F8C',
   },
 });

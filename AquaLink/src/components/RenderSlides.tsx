@@ -1,6 +1,5 @@
 import { View, Text, Image, ImageSourcePropType, StyleSheet, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-
 const { width, height } = Dimensions.get('window');
 
 interface SlideItem {

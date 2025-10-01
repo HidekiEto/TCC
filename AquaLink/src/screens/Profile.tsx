@@ -1,11 +1,15 @@
 import React, { Suspense, useEffect, useState } from "react";
+import { calcularMetaDiariaAgua } from '../components/Goals/DailyIntake';
+import { useConsumoUltimasSemanas } from '../components/Goals/WeeklyIntake';
+import { useFocusEffect } from '@react-navigation/native';
 import { Text, View, TouchableOpacity, ScrollView, Dimensions, StatusBar, ActivityIndicator, StyleSheet } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import BottomNavigation from "../components/BottomNavigation";
 import AvatarComponent from "../components/ProfileComponents/Avatar";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../config/firebase";
-
+import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
@@ -25,15 +29,46 @@ const Graphic = React.lazy(() =>
 
 export default function Profile() {
   const [user, setUser] = useState<User | null>(null);
+  const [profileData, setProfileData] = useState<any>(null);
   const [triggerImagePicker, setTriggerImagePicker] = useState(false);
+  const navigation = useNavigation<any>();
+  const [uid, setUid] = useState<string | undefined>(undefined);
+  const consumoSemana = useConsumoUltimasSemanas(uid);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        setUid(currentUser.uid);
+        // Busca dados extras do Firestore
+        try {
+          const { doc, getDoc } = await import('firebase/firestore');
+          const { firestore } = await import('../config/firebase');
+          const docRef = doc(firestore, "users", currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          let data = docSnap.exists() ? docSnap.data() : {};
+          setProfileData({
+            peso: Number(data.weight) || 70,
+            altura: Number(data.height) || 170,
+            genero: (data.gender || 'masculino').toLowerCase(),
+            idade: data.birthdate ? (new Date().getFullYear() - new Date(data.birthdate).getFullYear()) : 30,
+          });
+        } catch (e) {
+          setProfileData(null);
+        }
+      }
     });
-
     return () => unsubscribe();
   }, []);
+
+  // Atualiza consumo semanal ao voltar para tela
+  useFocusEffect(
+    React.useCallback(() => {
+      // Força atualização do hook useConsumoUltimasSemanas
+      // Basta alterar o uid para disparar o useEffect do hook
+      setUid(user?.uid);
+    }, [user])
+  );
 
   
   const handleImageSelect = (imageUri: string) => {
@@ -44,7 +79,7 @@ export default function Profile() {
 
  
   const handleEditProfile = () => {
-    setTriggerImagePicker(true);
+    navigation.navigate("EditProfile");
   };
 
  
@@ -137,7 +172,24 @@ export default function Profile() {
               Visão Geral da performance
             </Text>
             <Text style={styles.performanceSubtitle}>
-              Média p/dia: <Text style={styles.performanceValue}>2240 mls</Text>
+              Média p/dia: <Text style={styles.performanceValue}>
+                {(() => {
+                  // Consumo dos últimos 7 dias
+                  if (Array.isArray(consumoSemana) && consumoSemana.length > 0) {
+                    // Se o hook retorna 4 semanas, pega só a última semana
+                    const lastWeek = consumoSemana[consumoSemana.length - 1];
+                    // Se for um array de dias, soma e divide por 7
+                    if (Array.isArray(lastWeek)) {
+                      const soma = lastWeek.reduce((acc, v) => acc + v, 0);
+                      return `${Math.round(soma / 7)} mls`;
+                    } else {
+                      // Se for só o total da semana, divide por 7
+                      return `${Math.round(lastWeek / 7)} mls`;
+                    }
+                  }
+                  return '--';
+                })()}
+              </Text>
             </Text>
           </View>
 
@@ -150,7 +202,10 @@ export default function Profile() {
                 </View>
               }
             >
-              <Graphic />
+              <Graphic
+                data={consumoSemana}
+                metaDiaria={profileData ? calcularMetaDiariaAgua(profileData) : 0}
+              />
             </Suspense>
           </View>
         </ScrollView>
@@ -171,12 +226,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContainer: {
-    paddingBottom: 100,
+    paddingBottom: height * 0.12,
   },
   headerSection: {
-    paddingHorizontal: 40,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingHorizontal: width * 0.08,
+    paddingTop: height * 0.03,
+    paddingBottom: height * 0.015,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -184,29 +239,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    maxWidth: 350,
-    
+    maxWidth: width * 0.9,
   },
   userInfo: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: width * 0.03,
   },
   userName: {
-    fontSize: 24,
+    fontSize: Math.round(width * 0.06),
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 4,
+    marginBottom: height * 0.005,
   },
   userEmail: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     color: 'white',
-    marginBottom: 15,
+    marginBottom: height * 0.018,
     fontWeight: '400',
   },
   editButton: {
     backgroundColor: 'white',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: height * 0.01,
+    paddingHorizontal: width * 0.04,
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -221,26 +275,26 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   editIcon: {
-    marginRight: 6,
+    marginRight: width * 0.015,
   },
   editButtonText: {
     color: '#084F8C',
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     fontWeight: '600',
   },
   performanceSection: {
-    paddingHorizontal: 20,
-    paddingTop: 80,
+    paddingHorizontal: width * 0.05,
+    paddingTop: height * 0.09,
     paddingBottom: 0,
   },
   performanceTitle: {
-    fontSize: 20,
+    fontSize: Math.round(width * 0.05),
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
+    marginBottom: height * 0.01,
   },
   performanceSubtitle: {
-    fontSize: 14,
+    fontSize: Math.round(width * 0.035),
     color: '#666',
   },
   performanceValue: {
@@ -250,11 +304,11 @@ const styles = StyleSheet.create({
   chartSection: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: width * 0.04,
     paddingTop: 0,
   },
   fallback: {
-    height: 240,
+    height: height * 0.3,
     alignItems: "center",
     justifyContent: "center",
   },
