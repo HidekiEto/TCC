@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useEffect } from "react";
-import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, StatusBar, Dimensions, ScrollView } from "react-native";
+import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, StatusBar, Dimensions, ScrollView, Alert } from "react-native";
 import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { PaperProvider } from "react-native-paper";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,6 +31,7 @@ import BottomNavigation from "../components/BottomNavigation";
 import { calcularMetaDiariaAgua } from '../components/Goals/DailyIntake';
 import { useBLE } from "../contexts/BLEProvider";
 import { useDbContext } from "../hooks/useDbContext";
+import { useDataContext } from "../hooks/useDataContext";
 
 export default function Home() {
 
@@ -38,6 +39,7 @@ export default function Home() {
   const { getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia, adicionarLeituraSimulada } = useDbContext();
   const [consumoAcumulado, setConsumoAcumulado] = useState(0);
   const { writeToDevice, isConnected, batteryLevel } = useBLE();
+  const dataContext = useDataContext();
 
   const [profileData, setProfileData] = useState<any>(null);
 
@@ -137,6 +139,21 @@ export default function Home() {
   atualizarConsumo();
 }, [getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia]);
 
+  // 🔄 Atualização automática quando receber dados via BLE
+  useEffect(() => {
+    if (dataContext?.consumoAcumulado !== null && dataContext?.consumoAcumulado !== undefined) {
+      async function sincronizarDados() {
+        const banco = await getConsumoAcumuladoDoDia();
+        const total = (dataContext?.consumoAcumulado || 0) + banco;
+        setWaterValue(total);
+        setConsumoAcumulado(total);
+        setPercent(Math.round((total / goalMl) * 100));
+        console.log("dados atualizados automaticamente via BLE:", total, "mL");
+      }
+      sincronizarDados();
+    }
+  }, [dataContext?.consumoAcumulado, goalMl, getConsumoAcumuladoDoDia]);
+
   const handleSlidesDone = async () => {
     await AsyncStorage.setItem('slidesVistos', 'true');
     setShowInitialSlides(false);
@@ -156,11 +173,13 @@ export default function Home() {
     return "Usuário";
   };
 
-  const waterIncrement =  () => {
+  const waterIncrement = () => {
     if (isConnected) {
-      writeToDevice("1"); // envia o comando "1" para o ESP
+      writeToDevice("1");
+      console.log("comando enviado para a garrafa. Aguardando resposta via BLE...");
+
     } else {
-      console.log("Nenhuma garrafa conectada.");
+      console.log("nenhuma garrafa conectada.");
     }
   };
 

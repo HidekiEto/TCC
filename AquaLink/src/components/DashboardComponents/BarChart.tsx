@@ -7,12 +7,11 @@ import { calcularMetaSemanalAgua, useConsumoUltimasSemanas } from '../Goals/Week
 
 export const BarChartComponent: React.FC<{ userData?: any }> = ({ userData }) => {
   const { width, height } = Dimensions.get('window');
-  // Consumo real das últimas 4 semanas
   const consumoSemanal = useConsumoUltimasSemanas(userData?.uid);
-  // Meta semanal do usuário
+
   const metaSemanal = userData ? calcularMetaSemanalAgua(userData) : 0;
 
-  // Log para depuração
+
   console.log('[BarChart] ConsumoSemanal:', consumoSemanal);
   console.log('[BarChart] MetaSemanal:', metaSemanal);
 

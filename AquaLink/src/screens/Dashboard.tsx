@@ -188,7 +188,6 @@ export default function Dashboard() {
 
 
         <View style={styles.chartContainer}>
-          {/* Passa os dados do usuário para o BarChartComponent */}
           <BarChartComponent userData={profileData} />
         </View>
 
@@ -259,7 +258,7 @@ export default function Dashboard() {
               <Text style={styles.cadastradaText}>Cadastrada em: 28/08/2025</Text>
             </View>
 
-            {/* Linha vertical separadora */}
+          
             <View style={styles.verticalSeparator} />
 
             <View style={styles.garrafaInfo}>
@@ -309,7 +308,7 @@ export default function Dashboard() {
           </View>
         </View>
 
-        {/* Informativos Cards */}
+       
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <MaterialCommunityIcons name="information" size={20} color="#082862" />
