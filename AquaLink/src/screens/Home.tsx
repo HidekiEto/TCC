@@ -156,13 +156,12 @@ export default function Home() {
     return "Usuário";
   };
 
-  const waterIncrement = async () => {
-    await adicionarLeituraSimulada(250); // Adiciona 250mL simulados
-    // Atualiza valores do cache e percentuais
-    const acumulado = await getConsumoAcumuladoNoCache();
-    setWaterValue(acumulado);
-    setConsumoAcumulado(acumulado);
-    setPercent(Math.round((acumulado / goalMl) * 100));
+  const waterIncrement =  () => {
+    if (isConnected) {
+      writeToDevice("1"); // envia o comando "1" para o ESP
+    } else {
+      console.log("Nenhuma garrafa conectada.");
+    }
   };
 
   if (loadingSlides) {
@@ -184,7 +183,7 @@ export default function Home() {
       <StatusBar backgroundColor="#F8F9FA" barStyle="dark-content" />
 
       <View style={styles.container}>
-        {/* ...existing code... */}
+      
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>Olá, {getFirstName()},</Text>
