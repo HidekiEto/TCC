@@ -32,12 +32,11 @@ const app = initializeApp(firebaseConfig);
 
 console.log('Firebase app initialized:', app.name);
 
-// <<<<<<< bluetooth
+
 // export const auth = getAuth(app);
 // export const db = getDatabase(app);
-// =======
 
-// Configura persistência do Auth usando AsyncStorage
+
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 });

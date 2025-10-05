@@ -27,7 +27,7 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   
-  // Animação para o header quando o teclado aparece
+ 
   const [headerHeight] = useState(new Animated.Value(1));
   const [logoPosition] = useState(new Animated.Value(1));
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -45,21 +45,21 @@ export default function Register() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [checked, setChecked] = useState<boolean>(false);
 
-  // Listener para detectar quando o teclado aparece/desaparece
+
   useEffect(() => {
     const keyboardWillShowListener = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       () => {
         setIsKeyboardVisible(true);
-        // Anima o header para reduzir/ocultar quando teclado aparecer
+       
         Animated.parallel([
           Animated.timing(headerHeight, {
-            toValue: 0.3, // Reduz para 30% do tamanho original
+            toValue: 0.3, 
             duration: 250,
             useNativeDriver: false,
           }),
           Animated.timing(logoPosition, {
-            toValue: 0.6, // Move o logo para cima
+            toValue: 0.6, 
             duration: 250,
             useNativeDriver: false,
           }),
@@ -71,7 +71,7 @@ export default function Register() {
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
       () => {
         setIsKeyboardVisible(false);
-        // Anima o header para voltar ao tamanho normal
+       
         Animated.parallel([
           Animated.timing(headerHeight, {
             toValue: 1,
@@ -305,19 +305,19 @@ export default function Register() {
         </LinearGradient>
       </Animated.View>
       
-      {/* Logo sobrepondo a linha do header */}
+ 
       <Animated.View 
         style={[
           styles.logoFixedWrapper,
           {
             opacity: logoPosition.interpolate({
               inputRange: [0.6, 1],
-              outputRange: [0, 1], // Completamente invisível quando teclado aparece
+              outputRange: [0, 1], 
             }),
             transform: [{
               scale: logoPosition.interpolate({
                 inputRange: [0.6, 1],
-                outputRange: [0.5, 1], // Encolhe mais para dar efeito de "sumir"
+                outputRange: [0.5, 1], 
               }),
             }]
           }
@@ -330,14 +330,14 @@ export default function Register() {
         />
       </Animated.View>
       
-      {/* Step Indicator fixo abaixo do logo */}
+
       <Animated.View 
         style={[
           styles.stepIndicatorWrapper,
           {
             opacity: logoPosition.interpolate({
               inputRange: [0.6, 1],
-              outputRange: [0, 1], // Desaparece junto com o logo
+              outputRange: [0, 1], 
             }),
           }
         ]}
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   topHalfWrapper: {
-    overflow: 'visible', // Mudado para visible para o logo aparecer por cima
+    overflow: 'visible', 
     position: 'relative',
   },
   topHalf: {
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   },
   stepIndicatorWrapper: {
     position: 'absolute',
-    top: (height / 4) + 50, // Logo abaixo do logo (40 + 10 de margem)
+    top: (height / 4) + 50, 
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingVertical: 0,
-    paddingTop: 90, // Espaço para logo (80px) + step indicator (50px) + margem
+    paddingTop: 90, 
   },
   buttonContainer: {
     alignItems: 'center',

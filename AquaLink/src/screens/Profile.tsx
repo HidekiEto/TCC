@@ -40,7 +40,7 @@ export default function Profile() {
       setUser(currentUser);
       if (currentUser) {
         setUid(currentUser.uid);
-        // Busca dados extras do Firestore
+    
         try {
           const { doc, getDoc } = await import('firebase/firestore');
           const { firestore } = await import('../config/firebase');
@@ -61,11 +61,9 @@ export default function Profile() {
     return () => unsubscribe();
   }, []);
 
-  // Atualiza consumo semanal ao voltar para tela
   useFocusEffect(
     React.useCallback(() => {
-      // Força atualização do hook useConsumoUltimasSemanas
-      // Basta alterar o uid para disparar o useEffect do hook
+    
       setUid(user?.uid);
     }, [user])
   );
@@ -176,14 +174,14 @@ export default function Profile() {
                 {(() => {
                   // Consumo dos últimos 7 dias
                   if (Array.isArray(consumoSemana) && consumoSemana.length > 0) {
-                    // Se o hook retorna 4 semanas, pega só a última semana
+                    
                     const lastWeek = consumoSemana[consumoSemana.length - 1];
-                    // Se for um array de dias, soma e divide por 7
+                  
                     if (Array.isArray(lastWeek)) {
                       const soma = lastWeek.reduce((acc, v) => acc + v, 0);
                       return `${Math.round(soma / 7)} mls`;
                     } else {
-                      // Se for só o total da semana, divide por 7
+                     
                       return `${Math.round(lastWeek / 7)} mls`;
                     }
                   }

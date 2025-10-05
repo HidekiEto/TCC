@@ -29,14 +29,14 @@ export default function Step2Form({
   keepConnected,
   setKeepConnected,
 }: Step2FormProps) {
-  // Se não vier do pai, cria local
+  
   const [checked, setChecked] = useState(false);
   const isChecked = keepConnected !== undefined ? keepConnected : checked;
   const setIsChecked = setKeepConnected !== undefined ? setKeepConnected : setChecked;
 
   return (
     <View style={styles.container}>
-      {/* Linha com Altura e Peso lado a lado */}
+     
       <View style={styles.rowContainer}>
         <View style={styles.halfWidth}>
           <Input

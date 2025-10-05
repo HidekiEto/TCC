@@ -116,7 +116,7 @@ export const LiquidGauge = ({
   const waveClipWidth = waveLength * waveClipCount;
   const waveHeight = fillCircleRadius * waveHeightScale(fillPercent * 100);
 
-  // Aumentar o tamanho do número em porcentagem
+  
   const textPixels = (mergedConfig.textSize * radius) * 0.55;
   const textFinalValue = Number(value.toFixed(mergedConfig.toFixed));
   const textStartValue = mergedConfig.valueCountUp
@@ -161,7 +161,7 @@ export const LiquidGauge = ({
   const translateYPercent = useSharedValue(0);
   const translateXProgress = useSharedValue(0);
 
-  // Progresso da borda (animado)
+
   const progressValue = useSharedValue(fillPercent);
 
   useEffect(() => {
@@ -202,7 +202,7 @@ export const LiquidGauge = ({
     return radius - textWidth * 0.5;
   }, [text, radius, font]);
 
-  // Calcula valor atual em mL baseado na porcentagem
+ 
   const currentMl = Math.floor((value / 100) * goalMl);
   const mlLabel = `${currentMl} / ${goalMl} mL`;
   const mlLabelTranslateX = (() => {
@@ -211,7 +211,7 @@ export const LiquidGauge = ({
     return radius - mlLabelWidth * 0.5;
   })();
 
-  // Posição vertical da label mL: logo abaixo do número em porcentagem
+ 
   const mlLabelY = textPixels + (font ? font.getSize() : textPixels) + (fontMl ? fontMl.getSize() : textPixels * 0.32) * 0.2 + 40;
 
   const clipSVGString = clipArea(data)!;

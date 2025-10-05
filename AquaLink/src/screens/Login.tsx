@@ -21,12 +21,10 @@ export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
   const [checked, setChecked] = useState<boolean>(false);
 
-  // Animação para o header quando o teclado aparece
   const [headerOpacity] = useState(new Animated.Value(1));
   const [headerHeight] = useState(new Animated.Value(1));
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-  // Listener para detectar quando o teclado aparece/desaparece
   useEffect(() => {
     const keyboardWillShowListener = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
@@ -77,9 +75,9 @@ export default function Login() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      // Se o checkbox estiver marcado, salva o token
+    
       if (checked && user?.uid) {
-        // Salva o UID e token de acesso
+        
         await AsyncStorage.setItem('userToken', user.uid);
         await AsyncStorage.setItem('keepLoggedIn', 'true');
         console.log('Manter conectado está ATIVADO');

@@ -7,8 +7,8 @@ import { useDataContext } from '../hooks/useDataContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDbContext } from '../hooks/useDbContext';
 
-const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
-const CHARACTERISTIC_UUID = "abcd1234-ab12-cd34-ef56-1234567890ab";
+const SERVICE_UUID = "34303c72-4cb1-4d48-98cb-781afece9cd7";
+const CHARACTERISTIC_UUID = "5b4ff54f-8297-45b4-9949-7ff95e672aae";
 
 interface BLEContextType {
   isScanning: boolean;
@@ -68,7 +68,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
         try {
           await connectToDevice(lastDeviceId);
         } catch (e) {
-          // Se não conseguir conectar, limpe o estado
+    
           setIsConnected(false);
           setConnectedDevice(null);
         }
@@ -143,7 +143,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
 
     );
 
-    // Para o scan após 10 segundos
+
     if (scanTimeout.current) clearTimeout(scanTimeout.current);
     scanTimeout.current = setTimeout(() => {
       bleManager.stopDeviceScan();
@@ -184,7 +184,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
             Alert.alert('Info', 'A garrafa foi desconectada!');
           });
 
-          // Monitorar notificações
+
           device.monitorCharacteristicForService(
             SERVICE_UUID,
             CHARACTERISTIC_UUID,
@@ -201,10 +201,10 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
                   if (decoded.trim().startsWith("{")) {
                     const data = JSON.parse(decoded);
                     const volume = typeof data.volume === "number" ? data.volume : null;
-                    const battery = typeof data.battery === "number" ? data.battery : null; // NOVO
+                    const battery = typeof data.battery === "number" ? data.battery : null; 
 
                     if (battery !== null) {
-                      setBatteryLevel(battery); // NOVO
+                      setBatteryLevel(battery); 
                       console.log("Nível da bateria recebido:", battery);
                     }
 
@@ -220,8 +220,6 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
 
                         consumo = Math.round(consumo * 10) / 10;
                         dataContext.setConsumo(consumo);
-
-                        // Calcule o novo acumulado usando a ref local
                         consumoAcumuladoRef.current = Math.round((consumoAcumuladoRef.current + (consumo > 0 ? consumo : 0)) * 10) / 10;
                         dataContext.setConsumoAcumulado(consumoAcumuladoRef.current);
 
@@ -244,7 +242,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
                         dataContext.setVolumeAnterior(volume);
                         dataContext.setConsumo(0);
                         consumoAcumuladoRef.current = 0;
-                        dataContext.setConsumoAcumulado(0); // Zera o acumulado na primeira leitura
+                        dataContext.setConsumoAcumulado(0); 
                         console.log("Primeira leitura: volume anterior inicializado como o volume recebido.");
 
                         if (dbContext) {
@@ -285,14 +283,14 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
     setConnectedDevice(null);
     Alert.alert('Erro', error.message || 'Erro ao conectar');
 
-    // Tenta de novo automaticamente após pequeno delay
+   
     if (tentativa < 2) {
   try {
     await bleManager.cancelDeviceConnection(deviceId);
   } catch (e) {
-    // Ignora erro se já estiver desconectado
+   
   }
-  setTimeout(() => connectToDevice(deviceId, tentativa + 1), 2000); // 2 segundos de delay
+  setTimeout(() => connectToDevice(deviceId, tentativa + 1), 2000); 
 }
   }
 };

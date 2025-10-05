@@ -16,7 +16,6 @@ interface DbContextType {
 export const DbContext = createContext<DbContextType | undefined>(undefined);
 
 export const DbProvider = ({ children }: { children: React.ReactNode }) => {
-  // Função para simular leitura do ESP
   const adicionarLeituraSimulada = useCallback(async (consumo: number) => {
     try {
       const uid = auth.currentUser?.uid;
@@ -35,7 +34,7 @@ export const DbProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Erro ao adicionar leitura simulada:', e);
     }
   }, []);
-  // Salva uma leitura no cache local
+ 
   const salvarLeituraNoCache = useCallback(async (leitura: any) => {
     try {
       const uid = auth.currentUser?.uid;
@@ -85,7 +84,6 @@ export const DbProvider = ({ children }: { children: React.ReactNode }) => {
 
 
 
-  // Sincroniza o cache com o Firestore e limpa o cache se sucesso
   const sincronizarCacheComBanco = useCallback(async () => {
   try {
     const cache = await AsyncStorage.getItem('leiturasCache');
@@ -104,18 +102,18 @@ export const DbProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // Agrupa consumos por data
+   
     const consumoPorDia: Record<string, number> = {};
     for (const leitura of leituras) {
       if (typeof leitura.consumo === "number" && leitura.timestamp) {
         const dia = dayjs(leitura.timestamp).format("YYYY-MM-DD");
         consumoPorDia[dia] = (consumoPorDia[dia] || 0) + leitura.consumo;
       }
-      // Salva cada leitura individualmente
+      
       await push(ref(db, `bottles/${bottleId}/readings`), leitura);
     }
 
-    // Para cada dia, busque o valor atual, some e salve de volta
+  
     for (const dia in consumoPorDia) {
       const acumuladoRef = ref(db, `bottles/${bottleId}/readings/consumoAcumulado/${dia}`);
       const snapshot = await get(acumuladoRef);

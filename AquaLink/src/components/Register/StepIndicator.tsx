@@ -13,7 +13,7 @@ export default function StepIndicator({ currentStep, totalSteps }: StepIndicator
     
     return (
       <React.Fragment key={stepNumber}>
-        {/* Linha conectora antes do step (exceto no primeiro) */}
+       
         {stepNumber > 1 && (
           <View style={[
             styles.line,
@@ -21,7 +21,7 @@ export default function StepIndicator({ currentStep, totalSteps }: StepIndicator
           ]} />
         )}
         
-        {/* Circle do step */}
+       
         <View style={[
           styles.circle,
           isActive ? styles.circleActive : (isCompleted ? styles.circleCompleted : styles.circleInactive)

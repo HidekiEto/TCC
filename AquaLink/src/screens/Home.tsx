@@ -75,7 +75,7 @@ export default function Home() {
     const checkKeepLoggedIn = async () => {
       try {
         const keepLoggedIn = await AsyncStorage.getItem('keepLoggedIn');
-        // Verifica o estado do usuário autenticado pelo Firebase
+    
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
           if (keepLoggedIn === 'true' && currentUser) {
             console.log('Função manter conectado está funcionando: usuário está autenticado automaticamente.');
@@ -85,7 +85,7 @@ export default function Home() {
             console.log('Função manter conectado está DESATIVADA ou usuário não está autenticado.');
           }
         });
-        // Limpa o listener ao desmontar
+       
         return unsubscribe;
       } catch (e) {
         console.log('Erro ao verificar manter conectado:', e);
@@ -93,7 +93,7 @@ export default function Home() {
     };
     checkKeepLoggedIn();
   }, []);
-  const [waterValue, setWaterValue] = useState(44); // porcentagem
+  const [waterValue, setWaterValue] = useState(44); 
   const goalMl = profileData ? calcularMetaDiariaAgua(profileData) : 2000; // meta diária dinâmica
   const [user, setUser] = useState<User | null>(null);
   const [showInitialSlides, setShowInitialSlides] = useState<boolean>(false);
@@ -107,7 +107,7 @@ export default function Home() {
         const value = await AsyncStorage.getItem('slidesVistos');
         const keep = await AsyncStorage.getItem('keepLoggedIn');
         setKeepLoggedIn(keep);
-        // Só mostra os slides se NÃO estiver autenticado, ou manter conectado estiver desativado, ou slidesVistos não for 'true'
+        // só mostra os slides se NÃO estiver autenticado, ou manter conectado estiver desativado, ou slidesVistos não for 'true'
         if (!currentUser || keep !== 'true' || value !== 'true') {
           setShowInitialSlides(true);
         } else {

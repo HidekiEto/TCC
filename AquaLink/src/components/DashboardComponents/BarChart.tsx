@@ -51,7 +51,7 @@ export const BarChartComponent: React.FC<{ userData?: any }> = ({ userData }) =>
     </View>
   );
 
-  // Dados para o gráfico: cada barra representa uma semana
+ 
   const barData = consumoSemanal.map((v: number, i: number) => {
     const litros = v / 1000;
     return {

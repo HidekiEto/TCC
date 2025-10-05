@@ -27,7 +27,7 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Busca avatar do usuário ao carregar
+
   useEffect(() => {
     const fetchAvatar = async () => {
       const user = auth.currentUser;
@@ -66,19 +66,19 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
     return true;
   };
 
-  // Função para upload da imagem
+
   const uploadImageAsync = async (uri: string) => {
     setLoading(true);
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("Usuário não autenticado");
-      // Busca o blob da imagem
+     
       const response = await fetch(uri);
       const blob = await response.blob();
       const storageRef = ref(storage, `avatars/${user.uid}.jpg`);
       await uploadBytes(storageRef, blob);
       const downloadURL = await getDownloadURL(storageRef);
-      // Salva URL no Firestore
+      
   await setDoc(doc(firestore, "users", user.uid), { avatarUrl: downloadURL }, { merge: true });
       setImageUri(downloadURL);
       onImageSelect?.(downloadURL);

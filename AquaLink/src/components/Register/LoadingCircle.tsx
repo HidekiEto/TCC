@@ -5,16 +5,17 @@ import { LiquidGauge } from '../HomeComponents/LiquidGauge';
 interface LoadingCircleProps {
   progress: number; // valor de 0 a 100
   text?: string;
+  goalMl?: number; // meta diária em mL (opcional, default usado se não fornecido)
 }
-
-const LoadingCircle: React.FC<LoadingCircleProps> = ({ progress, text }) => {
+const LoadingCircle: React.FC<LoadingCircleProps> = ({ progress, text, goalMl = 2000 }) => {
   return (
     <View style={styles.container}>
-      <LiquidGauge value={progress} />
+      <LiquidGauge value={progress} goalMl={goalMl} />
       {text && <Text style={styles.text}>{text}</Text>}
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

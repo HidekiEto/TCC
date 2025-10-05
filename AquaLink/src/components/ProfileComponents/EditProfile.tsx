@@ -5,7 +5,7 @@ import { updateProfile, updateEmail } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, storage, firestore } from "../../config/firebase";
 
-const db = firestore; // Use a instância já inicializada
+const db = firestore;
 const { width, height } = Dimensions.get('window');
 
 export default function EditProfile() {

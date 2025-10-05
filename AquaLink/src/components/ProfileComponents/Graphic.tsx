@@ -20,7 +20,7 @@ export const Graphic = ({ data = [], metaDiaria = 0 }) => {
     label: dia,
   }));
 
-  // Gera labels do eixo Y baseado na meta
+
   const maxY = Math.max(metaDiaria, ...data, 2500);
   const step = Math.ceil(maxY / 5 / 100) * 100;
   const yLabels = Array.from({ length: 6 }, (_, i) => String(i * step));
