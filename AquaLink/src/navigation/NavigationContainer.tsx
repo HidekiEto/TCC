@@ -58,7 +58,7 @@ export default function Navigation({ initialRouteName = "Welcome" }: NavigationP
       <Stack.Screen
         name="EditProfile"
         component={require('../components/ProfileComponents/EditProfile').default}
-        options={{ headerShown: true, title: 'Editar Perfil' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Achievements"

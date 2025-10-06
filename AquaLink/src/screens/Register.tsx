@@ -162,7 +162,7 @@ export default function Register() {
 
     setIsLoading(true);
     setLoadingProgress(0);
-    // Simula progresso de loading
+    
     let progress = 0;
     const interval = setInterval(() => {
       progress += 10;
@@ -201,7 +201,7 @@ export default function Register() {
       if (checked && userCredential.user?.uid) {
         await AsyncStorage.setItem('userToken', userCredential.user.uid);
         await AsyncStorage.setItem('keepLoggedIn', 'true');
-        console.log('✅ Registro com manter conectado ATIVADO');
+        console.log('registro com manter conectado ATIVADO');
       } else {
         await AsyncStorage.setItem('keepLoggedIn', 'false');
         console.log(' Registro com manter conectado DESATIVADO');
@@ -326,11 +326,13 @@ export default function Register() {
           }
         ]}
       >
-        <Image
-          source={require('../../assets/logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <View style={styles.logoCircle}>
+          <Image
+            source={require('./../assets/logo.png')}  
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </View>
       </Animated.View>
       
 
@@ -437,7 +439,6 @@ const styles = StyleSheet.create({
   },
   topHalf: {
     flex: 1,
-    borderRadius: 5,
     borderBottomLeftRadius: 50,
     borderBottomRightRadius: 50,
   },
@@ -473,7 +474,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 100,
   },
-  logo: {
+  logoCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
@@ -485,6 +486,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoImage: {
+    width: 60,   
+    height: 60,  
   },
   headerContainer: {
     paddingTop: 10,
