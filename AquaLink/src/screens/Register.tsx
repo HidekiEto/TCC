@@ -179,7 +179,7 @@ export default function Register() {
         displayName: name,
       });
 
-      // Salva dados extras no Firestore
+     
       try {
         const { doc, setDoc } = await import('firebase/firestore');
         const { firestore } = await import('../config/firebase');
@@ -195,13 +195,16 @@ export default function Register() {
         console.error("Erro ao salvar dados extras:", e);
       }
 
-      // Se o checkbox estiver marcado, salva o UID/token
+      await AsyncStorage.setItem('slidesVistos', 'true');
+      
+  
       if (checked && userCredential.user?.uid) {
         await AsyncStorage.setItem('userToken', userCredential.user.uid);
         await AsyncStorage.setItem('keepLoggedIn', 'true');
-      }
-      if (!checked) {
+        console.log('✅ Registro com manter conectado ATIVADO');
+      } else {
         await AsyncStorage.setItem('keepLoggedIn', 'false');
+        console.log(' Registro com manter conectado DESATIVADO');
       }
 
       console.log("Usuário criado com sucesso:", userCredential.user.uid);

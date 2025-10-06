@@ -1,6 +1,7 @@
 import { Text, View, TouchableOpacity, StyleSheet, Alert, Dimensions } from "react-native";
 import BottomMenu from "../components/BottomNavigation";
 import { getAuth, signOut } from "firebase/auth";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -8,9 +9,15 @@ export default function Achievements() {
     const handleLogout = async () => {
         try {
             const auth = getAuth();
+            
+            await AsyncStorage.removeItem('keepLoggedIn');
+            await AsyncStorage.removeItem('userToken');
+            
             await signOut(auth);
+            console.log('Logout realizado com sucesso. Dados de sessão limpos.');
             Alert.alert("Logout", "Você saiu da sua conta.");
         } catch (e) {
+            console.error(' Erro no logout:', e);
             Alert.alert("Erro", "Não foi possível sair.");
         }
     };

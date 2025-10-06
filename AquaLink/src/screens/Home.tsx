@@ -5,8 +5,9 @@ import { PaperProvider } from "react-native-paper";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import InitialSlider from '../components/InitialSlider';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged, User, signOut } from "firebase/auth";
 import { auth } from "../config/firebase";
+import { useNavigation } from "@react-navigation/native";
 
 import WeekDays from "../components/HomeComponents/CalendarStrip";
 import ModalComponent from "../components/HomeComponents/Modal";
@@ -35,6 +36,7 @@ import { useDataContext } from "../hooks/useDataContext";
 
 export default function Home() {
 
+  const navigation = useNavigation<any>();
   const [percent, setPercent] = useState(0);
   const { getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia, adicionarLeituraSimulada } = useDbContext();
   const [consumoAcumulado, setConsumoAcumulado] = useState(0);
@@ -109,11 +111,17 @@ export default function Home() {
         const value = await AsyncStorage.getItem('slidesVistos');
         const keep = await AsyncStorage.getItem('keepLoggedIn');
         setKeepLoggedIn(keep);
-        // só mostra os slides se NÃO estiver autenticado, ou manter conectado estiver desativado, ou slidesVistos não for 'true'
-        if (!currentUser || keep !== 'true' || value !== 'true') {
-          setShowInitialSlides(true);
-        } else {
+        
+       
+        
+        if (currentUser) {
+         
           setShowInitialSlides(false);
+          console.log(' Usuário autenticado → Home');
+        } else {
+        
+          setShowInitialSlides(true);
+          console.log(' Usuário não autenticado → Slides');
         }
       } catch (e) {
         setShowInitialSlides(true);
@@ -122,7 +130,7 @@ export default function Home() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [navigation]);
 
   useEffect(() => {
   async function atualizarConsumo() {

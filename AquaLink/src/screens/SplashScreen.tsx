@@ -16,32 +16,75 @@ interface SplashScreenProps {
 
 export default function SplashScreen({ navigation }: SplashScreenProps) {
   useEffect(() => {
-    console.log('[SplashScreen] Montou');
+    console.log('[SplashScreen] 🚀 Montou');
     const { auth } = require('../config/firebase');
+    const { signOut } = require('firebase/auth');
     let navigated = false;
-    const unsubscribe = auth.onAuthStateChanged((user: any) => {
-      console.log('[SplashScreen] onAuthStateChanged', user);
+    
+    const checkAuthAndNavigate = async () => {
+     
+      const keepLoggedIn = await AsyncStorage.getItem('keepLoggedIn');
+      const slidesVistos = await AsyncStorage.getItem('slidesVistos');
+      
+      console.log(' keepLoggedIn:', keepLoggedIn);
+      console.log(' slidesVistos:', slidesVistos);
+     
+      if (keepLoggedIn !== 'true' && auth.currentUser) {
+        console.log(' Manter conectado DESATIVADO, fazendo logout...');
+        try {
+          await signOut(auth);
+          console.log(' Logout automático realizado');
+        } catch (e) {
+          console.error(' Erro ao fazer logout:', e);
+        }
+      }
+      
+      const unsubscribe = auth.onAuthStateChanged(async (user: any) => {
+        console.log('[SplashScreen] 🔍 onAuthStateChanged, user:', user?.uid);
+        if (!navigated) {
+          navigated = true;
+          
+          if (user && keepLoggedIn === 'true') {
+           
+            console.log('Usuário autenticado + manter conectado → Home');
+            navigation.navigate('Home');
+          } else {
+            
+            if (slidesVistos === 'true') {
+           
+              console.log(' Sem auth ou sem manter conectado → Login');
+              navigation.navigate('Login');
+            } else {
+              
+              console.log(' Primeira vez → InitialSlides');
+              navigation.navigate('InitialSlidesScreen');
+            }
+          }
+        }
+      });
+      
+      return unsubscribe;
+    };
+    
+    const unsubscribePromise = checkAuthAndNavigate();
+    
+   
+    const timeout = setTimeout(async () => {
       if (!navigated) {
         navigated = true;
-        if (user) {
-          console.log('[SplashScreen] Usuário autenticado, navegando para Home');
-          navigation.navigate('Home');
+        const slidesVistos = await AsyncStorage.getItem('slidesVistos');
+        if (slidesVistos === 'true') {
+          console.log(' Timeout → Login');
+          navigation.navigate('Login');
         } else {
-          console.log('[SplashScreen] Usuário não autenticado, navegando para InitialSlidesScreen');
+          console.log('Timeout → InitialSlides');
           navigation.navigate('InitialSlidesScreen');
         }
       }
-    });
-    // Fallback timeout para garantir navegação
-    const timeout = setTimeout(() => {
-      if (!navigated) {
-        navigated = true;
-        console.log('[SplashScreen] Timeout atingido, navegando para InitialSlidesScreen');
-        navigation.navigate('InitialSlidesScreen');
-      }
     }, 3000);
+    
     return () => {
-      unsubscribe();
+      unsubscribePromise.then(unsub => unsub());
       clearTimeout(timeout);
     };
   }, [navigation]);

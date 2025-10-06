@@ -76,8 +76,10 @@ export default function Login() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
     
+  
+      await AsyncStorage.setItem('slidesVistos', 'true');
+      
       if (checked && user?.uid) {
-        
         await AsyncStorage.setItem('userToken', user.uid);
         await AsyncStorage.setItem('keepLoggedIn', 'true');
         console.log('Manter conectado está ATIVADO');
