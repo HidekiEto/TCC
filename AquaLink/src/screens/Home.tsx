@@ -139,7 +139,7 @@ export default function Home() {
   atualizarConsumo();
 }, [getConsumoAcumuladoNoCache, getConsumoAcumuladoDoDia]);
 
-  // 🔄 Atualização automática quando receber dados via BLE
+
   useEffect(() => {
     if (dataContext?.consumoAcumulado !== null && dataContext?.consumoAcumulado !== undefined) {
       async function sincronizarDados() {

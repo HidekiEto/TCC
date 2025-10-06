@@ -13,15 +13,46 @@ const COLORS = {
 };
 
 export const Graphic = ({ data = [], metaDiaria = 0 }) => {
-  // data: array de valores diários da semana, ex: [2200, 2100, ...]
-  const diasSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-  const chartData = diasSemana.map((dia, i) => ({
-    value: data[i] || 0,
-    label: dia,
-  }));
+
+  
+  const diasSemanaCompletos = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  
+  const hoje = new Date();
+  const ultimosDias = Array.from({ length: 7 }, (_, i) => {
+    const dia = new Date(hoje);
+    dia.setDate(hoje.getDate() - (6 - i)); 
+    return {
+      diaSemana: diasSemanaCompletos[dia.getDay()],
+      diaNumero: dia.getDate(),
+      mes: dia.getMonth(),
+      ano: dia.getFullYear(),
+      timestamp: dia.toDateString()
+    };
+  });
+
+  const chartData = ultimosDias.map((diaInfo, i) => {
+    let valor = 0;
+    
+ 
+    if (data[i] && typeof data[i] === 'object' && 'value' in (data[i] as any)) {
+      valor = (data[i] as any).value || 0;
+    } 
+   
+    else if (data[i] !== undefined && typeof data[i] === 'number') {
+      valor = data[i] as number;
+    }
+    
+    return {
+      value: valor,
+      label: diaInfo.diaSemana,
+      dataLabel: `${diaInfo.diaNumero}/${diaInfo.mes + 1}`
+    };
+  });
 
 
-  const maxY = Math.max(metaDiaria, ...data, 2500);
+  
+  const valoresData = data.map(d => typeof d === 'number' ? d : (d as any)?.value || 0);
+  const maxY = Math.max(metaDiaria, ...valoresData, 2500);
   const step = Math.ceil(maxY / 5 / 100) * 100;
   const yLabels = Array.from({ length: 6 }, (_, i) => String(i * step));
 

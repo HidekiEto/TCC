@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { calcularMetaDiariaAgua } from '../components/Goals/DailyIntake';
-import { useConsumoUltimasSemanas } from '../components/Goals/WeeklyIntake';
+import { useConsumoUltimos7Dias } from '../components/Goals/WeeklyIntake';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text, View, TouchableOpacity, ScrollView, Dimensions, StatusBar, ActivityIndicator, StyleSheet } from "react-native";
 
@@ -33,7 +33,7 @@ export default function Profile() {
   const [triggerImagePicker, setTriggerImagePicker] = useState(false);
   const navigation = useNavigation<any>();
   const [uid, setUid] = useState<string | undefined>(undefined);
-  const consumoSemana = useConsumoUltimasSemanas(uid);
+  const consumoSemana = useConsumoUltimos7Dias(uid);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -172,7 +172,6 @@ export default function Profile() {
             <Text style={styles.performanceSubtitle}>
               Média p/dia: <Text style={styles.performanceValue}>
                 {(() => {
-                  // Consumo dos últimos 7 dias
                   if (Array.isArray(consumoSemana) && consumoSemana.length > 0) {
                     
                     const lastWeek = consumoSemana[consumoSemana.length - 1];
