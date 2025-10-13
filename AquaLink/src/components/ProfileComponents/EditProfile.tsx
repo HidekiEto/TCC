@@ -29,6 +29,26 @@ export default function EditProfile() {
 	const [showGenderModal, setShowGenderModal] = useState(false);
 	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [selectedDate, setSelectedDate] = useState(new Date());
+
+	// Placeholder localizado para cada campo
+	const getPlaceholder = (field: keyof typeof profile): string => {
+		switch (field) {
+			case "name":
+				return "Digite seu nome.";
+			case "email":
+				return "Digite seu e-mail.";
+			case "height":
+				return "Digite sua altura.";
+			case "weight":
+				return "Digite seu peso.";
+			case "gender":
+				return "Selecione seu gênero.";
+			case "birthdate":
+				return "Selecione sua data de nascimento.";
+			default:
+				return "Digite o valor.";
+		}
+	};
 	
 	const genderOptions = [
 		{ label: 'Masculino', value: 'masculino', icon: 'gender-male' },
@@ -228,7 +248,7 @@ export default function EditProfile() {
 											value={fieldValue}
 											onChangeText={setFieldValue}
 											autoFocus
-											placeholder={`Digite seu ${field === "name" ? "nome" : field === "email" ? "e-mail" : field}`}
+											placeholder={getPlaceholder(field as keyof typeof profile)}
 											placeholderTextColor="#999"
 											keyboardType={
 												field === "email" ? "email-address" :

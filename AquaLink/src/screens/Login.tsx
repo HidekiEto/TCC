@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Image, GestureResponderEvent, StyleSheet, Dimensions, StatusBar, Keyboard, Animated, Platform } from "react-native";
+import { View, Text, TouchableOpacity, Image, GestureResponderEvent, StyleSheet, Dimensions, StatusBar, Keyboard, Animated, Platform, Alert } from "react-native";
 import { CheckBox } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../config/firebase";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from "../types/navigation";
 
 import Input from "../components/Input";
+import { useGoogleSignIn } from "../hooks/useGoogleSignIn";
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,6 +21,12 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
   const [checked, setChecked] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const { promptAsync: loginWithGoogle, loading: googleLoading } = useGoogleSignIn(
+    () => navigation.navigate("Home"),
+    checked
+  );
 
   const [headerOpacity] = useState(new Animated.Value(1));
   const [headerHeight] = useState(new Animated.Value(1));
@@ -71,12 +78,18 @@ export default function Login() {
   }, []);
 
   const handleLogin = async (e: GestureResponderEvent) => {
-    e.preventDefault?.(); 
+    e.preventDefault?.();
+    
+    if (!email || !password) {
+      Alert.alert('Campos obrigatórios', 'Por favor, preencha email e senha.');
+      return;
+    }
+
+    setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
     
-  
       await AsyncStorage.setItem('slidesVistos', 'true');
       
       if (checked && user?.uid) {
@@ -87,11 +100,85 @@ export default function Login() {
         await AsyncStorage.setItem('keepLoggedIn', 'false');
         console.log('Manter conectado está DESATIVADO');
       }
+      
+      Alert.alert('Sucesso!', 'Login realizado com sucesso!');
       console.log("User logged in successfully");
-      navigation.navigate("Home");
-    } catch (error) {
+      
+      setTimeout(() => {
+        navigation.navigate("Home");
+      }, 1000);
+    } catch (error: any) {
       console.error("Error logging in:", error);
+      
+      let errorMessage = 'Erro ao fazer login.';
+      let errorDetails = '';
+
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorDetails = 'Usuário não encontrado.';
+          break;
+        case 'auth/wrong-password':
+          errorDetails = 'Senha incorreta.';
+          break;
+        case 'auth/invalid-email':
+          errorDetails = 'Email inválido.';
+          break;
+        case 'auth/invalid-credential':
+          errorDetails = 'Credenciais inválidas.';
+          break;
+        case 'auth/too-many-requests':
+          errorDetails = 'Muitas tentativas. Tente novamente mais tarde.';
+          break;
+        case 'auth/network-request-failed':
+          errorDetails = 'Erro de conexão. Verifique sua internet.';
+          break;
+        default:
+          errorDetails = error.message || 'Erro desconhecido.';
+      }
+      
+      Alert.alert(errorMessage, errorDetails);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert(
+        'Email necessário',
+        'Por favor, insira seu email no campo acima para redefinir a senha.'
+      );
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert(
+        'Email enviado!',
+        'Um link de redefinição de senha foi enviado para seu email.'
+      );
+    } catch (error: any) {
+      console.error("Error sending password reset email:", error);
+      
+      let errorMessage = 'Erro ao enviar email de redefinição.';
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'Nenhum usuário encontrado com este email.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Email inválido.';
+          break;
+        default:
+          errorMessage = error.message || 'Tente novamente.';
+      }
+      
+      Alert.alert('Erro', errorMessage);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    await loginWithGoogle();
   };
 
   return (
@@ -166,7 +253,7 @@ export default function Login() {
               containerStyle={styles.checkboxContainer}
               textStyle={styles.checkboxText}
             />
-            <TouchableOpacity onPress={() => console.log("Esqueci minha senha pressionado")}>
+            <TouchableOpacity onPress={handleForgotPassword}>
               <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
             </TouchableOpacity>
           </View>
@@ -174,14 +261,18 @@ export default function Login() {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               onPress={handleLogin}
-              style={styles.loginButton}
+              style={[styles.loginButton, loading && styles.buttonDisabled]}
+              disabled={loading}
             >
-              <Text style={styles.loginButtonText}>Acessar</Text>
+              <Text style={styles.loginButtonText}>
+                {loading ? 'Entrando...' : 'Acessar'}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               onPress={() => navigation.navigate("Register" as never)}
               style={styles.registerButton}
+              disabled={loading}
             >
               <Text style={styles.registerButtonText}>Cadastrar</Text>
             </TouchableOpacity>
@@ -193,14 +284,16 @@ export default function Login() {
             <View style={styles.dividerLine} />
           </View>
 
-          <View style={styles.socialContainer}>
-            <TouchableOpacity onPress={() => console.log("Login com Google")}>
-              <Image source={require("../assets/Google.png")} style={styles.socialIcon} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => console.log("Login com Facebook")}>
-              <Image source={require("../assets/Facebook.png")} style={styles.socialIcon} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={styles.googleLoginContainer}
+            onPress={handleGoogleLogin}
+            disabled={googleLoading || loading}
+          >
+            <Image source={require("../assets/Google.png")} style={styles.googleIcon} />
+            <Text style={styles.googleLoginText}>
+              {googleLoading ? 'Carregando...' : 'Fazer login com o Google'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </LinearGradient>
@@ -284,6 +377,9 @@ const styles = StyleSheet.create({
     minWidth: width * 0.35,
     alignItems: 'center',
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   loginButtonText: {
     color: 'white',
     fontSize: 16,
@@ -320,13 +416,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
   },
-  socialContainer: {
+  googleLoginContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 25,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     marginBottom: 30,
+    gap: 12,
   },
-  socialIcon: {
-    width: 48,
-    height: 48,
+  googleIcon: {
+    width: 24,
+    height: 24,
+    marginLeft: 10,
+  },
+  googleLoginText: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '400',
   },
 });

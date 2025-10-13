@@ -1,0 +1,118 @@
+import { useState } from 'react';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { 
+  GoogleAuthProvider, 
+  signInWithCredential 
+} from 'firebase/auth';
+import { auth } from '../config/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
+import Constants from 'expo-constants';
+
+const { GOOGLE_WEB_CLIENT_ID } = Constants.expoConfig?.extra || {};
+
+console.log('🔧 [useGoogleSignIn] Configurando Google Sign-In...');
+console.log('🔧 [useGoogleSignIn] Web Client ID:', GOOGLE_WEB_CLIENT_ID);
+
+// Configurar Google Sign-In com o Web Client ID do Firebase (apenas o essencial)
+GoogleSignin.configure({
+  webClientId: GOOGLE_WEB_CLIENT_ID,
+  scopes: ['profile', 'email'],
+});
+
+interface UseGoogleSignInResult {
+  promptAsync: () => Promise<void>;
+  loading: boolean;
+}
+
+export const useGoogleSignIn = (
+  onSuccess: () => void,
+  remember: boolean = true
+): UseGoogleSignInResult => {
+  const [loading, setLoading] = useState(false);
+
+  const promptAsync = async () => {
+    setLoading(true);
+    try {
+      console.log('🔍 [GoogleSignIn] Verificando Google Play Services...');
+  // 1. Verifica se o Google Play Services está disponível (Android)
+  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      console.log('✅ [GoogleSignIn] Google Play Services disponível');
+      
+      console.log('🔑 [GoogleSignIn] Iniciando Google Sign-In...');
+      // 2. Faz login com Google (abre tela de login do Google)
+      const userInfo = await GoogleSignin.signIn();
+  console.log('✅ [GoogleSignIn] Login bem-sucedido:', userInfo.data?.user?.email);
+      
+      // 3. Obtém o idToken
+      const idToken = userInfo.data?.idToken;
+      
+      if (!idToken) {
+        throw new Error('Não foi possível obter o token de autenticação');
+      }
+      
+      // 4. Cria credencial do Firebase com o token do Google
+      const googleCredential = GoogleAuthProvider.credential(idToken);
+      
+      // 5. Faz login no Firebase com a credencial do Google
+      const userCredential = await signInWithCredential(auth, googleCredential);
+      
+      // 6. Salva informações no AsyncStorage
+      await AsyncStorage.setItem('slidesVistos', 'true');
+      await AsyncStorage.setItem('userToken', userCredential.user.uid);
+      await AsyncStorage.setItem('keepLoggedIn', remember ? 'true' : 'false');
+      
+      // 7. Mostra mensagem de sucesso
+      Alert.alert('Sucesso!', 'Login com Google realizado com sucesso!');
+      
+      // 8. Navega para Home
+      setTimeout(() => {
+        onSuccess();
+      }, 1000);
+      
+    } catch (error: any) {
+      // Logs detalhados
+      try {
+        console.log('❌ [GoogleSignIn] Falha no login');
+        console.log('   code:', error?.code);
+        console.log('   message:', error?.message);
+      } catch {}
+      console.error('Erro no login com Google:', error);
+      
+      let errorMessage = 'Erro ao fazer login com Google.';
+      
+      if (error.code === 'SIGN_IN_CANCELLED') {
+        errorMessage = 'Login cancelado pelo usuário.';
+      } else if (error.code === 'IN_PROGRESS') {
+        errorMessage = 'Login já em andamento.';
+      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+        errorMessage = 'Google Play Services não disponível.';
+      } else if (error.code === 'auth/account-exists-with-different-credential') {
+        errorMessage = 'Já existe uma conta com este email usando outro método de login.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Erro de conexão. Verifique sua internet.';
+      } else if (error.code === 'DEVELOPER_ERROR') {
+        errorMessage = 'Configuração inválida (DEVELOPER_ERROR). Verifique SHA-1 / Web Client ID.';
+      } else if (error.code === 'NETWORK_ERROR' || error.code === 'auth/network-request-failed') {
+        errorMessage = 'Erro de rede. Verifique a conexão do dispositivo e tente novamente.';
+      } else {
+        errorMessage = error.message || 'Erro desconhecido.';
+      }
+
+      // Recuperação: limpar sessão local do Google
+      try { await GoogleSignin.signOut(); } catch {}
+      try { await GoogleSignin.revokeAccess(); } catch {}
+      
+      if (error.code !== 'SIGN_IN_CANCELLED') {
+        Alert.alert('Erro', errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    promptAsync,
+    loading,
+  };
+};

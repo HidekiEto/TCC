@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "464348842604",
+    "firebase_url": "https://aqualink-tcc-default-rtdb.firebaseio.com",
+    "project_id": "aqualink-tcc",
+    "storage_bucket": "aqualink-tcc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:464348842604:android:9b61a95f28201ce1a3e649",
+        "android_client_info": {
+          "package_name": "com.anonymous.aqualink"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "464348842604-aa2c9riveqj9m48kgne11ut3b37migj9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anonymous.aqualink",
+            "certificate_hash": "d47ccabf9999ca5f27c016f217d98c18d2c459dd"
+          }
+        },
+        {
+          "client_id": "464348842604-qskm65uutrh28aav3r478k7pqn0l756k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anonymous.aqualink",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "464348842604-7u43jjelpklne33u861pk9307d35rpud.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmXNxZmA5ehCkCIzFSmix3cTtgUBt2YmE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "464348842604-7u43jjelpklne33u861pk9307d35rpud.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
