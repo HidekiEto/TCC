@@ -11,6 +11,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "./src/types/navigation";
 import { DataProvider } from "./src/contexts/DataContext";
 import { DbProvider } from "./src/contexts/DbContext";
+import { ReminderProvider } from "./src/contexts/ReminderContext";
 
 export default function App() {
   const fontsLoaded = useAppFonts();
@@ -28,15 +29,17 @@ export default function App() {
   console.log("[App] Fontes carregadas, renderizando Navigation...");
   return (
     <Animated.View style={{ flex: 1 }}>
-      <DataProvider>
-        <DbProvider>
-          <BLEProvider>
-            <NavigationContainer>
-              <Navigation/>
-            </NavigationContainer>
-          </BLEProvider>
-        </DbProvider>
-      </DataProvider>
+      <ReminderProvider>
+        <DataProvider>
+          <DbProvider>
+            <BLEProvider>
+              <NavigationContainer>
+                <Navigation/>
+              </NavigationContainer>
+            </BLEProvider>
+          </DbProvider>
+        </DataProvider>
+      </ReminderProvider>
     </Animated.View>
   );
 }

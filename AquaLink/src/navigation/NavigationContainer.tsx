@@ -9,6 +9,7 @@ import Achievements from "../screens/Achievements";
 import Dashboard from "../screens/Dashboard";
 import Profile from "../screens/Profile";
 import InitialSlidesScreen from "../screens/InitialSlidesScreen";
+import ReminderSettings from "../screens/ReminderSettings";
 import type { RootStackParamList } from "../types/navigation";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -74,6 +75,17 @@ export default function Navigation({ initialRouteName = "Welcome" }: NavigationP
         name="InitialSlidesScreen"
         component={InitialSlidesScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ReminderSettings"
+        component={ReminderSettings}
+        options={{ 
+          headerShown: true,
+          title: "Configurar Lembretes",
+          headerStyle: { backgroundColor: '#0288D1' },
+          headerTintColor: '#fff',
+          headerTitleStyle: { fontWeight: 'bold' }
+        }}
       />
     </Stack.Navigator>
   );

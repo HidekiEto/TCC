@@ -120,7 +120,7 @@ export default function Profile() {
       colors={["#1081C7", "#27D5E8", "#FFFFFF"]}
       locations={[0.2, 0.9, 1]}
       start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 0.20 }}
+      end={{ x: 0, y: 0.25 }}
       style={styles.container}
     >
     <StatusBar backgroundColor="#1081C7" barStyle="light-content" />
@@ -158,6 +158,21 @@ export default function Profile() {
                   />
                   <Text style={styles.editButtonText}>
                     Editar perfil
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.reminderButton}
+                  onPress={() => navigation.navigate("ReminderSettings")}
+                >
+                  <MaterialCommunityIcons
+                    name="bell-ring"
+                    size={18}
+                    color="#27D5E8"
+                    style={styles.editIcon}
+                  />
+                  <Text style={styles.reminderButtonText}>
+                    Configurar Lembretes
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -237,6 +252,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     maxWidth: width * 0.9,
+    
   },
   userInfo: {
     flex: 1,
@@ -270,12 +286,35 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
+    marginBottom: height * 0.01,
   },
   editIcon: {
     marginRight: width * 0.015,
   },
   editButtonText: {
     color: '#084F8C',
+    fontSize: Math.round(width * 0.035),
+    fontWeight: '600',
+  },
+  reminderButton: {
+    backgroundColor: 'white',
+    paddingVertical: height * 0.01,
+    paddingHorizontal: width * 0.04,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  reminderButtonText: {
+    color: '#27D5E8',
     fontSize: Math.round(width * 0.035),
     fontWeight: '600',
   },

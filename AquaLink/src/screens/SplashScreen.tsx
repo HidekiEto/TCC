@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, StyleSheet, Dimensions, StatusBar } from "react-native";
 import Title from "../components/Title";
 import { LinearGradient } from "expo-linear-gradient";
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 
 import { NavigationProp } from '@react-navigation/native';
@@ -32,6 +33,9 @@ export default function SplashScreen({ navigation }: SplashScreenProps) {
       if (keepLoggedIn !== 'true' && auth.currentUser) {
         console.log(' Manter conectado DESATIVADO, fazendo logout...');
         try {
+          // Limpa sessão do Google para garantir que o seletor de contas apareça no próximo login
+          try { await GoogleSignin.signOut(); } catch {}
+          try { await GoogleSignin.revokeAccess(); } catch {}
           await signOut(auth);
           console.log(' Logout automático realizado');
         } catch (e) {

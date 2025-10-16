@@ -39,6 +39,14 @@ export const useGoogleSignIn = (
   await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       console.log('✅ [GoogleSignIn] Google Play Services disponível');
       
+      // Se o usuário NÃO marcou "manter conectado", limpamos a sessão do Google
+      // para forçar o seletor de contas no próximo login
+      if (!remember) {
+        try { await GoogleSignin.signOut(); } catch {}
+        try { await GoogleSignin.revokeAccess(); } catch {}
+        console.log('🔁 [GoogleSignIn] Sessão Google limpa para forçar seletor de contas');
+      }
+
       console.log('🔑 [GoogleSignIn] Iniciando Google Sign-In...');
       // 2. Faz login com Google (abre tela de login do Google)
       const userInfo = await GoogleSignin.signIn();

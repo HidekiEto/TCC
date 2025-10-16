@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import dayjs from 'dayjs';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../config/firebase";
-import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity, Modal, ActivityIndicator, Dimensions } from "react-native";
+import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity, Modal, ActivityIndicator, Dimensions, Platform, Alert } from "react-native";
 const { width, height } = Dimensions.get("window");
 import BottomNavigation from "../components/BottomNavigation";
 import { MaterialIcons, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
@@ -12,6 +12,8 @@ import { BarChartComponent } from "../components/DashboardComponents/BarChart";
 import { calcularMetaSemanalAgua, useConsumoUltimasSemanas } from '../components/Goals/WeeklyIntake';
 import { useBLE } from "../contexts/BLEProvider";
 import { useDbContext } from "../hooks/useDbContext";
+import { useReminders } from "../contexts/ReminderContext";
+import { useNavigation } from "@react-navigation/native";
 
 
 export default function Dashboard() {
@@ -87,6 +89,16 @@ export default function Dashboard() {
   const { sincronizarCacheComBanco } = useDbContext();
   const { scanForDevices, isScanning, isConnected, connectedDevice, foundDevices, connectToDevice, disconnectDevice, batteryLevel } = useBLE();
   const [modalVisible, setModalVisible] = useState(false);
+  
+  // Sistema de lembretes integrado
+  const navigation = useNavigation<any>();
+  const { 
+    config, 
+    scheduledCount, 
+    hasPermission, 
+    getNextReminderTime,
+    toggleReminders 
+  } = useReminders();
 
   const handleScan = () => {
     setModalVisible(true);
@@ -97,6 +109,90 @@ export default function Dashboard() {
     connectToDevice(deviceId);
     setModalVisible(false);
   };
+
+  // Navegar para configurações de lembretes
+  const handleReminderSettings = () => {
+    navigation.navigate('ReminderSettings');
+  };
+
+  // Toggle rápido de lembretes
+  const handleToggleReminders = async () => {
+    try {
+      await toggleReminders(!config.enabled);
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível alterar os lembretes');
+    }
+  };
+
+  // Calcular próximos 3 horários com base na configuração
+  const getNext3Reminders = (): Date[] => {
+    if (!config.enabled) return [];
+    
+    const now = new Date();
+    const times: Date[] = [];
+    const { startHour, endHour, intervalMinutes } = config;
+    
+    // Encontrar próximo horário
+    let checkTime = new Date(now);
+    checkTime.setSeconds(0, 0);
+    
+    // Arredondar para próximo intervalo
+    const currentMinutes = checkTime.getHours() * 60 + checkTime.getMinutes();
+    const startMinutes = startHour * 60;
+    const endMinutes = endHour * 60;
+    
+    let nextMinutes = startMinutes;
+    
+    // Se estamos antes do horário de início, começar no início
+    if (currentMinutes < startMinutes) {
+      nextMinutes = startMinutes;
+    } else {
+      // Encontrar próximo múltiplo do intervalo após o horário atual
+      while (nextMinutes <= currentMinutes && nextMinutes <= endMinutes) {
+        nextMinutes += intervalMinutes;
+      }
+      
+      // Se passou do fim do dia, começar amanhã no startHour
+      if (nextMinutes > endMinutes) {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(startHour, 0, 0, 0);
+        times.push(tomorrow);
+        
+        nextMinutes = startMinutes + intervalMinutes;
+        const second = new Date(tomorrow);
+        second.setHours(Math.floor(nextMinutes / 60), nextMinutes % 60, 0, 0);
+        times.push(second);
+        
+        nextMinutes += intervalMinutes;
+        const third = new Date(tomorrow);
+        third.setHours(Math.floor(nextMinutes / 60), nextMinutes % 60, 0, 0);
+        times.push(third);
+        
+        return times.slice(0, 3);
+      }
+    }
+    
+    // Adicionar próximos 3 horários
+    for (let i = 0; i < 3 && nextMinutes <= endMinutes; i++) {
+      const nextTime = new Date(now);
+      nextTime.setHours(Math.floor(nextMinutes / 60), nextMinutes % 60, 0, 0);
+      
+      // Se o horário já passou hoje, pular para amanhã
+      if (nextTime <= now) {
+        nextTime.setDate(nextTime.getDate() + 1);
+      }
+      
+      times.push(nextTime);
+      nextMinutes += intervalMinutes;
+    }
+    
+    return times.slice(0, 3);
+  };
+
+  const nextReminders = getNext3Reminders();
+  const formatTime = (date: Date) => 
+    `${String(date.getHours()).padStart(2, '0')}h${String(date.getMinutes()).padStart(2, '0')}`;
 
   return (
     <View style={styles.container}>
@@ -172,75 +268,7 @@ export default function Dashboard() {
           </Text>
         </View>
 
-
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="water" size={20} color="#082862" />
-            <Text style={styles.cardTitle}>Total Ingerido</Text>
-          </View>
-          <Text style={styles.totalValue}>{consumoMensal} mL</Text>
-          <Text style={styles.comparison}>
-            {consumoMensalAnterior > 0
-              ? `${(consumoMensal - consumoMensalAnterior).toFixed(1)} mL ${consumoMensal >= consumoMensalAnterior ? 'mais' : 'menos'} que passado`
-              : '0 mL mais que passado'}
-          </Text>
-        </View>
-
-
-        <View style={styles.chartContainer}>
-          <BarChartComponent userData={profileData} />
-        </View>
-
-
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <MaterialCommunityIcons name="bell-ring" size={20} color="#082862" />
-            <Text style={styles.cardTitle}>Lembretes</Text>
-          </View>
-          <Text style={styles.nextReminder}>Próximo Lembrete: 21h30</Text>
-          <Text style={styles.reminderSubtitle}>Duração de Lembretes</Text>
-          <View style={styles.timeOptions}>
-            <View style={styles.timeOption}>
-              <View style={styles.timeCircle} />
-              <Text style={styles.timeText}>19h30</Text>
-            </View>
-            <View style={styles.timeOption}>
-              <View style={styles.timeCircle} />
-              <Text style={styles.timeText}>18h30</Text>
-            </View>
-            <View style={styles.timeOption}>
-              <View style={styles.timeCircle} />
-              <Text style={styles.timeText}>09h30</Text>
-            </View>
-          </View>
-        </View>
-
-
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <MaterialCommunityIcons name="calculator" size={20} color="#082862" />
-            <Text style={styles.cardTitle}>Horários</Text>
-          </View>
-          <View style={styles.calculationRow}>
-            <Text style={styles.calculationTime}>08h30</Text>
-            <Text style={styles.calculationValue}>50 mL</Text>
-          </View>
-          <View style={styles.calculationRow}>
-            <Text style={styles.calculationTime}>07h30</Text>
-            <Text style={styles.calculationValue}>30 mL</Text>
-          </View>
-          <View style={styles.calculationRow}>
-            <Text style={styles.calculationTime}>06h00</Text>
-            <Text style={styles.calculationValue}>80 mL</Text>
-          </View>
-          <View style={styles.calculationRow}>
-            <Text style={styles.calculationTime}>05h30</Text>
-            <Text style={styles.calculationValue}>30 mL</Text>
-          </View>
-        </View>
-
-
-        <View style={styles.card}>
+                <View style={styles.card}>
           <View style={styles.cardHeader}>
             <MaterialCommunityIcons name="information" size={20} color="#082862" />
             <Text style={styles.cardTitle}>Sua Garrafa</Text>
@@ -308,7 +336,145 @@ export default function Dashboard() {
           </View>
         </View>
 
-       
+
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="water" size={20} color="#082862" />
+            <Text style={styles.cardTitle}>Total Ingerido</Text>
+          </View>
+          <Text style={styles.totalValue}>{consumoMensal} mL</Text>
+          <Text style={styles.comparison}>
+            {consumoMensalAnterior > 0
+              ? `${(consumoMensal - consumoMensalAnterior).toFixed(1)} mL ${consumoMensal >= consumoMensalAnterior ? 'mais' : 'menos'} que passado`
+              : '0 mL mais que passado'}
+          </Text>
+        </View>
+
+
+        <View style={styles.chartContainer}>
+          <BarChartComponent userData={profileData} />
+        </View>
+
+
+        <View style={styles.card}>
+          <View style={[styles.cardHeader, { justifyContent: 'space-between' }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <MaterialCommunityIcons 
+                name={config.enabled ? "bell-ring" : "bell-off"} 
+                size={20} 
+                color={config.enabled ? "#29EBD5" : "#999"} 
+              />
+              <Text style={styles.cardTitle}>Lembretes de Hidratação</Text>
+            </View>
+            <TouchableOpacity onPress={handleReminderSettings}>
+              <MaterialCommunityIcons name="cog" size={20} color="#082862" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Status */}
+          <View style={styles.reminderStatus}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={[styles.statusDot, { backgroundColor: config.enabled ? '#29EBD5' : '#999' }]} />
+                <Text style={styles.statusText}>
+                  {config.enabled ? 'Lembretes Ativos' : 'Lembretes Desativados'}
+                </Text>
+              </View>
+              <TouchableOpacity 
+                onPress={handleToggleReminders}
+                style={[styles.toggleButton, config.enabled && styles.toggleButtonActive]}
+              >
+                <Text style={[styles.toggleButtonText, config.enabled && styles.toggleButtonTextActive]}>
+                  {config.enabled ? 'Desativar' : 'Ativar'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {!hasPermission && (
+              <View style={styles.warningBox}>
+                <MaterialCommunityIcons name="alert-circle" size={16} color="#FF6B6B" />
+                <Text style={styles.warningText}>
+                  Permissão de notificação necessária
+                </Text>
+              </View>
+            )}
+
+            {config.enabled && hasPermission && (
+              <>
+                <View style={styles.infoRow}>
+                  <MaterialCommunityIcons name="clock-outline" size={16} color="#666" />
+                  <Text style={styles.infoText}>
+                    {config.startHour}h - {config.endHour}h, a cada{' '}
+                    {config.intervalMinutes >= 60 
+                      ? `${Math.floor(config.intervalMinutes / 60)}h` 
+                      : `${config.intervalMinutes}min`}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <MaterialCommunityIcons name="calendar-check" size={16} color="#666" />
+                  <Text style={styles.infoText}>
+                    {scheduledCount} lembretes agendados
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+
+          {/* Próximos Horários */}
+          {config.enabled && nextReminders.length > 0 && (
+            <>
+              <View style={styles.divider} />
+              <Text style={styles.reminderSubtitle}>Próximos Horários</Text>
+              <View style={styles.timeOptions}>
+                {nextReminders.map((time, idx) => (
+                  <View key={idx} style={styles.timeOption}>
+                    <View style={styles.timeCircle} />
+                    <Text style={styles.timeText}>{formatTime(time)}</Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+
+          {/* Ação */}
+          {!config.enabled && (
+            <TouchableOpacity 
+              style={styles.configureButton}
+              onPress={handleReminderSettings}
+            >
+              <MaterialCommunityIcons name="cog-outline" size={18} color="#082862" />
+              <Text style={styles.configureButtonText}>
+                Configurar Lembretes
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+
+        {/* <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <MaterialCommunityIcons name="calculator" size={20} color="#082862" />
+            <Text style={styles.cardTitle}>Horários</Text>
+          </View>
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationTime}>08h30</Text>
+            <Text style={styles.calculationValue}>50 mL</Text>
+          </View>
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationTime}>07h30</Text>
+            <Text style={styles.calculationValue}>30 mL</Text>
+          </View>
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationTime}>06h00</Text>
+            <Text style={styles.calculationValue}>80 mL</Text>
+          </View>
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationTime}>05h30</Text>
+            <Text style={styles.calculationValue}>30 mL</Text>
+          </View>
+        </View> */}
+
+  
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <MaterialCommunityIcons name="information" size={20} color="#082862" />
@@ -665,5 +831,101 @@ const styles = StyleSheet.create({
   },
   bottomSpace: {
     height: height * 0.12,
+  },
+  intervalChip: {
+    paddingVertical: height * 0.008,
+    paddingHorizontal: width * 0.03,
+    borderRadius: 16,
+    backgroundColor: '#ECEFF1',
+  },
+  intervalChipActive: {
+    backgroundColor: '#082862',
+  },
+  intervalChipText: {
+    color: '#082862',
+    fontWeight: '600',
+  },
+  intervalChipTextActive: {
+    color: '#FFFFFF',
+  },
+  reminderStatus: {
+    paddingVertical: height * 0.01,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  statusText: {
+    fontSize: Math.round(width * 0.038),
+    color: '#333',
+    fontWeight: '500',
+  },
+  toggleButton: {
+    paddingHorizontal: width * 0.04,
+    paddingVertical: height * 0.008,
+    borderRadius: 16,
+    backgroundColor: '#E3F2FD',
+    borderWidth: 1,
+    borderColor: '#BBDEFB',
+  },
+  toggleButtonActive: {
+    backgroundColor: '#082862',
+    borderColor: '#082862',
+  },
+  toggleButtonText: {
+    fontSize: Math.round(width * 0.032),
+    color: '#1976D2',
+    fontWeight: '600',
+  },
+  toggleButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    padding: width * 0.03,
+    borderRadius: 8,
+    marginTop: height * 0.01,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+  },
+  warningText: {
+    fontSize: Math.round(width * 0.032),
+    color: '#E65100',
+    marginLeft: width * 0.02,
+    flex: 1,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: height * 0.01,
+  },
+  infoText: {
+    fontSize: Math.round(width * 0.035),
+    color: '#666',
+    marginLeft: width * 0.02,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: height * 0.015,
+  },
+  configureButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E3F2FD',
+    borderRadius: 8,
+    paddingVertical: height * 0.015,
+    marginTop: height * 0.01,
+  },
+  configureButtonText: {
+    fontSize: Math.round(width * 0.038),
+    color: '#082862',
+    fontWeight: '600',
+    marginLeft: width * 0.02,
   },
 });
