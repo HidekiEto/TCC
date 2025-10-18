@@ -1,9 +1,3 @@
-/**
- * Tela de Configuração de Lembretes
- * 
- * Permite ao usuário personalizar os horários e frequência
- * dos lembretes de hidratação.
- */
 
 import React, { useState } from 'react';
 import {
@@ -166,7 +160,7 @@ export default function ReminderSettings() {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header */}
+   
       <View style={styles.header}>
         <Text style={styles.title}>⏰ Lembretes de Hidratação</Text>
         <Text style={styles.subtitle}>
@@ -174,7 +168,7 @@ export default function ReminderSettings() {
         </Text>
       </View>
 
-      {/* Status Card */}
+  
       <View style={styles.card}>
         <View style={styles.row}>
           <Text style={styles.label}>Lembretes Ativos</Text>
@@ -190,7 +184,7 @@ export default function ReminderSettings() {
           <>
             <View style={styles.divider} />
             <Text style={styles.infoText}>
-              📊 {scheduledCount} lembretes agendados
+               {scheduledCount} lembretes agendados
             </Text>
             {nextReminder && (
               <Text style={styles.infoText}>
@@ -220,7 +214,7 @@ export default function ReminderSettings() {
 
       {/* Horários */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>🕐 Horários</Text>
+        <Text style={styles.cardTitle}> Horários</Text>
 
         <View style={styles.timeRow}>
           <View style={styles.timeColumn}>
@@ -273,7 +267,7 @@ export default function ReminderSettings() {
 
       {/* Intervalo */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>⏱️ Intervalo entre Lembretes</Text>
+        <Text style={styles.cardTitle}> Intervalo entre Lembretes</Text>
         <View style={styles.intervalGrid}>
           {intervalOptions.map((option) => (
             <TouchableOpacity
@@ -298,9 +292,9 @@ export default function ReminderSettings() {
         </View>
       </View>
 
-      {/* Dias da Semana */}
+
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>📅 Dias da Semana</Text>
+        <Text style={styles.cardTitle}>Dias da Semana</Text>
         <View style={styles.daysGrid}>
           {days.map((day) => (
             <TouchableOpacity
@@ -328,7 +322,7 @@ export default function ReminderSettings() {
 
       {/* Resumo */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>📋 Resumo</Text>
+        <Text style={styles.cardTitle}>Resumo</Text>
         <Text style={styles.summaryText}>
           {formatReminderConfig({
             ...config,
@@ -345,14 +339,14 @@ export default function ReminderSettings() {
           style={[styles.button, styles.saveButton]}
           onPress={handleSave}
         >
-          <Text style={styles.buttonText}>💾 Salvar Configuração</Text>
+          <Text style={styles.buttonText}>Salvar Configuração</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, styles.resetButton]}
           onPress={handleReset}
         >
-          <Text style={styles.resetButtonText}>🔄 Restaurar Padrão</Text>
+          <Text style={styles.resetButtonText}>Restaurar Padrão</Text>
         </TouchableOpacity>
       </View>
 
