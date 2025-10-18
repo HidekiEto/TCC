@@ -253,7 +253,6 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
       );
     }
 
-    // Define a direção do gradiente para cada slide
     const getGradientDirection = () => {
       switch(index) {
         case 0: // Slide 1: De cima para baixo (vertical)
@@ -538,7 +537,6 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     textAlign: 'center',
   },
-  // Estilos do Welcome
   welcomeContent: {
     flex: 1,
     paddingHorizontal: 30,

@@ -1,8 +1,10 @@
 import React from 'react';
 import Slider from 'react-native-app-intro-slider';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, ActivityIndicator, Text } from 'react-native';
 import { RenderComponentSlides } from './RenderComponentSlides';
 import { useAppFonts } from '../../hooks/useAppFonts';
+import { useCalendarContext } from '../../hooks/useCalendarContext';
+import dayjs from 'dayjs';
 
 const { width, height } = Dimensions.get('window');
 
@@ -10,29 +12,40 @@ interface Slide {
   key: string;
   text?: string;
   info1?: string;
-  info2?: string;
   backgroundColor?: string;
 }
 
-const slides: Slide[] = [
-  {
-    key: '1',
-    backgroundColor: '#3498db',
-    text: 'Metas Alcançadas',
-    info1: 'Você alcançou sua meta em: 2 dos 31 dias',
-    info2: 'Água ingerida: 12,5L',
-  },
-  {
-    key: '2',
-    text: 'Água ingerida',
-    backgroundColor: '#3498db',
-    info1: 'Você ingeriu um total de 12,5L de água este mês!',
-  },
-];
-
 export default function SliderComponent() {
   const fontsLoaded = useAppFonts();
-  if (!fontsLoaded) return null;
+  const { diasMetaAlcancada, totalAguaMes, loading } = useCalendarContext();
+
+  if (!fontsLoaded || loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="small" color="#27D5E8" />
+      </View>
+    );
+  }
+
+  const mesAtual = dayjs().format('MMMM');
+  const diasNoMes = dayjs().daysInMonth();
+  
+  const totalLitros = (totalAguaMes / 1000).toFixed(1);
+
+  const slides: Slide[] = [
+    {
+      key: '1',
+      backgroundColor: '#3498db',
+      text: 'Metas Alcançadas',
+      info1: `Você alcançou sua meta em: ${diasMetaAlcancada} dos ${diasNoMes} dias`,
+    },
+    {
+      key: '2',
+      text: 'Água ingerida',
+      backgroundColor: '#3498db',
+      info1: `Você ingeriu um total de ${totalLitros}L de água este mês!`,
+    },
+  ];
 
   const renderItem = ({ item }: { item: Slide }) => {
     return <RenderComponentSlides item={item} />;
@@ -82,6 +95,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 10,
+  },
+  loadingContainer: {
+    minHeight: 160,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   paginationContainer: {
     height: 40,

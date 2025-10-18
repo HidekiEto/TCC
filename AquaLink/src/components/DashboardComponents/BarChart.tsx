@@ -3,17 +3,24 @@ import React from 'react';
 import { BarChart } from "react-native-gifted-charts";
 import { View, Text, Dimensions } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-import { calcularMetaSemanalAgua, useConsumoUltimasSemanas } from '../Goals/WeeklyIntake';
+import { calcularMetaSemanalAgua, useConsumoSemanasDoMesAtual } from '../Goals/WeeklyIntake';
+import dayjs from 'dayjs';
+import 'dayjs/locale/pt-br';
+
+dayjs.locale('pt-br');
 
 export const BarChartComponent: React.FC<{ userData?: any }> = ({ userData }) => {
   const { width, height } = Dimensions.get('window');
-  const consumoSemanal = useConsumoUltimasSemanas(userData?.uid);
+  const consumoSemanal = useConsumoSemanasDoMesAtual(userData?.uid);
 
   const metaSemanal = userData ? calcularMetaSemanalAgua(userData) : 0;
 
 
   console.log('[BarChart] ConsumoSemanal:', consumoSemanal);
   console.log('[BarChart] MetaSemanal:', metaSemanal);
+
+  const mesAtual = dayjs().format('MMMM');
+  const mesCapitalizado = mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1);
 
   const renderTitle = () => (
     <View style={{ alignItems: 'center', marginTop: 10 }}>
@@ -25,7 +32,7 @@ export const BarChartComponent: React.FC<{ userData?: any }> = ({ userData }) =>
           textAlign: 'center',
         }}>
         <Ionicons name="water" size={20} color="#082862" />
-        Relatório de Hidratação
+        Relatório de Hidratação - {mesCapitalizado}
       </Text>
       <View
         style={{
@@ -86,7 +93,6 @@ export const BarChartComponent: React.FC<{ userData?: any }> = ({ userData }) =>
             <BarChart
             showFractionalValues
             showYAxisIndices
-            // hideRules
             noOfSections={3}
             maxValue={30}
             data={barData}

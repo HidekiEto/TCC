@@ -33,7 +33,6 @@ export default function SplashScreen({ navigation }: SplashScreenProps) {
       if (keepLoggedIn !== 'true' && auth.currentUser) {
         console.log(' Manter conectado DESATIVADO, fazendo logout...');
         try {
-          // Limpa sessão do Google para garantir que o seletor de contas apareça no próximo login
           try { await GoogleSignin.signOut(); } catch {}
           try { await GoogleSignin.revokeAccess(); } catch {}
           await signOut(auth);

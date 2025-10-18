@@ -30,6 +30,9 @@
     "java.project.sourcePaths": [
         "android/app/src/main/java"
     ],
+    "java.project.referencedLibraries": [
+        "android/app/libs/**/*.jar"
+    ],
     "typescript.tsdk": "node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "javascript.preferences.importModuleSpecifier": "relative",
@@ -37,5 +40,12 @@
     "java.dependency.packagePresentation": "hierarchical",
     "problems.decorations.enabled": false,
     "java.errors.incompleteClasspath.severity": "ignore",
-    "java.import.generatesMetadataFilesAtProjectRoot": false
+    "java.import.generatesMetadataFilesAtProjectRoot": false,
+    "java.autobuild.enabled": false,
+    "java.project.resourceFilters": [
+        "node_modules"
+    ],
+    "[java]": {
+        "editor.defaultFormatter": "redhat.java"
+    }
 }

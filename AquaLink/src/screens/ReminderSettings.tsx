@@ -37,9 +37,6 @@ export default function ReminderSettings() {
   const [localEndHour, setLocalEndHour] = useState(config.endHour);
   const [localInterval, setLocalInterval] = useState(config.intervalMinutes);
 
-  // ============================================================================
-  // HANDLERS
-  // ============================================================================
 
   const handleToggle = async (value: boolean) => {
     try {
@@ -136,9 +133,6 @@ export default function ReminderSettings() {
     }
   };
 
-  // ============================================================================
-  // RENDER HELPERS
-  // ============================================================================
 
   const nextReminder = getNextReminderTime();
 
@@ -161,9 +155,6 @@ export default function ReminderSettings() {
     { label: 'Sáb', value: 6 },
   ];
 
-  // ============================================================================
-  // RENDER
-  // ============================================================================
 
   if (isLoading) {
     return (
@@ -370,9 +361,6 @@ export default function ReminderSettings() {
   );
 }
 
-// ============================================================================
-// ESTILOS
-// ============================================================================
 
 const styles = StyleSheet.create({
   container: {

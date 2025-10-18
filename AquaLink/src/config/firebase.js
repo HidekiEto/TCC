@@ -33,8 +33,6 @@ const app = initializeApp(firebaseConfig);
 console.log('Firebase app initialized:', app.name);
 
 
-// export const auth = getAuth(app);
-// export const db = getDatabase(app);
 
 
 export const auth = initializeAuth(app, {

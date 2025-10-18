@@ -33,6 +33,7 @@ import { calcularMetaDiariaAgua } from '../components/Goals/DailyIntake';
 import { useBLE } from "../contexts/BLEProvider";
 import { useDbContext } from "../hooks/useDbContext";
 import { useDataContext } from "../hooks/useDataContext";
+import { useReminders } from "../contexts/ReminderContext";
 
 export default function Home() {
 
@@ -42,6 +43,16 @@ export default function Home() {
   const [consumoAcumulado, setConsumoAcumulado] = useState(0);
   const { writeToDevice, isConnected, batteryLevel } = useBLE();
   const dataContext = useDataContext();
+  
+  const volumeAtual = dataContext?.volume ?? null;
+  
+  const { 
+    config, 
+    scheduledCount, 
+    hasPermission, 
+    getNextReminderTime,
+    toggleReminders 
+  } = useReminders();
 
   const [profileData, setProfileData] = useState<any>(null);
 
@@ -98,7 +109,7 @@ export default function Home() {
     checkKeepLoggedIn();
   }, []);
   const [waterValue, setWaterValue] = useState(44); 
-  const goalMl = profileData ? calcularMetaDiariaAgua(profileData) : 2000; // meta diária dinâmica
+  const goalMl = profileData ? calcularMetaDiariaAgua(profileData) : 2000;
   const [user, setUser] = useState<User | null>(null);
   const [showInitialSlides, setShowInitialSlides] = useState<boolean>(false);
   const [loadingSlides, setLoadingSlides] = useState(true);
@@ -165,6 +176,76 @@ export default function Home() {
   const handleSlidesDone = async () => {
     await AsyncStorage.setItem('slidesVistos', 'true');
     setShowInitialSlides(false);
+  };
+
+  const getNext3Reminders = (): Date[] => {
+    if (!config.enabled) return [];
+    
+    const now = new Date();
+    const times: Date[] = [];
+    const { startHour, endHour, intervalMinutes } = config;
+    
+    let checkTime = new Date(now);
+    checkTime.setSeconds(0, 0);
+    
+    const currentMinutes = checkTime.getHours() * 60 + checkTime.getMinutes();
+    const startMinutes = startHour * 60;
+    const endMinutes = endHour * 60;
+    
+    let nextMinutes = startMinutes;
+    
+    if (currentMinutes < startMinutes) {
+      nextMinutes = startMinutes;
+    } else {
+      while (nextMinutes <= currentMinutes && nextMinutes <= endMinutes) {
+        nextMinutes += intervalMinutes;
+      }
+      
+      if (nextMinutes > endMinutes) {
+        const tomorrow = new Date(checkTime);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(startHour, 0, 0, 0);
+        times.push(tomorrow);
+        
+        let nextDay = startMinutes + intervalMinutes;
+        while (times.length < 3 && nextDay <= endMinutes) {
+          const time = new Date(tomorrow);
+          time.setHours(Math.floor(nextDay / 60), nextDay % 60, 0, 0);
+          times.push(time);
+          nextDay += intervalMinutes;
+        }
+        return times;
+      }
+    }
+    
+    while (times.length < 3 && nextMinutes <= endMinutes) {
+      const time = new Date(checkTime);
+      time.setHours(Math.floor(nextMinutes / 60), nextMinutes % 60, 0, 0);
+      times.push(time);
+      nextMinutes += intervalMinutes;
+    }
+    
+    if (times.length < 3) {
+      const tomorrow = new Date(checkTime);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      let nextDay = startMinutes;
+      while (times.length < 3 && nextDay <= endMinutes) {
+        const time = new Date(tomorrow);
+        time.setHours(Math.floor(nextDay / 60), nextDay % 60, 0, 0);
+        times.push(time);
+        nextDay += intervalMinutes;
+      }
+    }
+    
+    return times;
+  };
+
+  const nextReminders = getNext3Reminders();
+  const formatTime = (date: Date) => 
+    `${String(date.getHours()).padStart(2, '0')}h${String(date.getMinutes()).padStart(2, '0')}`;
+
+  const handleReminderSettings = () => {
+    navigation.navigate('ReminderSettings');
   };
 
   const getFirstName = () => {
@@ -270,8 +351,8 @@ export default function Home() {
             title="Bateria"
             icon="battery"
             info1={`Status da bateria: ${batteryLevel !== null ? `${batteryLevel}%` : '---'}`}
-            info2="Água restante na garrafa: 160 mL"
-            info3="Tempo estimado de uso: 8 horas"
+            info2={`Água restante na garrafa: ${isConnected && volumeAtual !== null ? `${Math.round(volumeAtual)} mL` : '--- mL'}`}
+            info3={`Capacidade total: 900 mL`}
             buttonStyle={styles.batteryCard}
           >
             <View style={styles.cardContent}>
@@ -293,7 +374,30 @@ export default function Home() {
                   <Text style={styles.batteryTitle}>Bateria:</Text>
                   <Text style={styles.batteryPercentage}>{batteryLevel !== null ? `${batteryLevel}%` : '---'}</Text>
                   <Text style={styles.batterySubtext}>Água restante na garrafa:</Text>
-                  <Text style={styles.batterySubtext}>160 mL</Text>
+                  <Text style={styles.batterySubtext}>
+                    {isConnected && volumeAtual !== null ? `${Math.round(volumeAtual)} mL` : '--- mL'}
+                  </Text>
+                  
+                  {/* Barra de Progresso de Água */}
+                  {isConnected && volumeAtual !== null && (
+                    <View style={styles.waterProgressContainerSmall}>
+                      <View style={styles.waterProgressBarSmall}>
+                        <View 
+                          style={[
+                            styles.waterProgressFillSmall, 
+                            { 
+                              width: `${Math.min((volumeAtual / 900) * 100, 100)}%`,
+                              backgroundColor: volumeAtual < 180 ? '#FF6B6B' : 
+                                             volumeAtual < 450 ? '#FFA500' : '#1976D2'
+                            }
+                          ]} 
+                        />
+                      </View>
+                      <Text style={styles.waterProgressTextSmall}>
+                        {Math.round((volumeAtual / 900) * 100)}%
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
             </View>
@@ -301,28 +405,39 @@ export default function Home() {
           <ModalComponent
             title="Lembretes"
             icon="clock-outline"
-            info1="Próximo lembrete: 12:30h"
-            info2="Lembretes configurados: 3"
-            info3="Frequência: A cada 4 horas"
+            info1={config.enabled ? `Próximo lembrete: ${nextReminders.length > 0 ? formatTime(nextReminders[0]) : 'N/A'}` : 'Lembretes desativados'}
+            info2={`Lembretes configurados: ${scheduledCount}`}
+            info3={`Frequência: A cada ${Math.floor(config.intervalMinutes / 60)}h${config.intervalMinutes % 60 > 0 ? ` ${config.intervalMinutes % 60}min` : ''}`}
             buttonStyle={styles.reminderCard}
+            modalContent={
+              <View style={{ width: '100%', marginTop: 20 }}>
+                <TouchableOpacity 
+                  style={styles.configureReminderButton}
+                  onPress={handleReminderSettings}
+                >
+                  <MaterialCommunityIcons name="cog" size={20} color="#084F8C" />
+                  <Text style={styles.configureReminderButtonText}>Configurar Lembretes</Text>
+                </TouchableOpacity>
+              </View>
+            }
           >
             <View style={styles.cardContent}>
               <Text style={styles.reminderTitle}>Lembretes</Text>
-              <View style={styles.reminderItem}>
-                <Text style={styles.reminderBullet}>•</Text>
-                <Text style={styles.reminderTime}>12h30</Text>
-                <FontAwesome5 name="bell" size={12} color="white" />
-              </View>
-              <View style={styles.reminderItem}>
-                <Text style={styles.reminderBullet}>•</Text>
-                <Text style={styles.reminderTime}>16h00</Text>
-                <FontAwesome5 name="bell" size={12} color="white" />
-              </View>
-              <View style={styles.reminderItem}>
-                <Text style={styles.reminderBullet}>•</Text>
-                <Text style={styles.reminderTime}>20h30</Text>
-                <FontAwesome5 name="bell" size={12} color="white" />
-              </View>
+              {config.enabled && nextReminders.length > 0 ? (
+                nextReminders.slice(0, 3).map((time, index) => (
+                  <View key={index} style={styles.reminderItem}>
+                    <Text style={styles.reminderBullet}>•</Text>
+                    <Text style={styles.reminderTime}>{formatTime(time)}</Text>
+                    <FontAwesome5 name="bell" size={12} color="white" />
+                  </View>
+                ))
+              ) : (
+                <View style={styles.reminderItem}>
+                  <Text style={styles.reminderBullet}>•</Text>
+                  <Text style={styles.reminderTime}>---</Text>
+                  <FontAwesome5 name="bell" size={12} color="white" />
+                </View>
+              )}
             </View>
           </ModalComponent>
         </View>
@@ -523,5 +638,48 @@ const styles = StyleSheet.create({
     height: 200,
     alignItems: "center",
     justifyContent: "center",
+  },
+  configureReminderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E3F2FD',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#084F8C',
+  },
+  configureReminderButtonText: {
+    color: '#084F8C',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  waterProgressContainerSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    width: '100%',
+  },
+  waterProgressBarSmall: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginRight: 8,
+  },
+  waterProgressFillSmall: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  waterProgressTextSmall: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#666',
+    minWidth: 35,
+    textAlign: 'right',
   },
 });

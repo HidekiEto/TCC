@@ -230,7 +230,6 @@ export const LiquidGauge = ({
     { translateY: textRiseScaleY(mergedConfig.textVertPosition) - textPixels },
   ];
 
-  // path animado da borda
   const borderPath = useDerivedValue(() => {
     const p = Skia.Path.Make();
     const sweepAngle = 360 * progressValue.value;

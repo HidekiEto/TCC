@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useDataContext } from '../hooks/useDataContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDbContext } from '../hooks/useDbContext';
+import { auth } from '../config/firebase';
 
 const SERVICE_UUID = "34303c72-4cb1-4d48-98cb-781afece9cd7";
 const CHARACTERISTIC_UUID = "5b4ff54f-8297-45b4-9949-7ff95e672aae";
@@ -60,6 +61,33 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
   const volumeAnteriorRef = useRef<number | null>(null);
   const consumoAcumuladoRef = useRef<number>(0);
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        console.log(`🔄 [BLEProvider] Usuário logado: ${user.uid}`);
+        
+        try {
+          if (dbContext) {
+            const consumoCache = await dbContext.getConsumoAcumuladoNoCache();
+            consumoAcumuladoRef.current = consumoCache;
+            if (dataContext) {
+              dataContext.setConsumoAcumulado(consumoCache);
+            }
+            console.log("✅ [BLEProvider] Consumo do usuário carregado:", consumoCache, "mL");
+          }
+        } catch (e) {
+          console.log("⚠️ [BLEProvider] Erro ao carregar consumo:", e);
+        }
+      } else {
+        console.log(`🚪 [BLEProvider] Usuário deslogado - resetando refs`);
+        
+        volumeAnteriorRef.current = null;
+        consumoAcumuladoRef.current = 0;
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [dbContext, dataContext]);
 
   useEffect(() => {
     const tryReconnect = async () => {
@@ -89,6 +117,77 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
     }, 3000);
     return () => clearInterval(interval);
   }, [connectedDevice]);
+
+  useEffect(() => {
+    if (!isConnected || !connectedDevice?.id || !dbContext) return;
+
+    console.log("🔄 [AUTO-SYNC] Sistema de sincronização automática iniciado");
+    console.log("🔄 [AUTO-SYNC] Intervalo: 5 minutos");
+    console.log("🔄 [AUTO-SYNC] Garrafa conectada:", connectedDevice.id);
+
+    const syncInterval = setInterval(async () => {
+      try {
+        console.log("⏰ [AUTO-SYNC] Verificando se há leituras para sincronizar...");
+        
+        const uid = auth.currentUser?.uid;
+        if (!uid) {
+          console.log("⚠️ [AUTO-SYNC] Usuário não autenticado, pulando sincronização");
+          return;
+        }
+
+        const cacheKey = `leiturasCache_${uid}`;
+        const cache = await AsyncStorage.getItem(cacheKey);
+        const leituras = cache ? JSON.parse(cache) : [];
+
+        if (leituras.length === 0) {
+          console.log("ℹ️ [AUTO-SYNC] Nenhuma leitura no cache para sincronizar");
+          return;
+        }
+
+        console.log(`🔄 [AUTO-SYNC] Iniciando sincronização automática de ${leituras.length} leitura(s)...`);
+        console.log(`📱 [AUTO-SYNC] Garrafa ID: ${connectedDevice.id}`);
+        console.log(`👤 [AUTO-SYNC] Usuário ID: ${uid}`);
+
+        await dbContext.sincronizarCacheComBanco(connectedDevice.id);
+
+        console.log("✅ [AUTO-SYNC] Sincronização automática concluída com sucesso!");
+        console.log(`📊 [AUTO-SYNC] ${leituras.length} leitura(s) enviada(s) para o Firebase`);
+        
+      } catch (error: any) {
+        console.error("❌ [AUTO-SYNC] Erro durante sincronização automática:", error?.message || error);
+        console.error("❌ [AUTO-SYNC] Stack:", error?.stack);
+      }
+    }, 5 * 60 * 1000); // 5 minutos
+
+    const initialSyncTimeout = setTimeout(async () => {
+      try {
+        console.log("🚀 [AUTO-SYNC] Executando sincronização inicial...");
+        
+        const uid = auth.currentUser?.uid;
+        if (!uid) return;
+
+        const cacheKey = `leiturasCache_${uid}`;
+        const cache = await AsyncStorage.getItem(cacheKey);
+        const leituras = cache ? JSON.parse(cache) : [];
+
+        if (leituras.length > 0) {
+          console.log(`🔄 [AUTO-SYNC] Sincronizando ${leituras.length} leitura(s) pendente(s)...`);
+          await dbContext.sincronizarCacheComBanco(connectedDevice.id);
+          console.log("✅ [AUTO-SYNC] Sincronização inicial concluída!");
+        } else {
+          console.log("ℹ️ [AUTO-SYNC] Nenhuma leitura pendente na sincronização inicial");
+        }
+      } catch (error: any) {
+        console.error("❌ [AUTO-SYNC] Erro na sincronização inicial:", error?.message || error);
+      }
+    }, 30000); // 30 segundos após conectar
+
+    return () => {
+      console.log("🛑 [AUTO-SYNC] Sistema de sincronização automática encerrado");
+      clearInterval(syncInterval);
+      clearTimeout(initialSyncTimeout);
+    };
+  }, [isConnected, connectedDevice, dbContext]);
 
 
 
@@ -176,7 +275,6 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
           setConnectedDevice(device);
           setIsConnected(true);
 
-          // Listener de desconexão BLE em tempo real
           device.onDisconnected((error, disconnectedDevice) => {
             console.log("BLE desconectado!", error);
             setIsConnected(false);
@@ -200,65 +298,79 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
                 try {
                   if (decoded.trim().startsWith("{")) {
                     const data = JSON.parse(decoded);
+                    
                     const volume = typeof data.volume === "number" ? data.volume : null;
-                    const battery = typeof data.battery === "number" ? data.battery : null; 
+                    const distancia = typeof data.distancia === "number" ? data.distancia : null;
+                    const batteryV = typeof data.bateria_v === "number" ? data.bateria_v : null;
+                    const batteryPct = typeof data.bateria_pct === "number" ? data.bateria_pct : null;
+                    const ldrPct = typeof data.ldr_pct === "number" ? data.ldr_pct : null;
 
-                    if (battery !== null) {
-                      setBatteryLevel(battery); 
-                      console.log("Nível da bateria recebido:", battery);
+                    if (batteryPct !== null) {
+                      setBatteryLevel(Math.round(batteryPct)); 
+                      console.log("🔋 Bateria:", batteryPct, "% | Tensão:", batteryV, "V");
                     }
 
-                    if (dataContext && volume !== null) {
-                      if (volumeAnteriorRef.current !== null) {
-                        dataContext.setVolumeAnterior(volumeAnteriorRef.current);
-                        let consumo = volumeAnteriorRef.current - volume;
+                    if (dataContext) {
+                      if (distancia !== null) dataContext.setDistancia(distancia);
+                      if (batteryV !== null) dataContext.setBatteryV(batteryV);
+                      if (batteryPct !== null) dataContext.setBatteryPct(batteryPct);
+                      if (ldrPct !== null) dataContext.setLdrPct(ldrPct);
 
-                        if (consumo < 0) {
-                          console.log("Consumo negativo detectado, ajustando para 0");
-                          consumo = 0;
+                      if (volume !== null) {
+                        if (volumeAnteriorRef.current !== null) {
+                          dataContext.setVolumeAnterior(volumeAnteriorRef.current);
+                          let consumo = volumeAnteriorRef.current - volume;
+
+                          if (consumo < 0) {
+                            console.log("⚠️ Consumo negativo detectado, ajustando para 0");
+                            consumo = 0;
+                          }
+
+                          consumo = Math.round(consumo * 10) / 10;
+                          dataContext.setConsumo(consumo);
+                          consumoAcumuladoRef.current = Math.round((consumoAcumuladoRef.current + (consumo > 0 ? consumo : 0)) * 10) / 10;
+                          dataContext.setConsumoAcumulado(consumoAcumuladoRef.current);
+
+                          if (dbContext) {
+                            const leitura = {
+                              timestamp: Date.now(),
+                              volume,
+                              volumeAnterior: volumeAnteriorRef.current,
+                              consumo,
+                            };
+                            dbContext.salvarLeituraNoCache(leitura);
+                          }
+
+                          console.log("==== DADOS ATUALIZADOS ====");
+                          console.log("📏 Distância:", distancia, "cm");
+                          console.log("💧 Volume anterior:", volumeAnteriorRef.current, "mL");
+                          console.log("💧 Volume atual:", volume, "mL");
+                          console.log("📊 Consumo calculado:", consumo, "mL");
+                          console.log("🔋 Bateria:", batteryPct, "% (", batteryV, "V)");
+                          console.log("☀️ LDR:", ldrPct, "%");
+                          console.log("=================================");
+                        } else {
+                          dataContext.setVolumeAnterior(volume);
+                          dataContext.setConsumo(0);
+                          consumoAcumuladoRef.current = 0;
+                          dataContext.setConsumoAcumulado(0); 
+                          console.log("🆕 Primeira leitura: volume anterior inicializado como o volume recebido.");
+
+                          if (dbContext) {
+                            const leitura = {
+                              timestamp: Date.now(),
+                              volume,
+                              volumeAnterior: volume,
+                              consumo: 0,
+                              consumoAcumulado: 0,
+                            };
+                            dbContext.salvarLeituraNoCache(leitura);
+                          }
                         }
 
-                        consumo = Math.round(consumo * 10) / 10;
-                        dataContext.setConsumo(consumo);
-                        consumoAcumuladoRef.current = Math.round((consumoAcumuladoRef.current + (consumo > 0 ? consumo : 0)) * 10) / 10;
-                        dataContext.setConsumoAcumulado(consumoAcumuladoRef.current);
-
-                        if (dbContext) {
-                          const leitura = {
-                            timestamp: Date.now(),
-                            volume,
-                            volumeAnterior: volumeAnteriorRef.current,
-                            consumo,
-                          };
-                          dbContext.salvarLeituraNoCache(leitura);
-                        }
-
-                        console.log("==== DADOS ATUALIZADOS ====");
-                        console.log("Volume anterior:", volumeAnteriorRef.current);
-                        console.log("Volume atual:", volume);
-                        console.log("Consumo calculado:", consumo);             
-                        console.log("=================================");
-                      } else {
-                        dataContext.setVolumeAnterior(volume);
-                        dataContext.setConsumo(0);
-                        consumoAcumuladoRef.current = 0;
-                        dataContext.setConsumoAcumulado(0); 
-                        console.log("Primeira leitura: volume anterior inicializado como o volume recebido.");
-
-                        if (dbContext) {
-                          const leitura = {
-                            timestamp: Date.now(),
-                            volume,
-                            volumeAnterior: volume,
-                            consumo: 0,
-                            consumoAcumulado: 0,
-                          };
-                          dbContext.salvarLeituraNoCache(leitura);
-                        }
+                        volumeAnteriorRef.current = volume;
+                        dataContext.setVolume(volume);
                       }
-
-                      volumeAnteriorRef.current = volume;
-                      dataContext.setVolume(volume);
                     }
                   } else {
                     console.log("Mensagem recebida:", decoded);
@@ -269,6 +381,22 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
               }
             }
           );
+
+          try {
+            const uid = auth.currentUser?.uid;
+            if (uid && device.id) {
+              const { ref, set } = await import('firebase/database');
+              const { db } = await import('../config/firebase');
+              
+              await set(ref(db, `users/${uid}/connectedBottle`), device.id);
+              console.log(`🔗 [BLE] Usuário ${uid} vinculado à garrafa ${device.id} no Firebase`);
+              
+              await AsyncStorage.setItem('lastDeviceId', device.id);
+              console.log(`💾 [BLE] Device ID salvo no AsyncStorage`);
+            }
+          } catch (e) {
+            console.error("⚠️ [BLE] Erro ao vincular usuário à garrafa no Firebase:", e);
+          }
 
           Alert.alert('Sucesso', `Conectado ao dispositivo ${device.name || device.id}`);
           resolve();

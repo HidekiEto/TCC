@@ -1,9 +1,3 @@
-/**
- * Context de Gerenciamento de Lembretes
- * 
- * Gerencia o estado global dos lembretes de hidratação,
- * incluindo configurações, persistência e sincronização.
- */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,39 +18,28 @@ import {
 } from '../utils/notifications';
 import * as Notifications from 'expo-notifications';
 
-// ============================================================================
-// TIPOS
-// ============================================================================
 
 interface ReminderContextData {
-  // Estado
+ 
   config: ReminderConfig;
   isLoading: boolean;
   hasPermission: boolean;
   scheduledCount: number;
   
-  // Ações
+ 
   updateConfig: (newConfig: Partial<ReminderConfig>) => Promise<void>;
   toggleReminders: (enabled: boolean) => Promise<void>;
   requestPermission: () => Promise<boolean>;
   refreshScheduledCount: () => Promise<void>;
   resetToDefault: () => Promise<void>;
   
-  // Informações
+ 
   getNextReminderTime: () => Date | null;
 }
-
-// ============================================================================
-// CONTEXT
-// ============================================================================
 
 const ReminderContext = createContext<ReminderContextData | undefined>(undefined);
 
 const STORAGE_KEY = '@aqualink:reminder_config';
-
-// ============================================================================
-// PROVIDER
-// ============================================================================
 
 interface ReminderProviderProps {
   children: ReactNode;
@@ -68,38 +51,31 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
   const [hasPermission, setHasPermission] = useState(false);
   const [scheduledCount, setScheduledCount] = useState(0);
 
-  // ============================================================================
-  // INICIALIZAÇÃO
-  // ============================================================================
-
+ 
   useEffect(() => {
     initializeReminders();
   }, []);
 
-  /**
-   * Inicializa o sistema de lembretes
-   */
+
   async function initializeReminders() {
     try {
       setIsLoading(true);
 
-      // 1. Configurar handlers de notificação
+    
       setupNotificationHandler();
       await setupNotificationChannel();
 
-      // 2. Verificar permissões
+     
       const permission = await checkNotificationPermissions();
       setHasPermission(permission);
 
-      // 3. Carregar configuração salva
       const savedConfig = await loadConfig();
       setConfig(savedConfig);
 
-      // 4. Contar notificações agendadas
       const count = await countWaterReminders();
       setScheduledCount(count);
 
-      // 5. Reagendar se necessário
+    
       if (savedConfig.enabled && permission && count === 0) {
         console.log('🔄 Reagendando lembretes...');
         await scheduleWaterReminders(savedConfig);
@@ -109,26 +85,24 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
 
       console.log('✅ Sistema de lembretes inicializado');
     } catch (error) {
-      console.error('❌ Erro ao inicializar lembretes:', error);
+      console.error(' Erro ao inicializar lembretes:', error);
     } finally {
       setIsLoading(false);
     }
   }
 
-  // ============================================================================
-  // LISTENERS DE NOTIFICAÇÕES
-  // ============================================================================
+
 
   useEffect(() => {
-    // Listener para quando uma notificação é recebida (app em foreground)
+  
     const receivedSubscription = addNotificationReceivedListener((notification) => {
       console.log('📬 Notificação recebida:', notification.request.content.title);
     });
 
-    // Listener para quando o usuário toca na notificação
+   
     const responseSubscription = addNotificationResponseListener((response) => {
       console.log('👆 Notificação tocada:', response.notification.request.content.title);
-      // Aqui você pode navegar para uma tela específica, por exemplo
+    
     });
 
     return () => {
@@ -137,13 +111,6 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
     };
   }, []);
 
-  // ============================================================================
-  // PERSISTÊNCIA
-  // ============================================================================
-
-  /**
-   * Carrega configuração do AsyncStorage
-   */
   async function loadConfig(): Promise<ReminderConfig> {
     try {
       const saved = await AsyncStorage.getItem(STORAGE_KEY);
@@ -158,9 +125,6 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
     return DEFAULT_REMINDER_CONFIG;
   }
 
-  /**
-   * Salva configuração no AsyncStorage
-   */
   async function saveConfig(newConfig: ReminderConfig): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
@@ -170,29 +134,18 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
     }
   }
 
-  // ============================================================================
-  // AÇÕES
-  // ============================================================================
-
-  /**
-   * Atualiza a configuração de lembretes
-   */
   async function updateConfig(newConfig: Partial<ReminderConfig>): Promise<void> {
     try {
       const updatedConfig = { ...config, ...newConfig };
 
-      // Validar configuração
       if (!validateReminderConfig(updatedConfig)) {
         throw new Error('Configuração inválida');
       }
 
-      // Atualizar estado
       setConfig(updatedConfig);
 
-      // Salvar
       await saveConfig(updatedConfig);
 
-      // Reagendar notificações
       if (updatedConfig.enabled && hasPermission) {
         await scheduleWaterReminders(updatedConfig);
         await refreshScheduledCount();
@@ -208,9 +161,6 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
     }
   }
 
-  /**
-   * Liga/desliga os lembretes
-   */
   async function toggleReminders(enabled: boolean): Promise<void> {
     try {
       if (enabled && !hasPermission) {
@@ -227,16 +177,12 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
     }
   }
 
-  /**
-   * Solicita permissão de notificações
-   */
   async function requestPermission(): Promise<boolean> {
     try {
       const granted = await requestNotificationPermissions();
       setHasPermission(granted);
 
       if (granted && config.enabled) {
-        // Se ganhou permissão e lembretes estão habilitados, agendar
         await scheduleWaterReminders(config);
         await refreshScheduledCount();
       }
@@ -248,9 +194,6 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
     }
   }
 
-  /**
-   * Atualiza a contagem de notificações agendadas
-   */
   async function refreshScheduledCount(): Promise<void> {
     try {
       const count = await countWaterReminders();
@@ -260,9 +203,6 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
     }
   }
 
-  /**
-   * Reseta configuração para o padrão
-   */
   async function resetToDefault(): Promise<void> {
     try {
       setConfig(DEFAULT_REMINDER_CONFIG);
@@ -280,9 +220,6 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
     }
   }
 
-  /**
-   * Calcula o próximo horário de lembrete
-   */
   function getNextReminderTime(): Date | null {
     if (!config.enabled || scheduledCount === 0) {
       return null;
@@ -293,7 +230,6 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
     const startMinutes = config.startHour * 60;
     const endMinutes = config.endHour * 60;
 
-    // Se estamos fora do horário de lembretes, retornar próximo startHour
     if (currentMinutes < startMinutes) {
       const next = new Date();
       next.setHours(config.startHour, 0, 0, 0);
@@ -307,7 +243,6 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
       return next;
     }
 
-    // Encontrar próximo horário
     let nextMinutes = startMinutes;
     while (nextMinutes <= endMinutes) {
       if (nextMinutes > currentMinutes) {
@@ -318,16 +253,11 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
       nextMinutes += config.intervalMinutes;
     }
 
-    // Se não encontrou hoje, retornar amanhã no startHour
     const next = new Date();
     next.setDate(next.getDate() + 1);
     next.setHours(config.startHour, 0, 0, 0);
     return next;
   }
-
-  // ============================================================================
-  // CONTEXT VALUE
-  // ============================================================================
 
   const value: ReminderContextData = {
     config,
@@ -349,13 +279,6 @@ export function ReminderProvider({ children }: ReminderProviderProps) {
   );
 }
 
-// ============================================================================
-// HOOK
-// ============================================================================
-
-/**
- * Hook para acessar o contexto de lembretes
- */
 export function useReminders(): ReminderContextData {
   const context = useContext(ReminderContext);
   if (!context) {

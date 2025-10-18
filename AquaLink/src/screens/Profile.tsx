@@ -63,8 +63,12 @@ export default function Profile() {
 
   useFocusEffect(
     React.useCallback(() => {
-    
+      console.log('🔄 [Profile] Tela ganhou foco - recarregando dados...');
       setUid(user?.uid);
+      if (user?.uid) {
+        setUid(undefined);
+        setTimeout(() => setUid(user.uid), 100);
+      }
     }, [user])
   );
 

@@ -1,8 +1,3 @@
-/**
- * Widget de Status de Lembretes
- * 
- * Exibe informações sobre os lembretes configurados na tela Home
- */
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';

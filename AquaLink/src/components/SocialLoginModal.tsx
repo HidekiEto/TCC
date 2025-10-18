@@ -62,7 +62,6 @@ export default function SocialLoginModal({
       const credential = GoogleAuthProvider.credential(idToken, accessToken);
       const userCredential = await signInWithCredential(auth, credential);
       
-      // Salvar informações de autenticação
       await AsyncStorage.setItem('slidesVistos', 'true');
       await AsyncStorage.setItem('userToken', userCredential.user.uid);
       await AsyncStorage.setItem('keepLoggedIn', 'true');

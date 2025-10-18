@@ -1,10 +1,9 @@
-import React, { useCallback } from "react";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import dayjs from 'dayjs';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../config/firebase";
-import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity, Modal, ActivityIndicator, Dimensions, Platform, Alert } from "react-native";
+import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity, Modal, ActivityIndicator, Dimensions, Platform, Alert, StatusBar } from "react-native";
 const { width, height } = Dimensions.get("window");
 import BottomNavigation from "../components/BottomNavigation";
 import { MaterialIcons, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
@@ -13,11 +12,11 @@ import { calcularMetaSemanalAgua, useConsumoUltimasSemanas } from '../components
 import { useBLE } from "../contexts/BLEProvider";
 import { useDbContext } from "../hooks/useDbContext";
 import { useReminders } from "../contexts/ReminderContext";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useDataContext } from "../hooks/useDataContext";
 
 
 export default function Dashboard() {
-  // Relatório semanal de hidratação
   const [profileData, setProfileData] = useState<any>(null);
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -43,54 +42,112 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, []);
 
-  // Atualiza gráfico ao voltar para tela
   const { useFocusEffect } = require('@react-navigation/native');
   useFocusEffect(
     React.useCallback(() => {
-      // Força atualização do BarChartComponent ao voltar para tela
       setProfileData((prev: any) => prev ? { ...prev } : prev);
     }, [profileData?.uid])
   );
 
 
-  // Consumo mensal e comparação
   const [consumoMensal, setConsumoMensal] = useState(0);
   const [consumoMensalAnterior, setConsumoMensalAnterior] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  useEffect(() => {
-    async function calcularConsumoMensal() {
-      if (!profileData?.uid) return;
-      let leituras = [];
-      try {
-        const cacheStr = await AsyncStorage.getItem(`leiturasCache_${profileData.uid}`);
-        leituras = cacheStr ? JSON.parse(cacheStr) : [];
-      } catch (e) {
-        leituras = [];
-      }
+  const calcularConsumoMensal = useCallback(async () => {
+    if (!profileData?.uid) return;
+    
+    try {
+      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      const { firestore } = await import('../config/firebase');
+      
       const mesAtual = dayjs().format('YYYY-MM');
       const mesAnterior = dayjs().subtract(1, 'month').format('YYYY-MM');
-      let somaAtual = 0;
-      let somaAnterior = 0;
+      
+      const startDateAtual = `${mesAtual}-01`;
+      const endDateAtual = dayjs().endOf('month').format('YYYY-MM-DD');
+      
+      const qAtual = query(
+        collection(firestore, "consumoDiario"),
+        where("userId", "==", profileData.uid),
+        where("date", ">=", startDateAtual),
+        where("date", "<=", endDateAtual)
+      );
+      
+      const snapshotAtual = await getDocs(qAtual);
+      let somaFirestoreAtual = 0;
+      snapshotAtual.forEach((doc) => {
+        somaFirestoreAtual += doc.data().total || 0;
+      });
+      
+      const cacheKey = `leiturasCache_${profileData.uid}`;
+      const cacheStr = await AsyncStorage.getItem(cacheKey);
+      const leituras = cacheStr ? JSON.parse(cacheStr) : [];
+      
+      let somaCacheAtual = 0;
+      let somaCacheAnterior = 0;
+      
       for (const leitura of leituras) {
         if (typeof leitura.consumo === 'number' && leitura.timestamp) {
           const mesLeitura = dayjs(leitura.timestamp).format('YYYY-MM');
           if (mesLeitura === mesAtual) {
-            somaAtual += leitura.consumo;
+            somaCacheAtual += leitura.consumo;
           } else if (mesLeitura === mesAnterior) {
-            somaAnterior += leitura.consumo;
+            somaCacheAnterior += leitura.consumo;
           }
         }
       }
-      setConsumoMensal(somaAtual);
-      setConsumoMensalAnterior(somaAnterior);
+      
+      const startDateAnterior = dayjs().subtract(1, 'month').startOf('month').format('YYYY-MM-DD');
+      const endDateAnterior = dayjs().subtract(1, 'month').endOf('month').format('YYYY-MM-DD');
+      
+      const qAnterior = query(
+        collection(firestore, "consumoDiario"),
+        where("userId", "==", profileData.uid),
+        where("date", ">=", startDateAnterior),
+        where("date", "<=", endDateAnterior)
+      );
+      
+      const snapshotAnterior = await getDocs(qAnterior);
+      let somaFirestoreAnterior = 0;
+      snapshotAnterior.forEach((doc) => {
+        somaFirestoreAnterior += doc.data().total || 0;
+      });
+      
+      const totalAtual = Math.round(somaFirestoreAtual + somaCacheAtual);
+      const totalAnterior = Math.round(somaFirestoreAnterior + somaCacheAnterior);
+      
+      setConsumoMensal(totalAtual);
+      setConsumoMensalAnterior(totalAnterior);
+      
+      console.log('📊 [Dashboard] ========== CONSUMO MENSAL ==========');
+      console.log('☁️ [Dashboard] Firestore (atual):', Math.round(somaFirestoreAtual), 'ml');
+      console.log('� [Dashboard] Cache local (atual):', Math.round(somaCacheAtual), 'ml');
+      console.log('💧 [Dashboard] TOTAL COMBINADO (atual):', totalAtual, 'ml');
+      console.log('📊 [Dashboard] Mês anterior:', totalAnterior, 'ml');
+      console.log('📊 [Dashboard] =========================================');
+    } catch (e) {
+      console.error('❌ [Dashboard] Erro ao buscar consumo mensal:', e);
+      setConsumoMensal(0);
+      setConsumoMensalAnterior(0);
     }
-    calcularConsumoMensal();
   }, [profileData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log('🔄 [Dashboard] Tela ganhou foco - recarregando dados...');
+      calcularConsumoMensal();
+      setRefreshTrigger(prev => prev + 1); // Força atualização dos gráficos
+    }, [calcularConsumoMensal])
+  );
+
   const { sincronizarCacheComBanco } = useDbContext();
   const { scanForDevices, isScanning, isConnected, connectedDevice, foundDevices, connectToDevice, disconnectDevice, batteryLevel } = useBLE();
   const [modalVisible, setModalVisible] = useState(false);
   
-  // Sistema de lembretes integrado
+  const dataContext = useDataContext();
+  const volumeAtual = dataContext?.volume ?? null;
+  
   const navigation = useNavigation<any>();
   const { 
     config, 
@@ -110,12 +167,10 @@ export default function Dashboard() {
     setModalVisible(false);
   };
 
-  // Navegar para configurações de lembretes
   const handleReminderSettings = () => {
     navigation.navigate('ReminderSettings');
   };
 
-  // Toggle rápido de lembretes
   const handleToggleReminders = async () => {
     try {
       await toggleReminders(!config.enabled);
@@ -124,7 +179,6 @@ export default function Dashboard() {
     }
   };
 
-  // Calcular próximos 3 horários com base na configuração
   const getNext3Reminders = (): Date[] => {
     if (!config.enabled) return [];
     
@@ -132,27 +186,22 @@ export default function Dashboard() {
     const times: Date[] = [];
     const { startHour, endHour, intervalMinutes } = config;
     
-    // Encontrar próximo horário
     let checkTime = new Date(now);
     checkTime.setSeconds(0, 0);
     
-    // Arredondar para próximo intervalo
     const currentMinutes = checkTime.getHours() * 60 + checkTime.getMinutes();
     const startMinutes = startHour * 60;
     const endMinutes = endHour * 60;
     
     let nextMinutes = startMinutes;
     
-    // Se estamos antes do horário de início, começar no início
     if (currentMinutes < startMinutes) {
       nextMinutes = startMinutes;
     } else {
-      // Encontrar próximo múltiplo do intervalo após o horário atual
       while (nextMinutes <= currentMinutes && nextMinutes <= endMinutes) {
         nextMinutes += intervalMinutes;
       }
       
-      // Se passou do fim do dia, começar amanhã no startHour
       if (nextMinutes > endMinutes) {
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -173,12 +222,10 @@ export default function Dashboard() {
       }
     }
     
-    // Adicionar próximos 3 horários
     for (let i = 0; i < 3 && nextMinutes <= endMinutes; i++) {
       const nextTime = new Date(now);
       nextTime.setHours(Math.floor(nextMinutes / 60), nextMinutes % 60, 0, 0);
       
-      // Se o horário já passou hoje, pular para amanhã
       if (nextTime <= now) {
         nextTime.setDate(nextTime.getDate() + 1);
       }
@@ -196,6 +243,7 @@ export default function Dashboard() {
 
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor="#F5F7FA" barStyle="dark-content" />
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <Modal
           visible={modalVisible}
@@ -300,12 +348,38 @@ export default function Dashboard() {
                 <View style={[styles.statusIndicator, { backgroundColor: '#29EBD5' }]} />
                 <Text style={styles.garrafaInfoText}>Água na Garrafa:</Text>
               </View>
-              <Text style={styles.garrafaInfoValue}>1200 mL</Text>
+              <Text style={styles.garrafaInfoValue}>
+                {isConnected && volumeAtual !== null 
+                  ? `${Math.round(volumeAtual)} mL` 
+                  : '--- mL'}
+              </Text>
+              
+              {/* Barra de Progresso de Água */}
+              {isConnected && volumeAtual !== null && (
+                <View style={styles.waterProgressContainer}>
+                  <View style={styles.waterProgressBar}>
+                    <View 
+                      style={[
+                        styles.waterProgressFill, 
+                        { 
+                          width: `${Math.min((volumeAtual / 900) * 100, 100)}%`,
+                          backgroundColor: volumeAtual < 180 ? '#FF6B6B' : 
+                                         volumeAtual < 450 ? '#FFA500' : '#29EBD5'
+                        }
+                      ]} 
+                    />
+                  </View>
+                  <Text style={styles.waterProgressText}>
+                    {Math.round((volumeAtual / 900) * 100)}%
+                  </Text>
+                </View>
+              )}
+              
               <View style={styles.garrafaInfoRow}>
                 <View style={[styles.statusIndicator, { backgroundColor: '#4CAF50' }]} />
                 <Text style={styles.garrafaInfoText}>Capacidade:</Text>
               </View>
-              <Text style={styles.garrafaInfoValue}>2000 mL</Text>
+              <Text style={styles.garrafaInfoValue}>900 mL</Text>
               <View style={{ flexDirection: 'column', gap: 8, marginTop: 12 }}>
                 <TouchableOpacity
                   style={styles.resincronizarButton}
@@ -319,11 +393,34 @@ export default function Dashboard() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.resincronizarButton, { backgroundColor: '#2196F3' }]}
-                  onPress={() => {
-                    if (connectedDevice?.id) {
-                      sincronizarCacheComBanco(connectedDevice?.id);
-                    } else {
-                      alert("Nenhuma garrafa conectada.");
+                  onPress={async () => {
+                    if (!connectedDevice?.id) {
+                      console.log('❌ [SYNC] Erro: Nenhuma garrafa conectada');
+                      Alert.alert("Erro", "Nenhuma garrafa conectada.");
+                      return;
+                    }
+                    
+                    try {
+                      console.log('🔄 [SYNC] Iniciando sincronização...');
+                      console.log('📱 [SYNC] Garrafa ID:', connectedDevice.id);
+                      console.log('👤 [SYNC] Usuário ID:', auth.currentUser?.uid);
+                      
+                      await sincronizarCacheComBanco(connectedDevice.id);
+                      
+                      console.log('✅ [SYNC] Sincronização concluída com sucesso!');
+                      Alert.alert(
+                        "Sucesso", 
+                        "Leituras sincronizadas com sucesso!",
+                        [{ text: "OK" }]
+                      );
+                    } catch (error: any) {
+                      console.error('❌ [SYNC] Erro durante sincronização:', error);
+                      console.error('❌ [SYNC] Stack trace:', error.stack);
+                      Alert.alert(
+                        "Erro", 
+                        `Falha ao sincronizar: ${error.message || 'Erro desconhecido'}`,
+                        [{ text: "OK" }]
+                      );
                     }
                   }}
                   disabled={!isConnected}
@@ -342,11 +439,17 @@ export default function Dashboard() {
             <Ionicons name="water" size={20} color="#082862" />
             <Text style={styles.cardTitle}>Total Ingerido</Text>
           </View>
-          <Text style={styles.totalValue}>{consumoMensal} mL</Text>
+          <Text style={styles.totalValue}>
+            {consumoMensal >= 1000 
+              ? `${(consumoMensal / 1000).toFixed(1)} L` 
+              : `${consumoMensal} mL`}
+          </Text>
           <Text style={styles.comparison}>
             {consumoMensalAnterior > 0
-              ? `${(consumoMensal - consumoMensalAnterior).toFixed(1)} mL ${consumoMensal >= consumoMensalAnterior ? 'mais' : 'menos'} que passado`
-              : '0 mL mais que passado'}
+              ? `${Math.abs(consumoMensal - consumoMensalAnterior) >= 1000
+                  ? `${(Math.abs(consumoMensal - consumoMensalAnterior) / 1000).toFixed(1)} L`
+                  : `${Math.abs(consumoMensal - consumoMensalAnterior).toFixed(0)} mL`} ${consumoMensal >= consumoMensalAnterior ? 'mais' : 'menos'} que o mês passado`
+              : 'Primeiro mês registrado'}
           </Text>
         </View>
 
@@ -927,5 +1030,31 @@ const styles = StyleSheet.create({
     color: '#082862',
     fontWeight: '600',
     marginLeft: width * 0.02,
+  },
+  waterProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: width * 0.04,
+    marginTop: height * 0.008,
+    marginBottom: height * 0.015,
+  },
+  waterProgressBar: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginRight: width * 0.02,
+  },
+  waterProgressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  waterProgressText: {
+    fontSize: Math.round(width * 0.032),
+    fontWeight: '600',
+    color: '#666',
+    minWidth: width * 0.1,
+    textAlign: 'right',
   },
 });

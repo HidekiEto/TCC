@@ -14,6 +14,7 @@ interface ModalComponentProps {
   containerStyle?: StyleProp<ViewStyle>;
   buttonStyle?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
+  modalContent?: React.ReactNode; 
 }
 
 const ModalComponent: React.FC<ModalComponentProps> = ({
@@ -25,6 +26,7 @@ const ModalComponent: React.FC<ModalComponentProps> = ({
   containerStyle,
   buttonStyle,
   children,
+  modalContent,
 }) => {
   const [visible, setVisible] = useState(false);
 
@@ -64,7 +66,7 @@ const ModalComponent: React.FC<ModalComponentProps> = ({
               </View>
             )}
             
-            {children}
+            {modalContent}
             
             <TouchableOpacity style={styles.closeButton} onPress={hideModal}>
               <Text style={styles.closeButtonText}>Fechar</Text>

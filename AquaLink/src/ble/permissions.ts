@@ -3,7 +3,6 @@ import { PermissionsAndroid, Platform } from 'react-native';
 export async function requestBluetoothPermissions(): Promise<boolean> {
   if (Platform.OS === 'android') {
     try {
-      // Para Android 12+ (API 31+)
       if (Platform.Version >= 31) {
         const bluetoothScanPermission = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
@@ -38,7 +37,6 @@ export async function requestBluetoothPermissions(): Promise<boolean> {
           fineLocationPermission === PermissionsAndroid.RESULTS.GRANTED
         );
       } 
-      // Para Android 6.0 até 11
       else {
         const fineLocationPermission = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
@@ -56,10 +54,8 @@ export async function requestBluetoothPermissions(): Promise<boolean> {
       return false;
     }
   } else {
-    // Para iOS não é necessário solicitar permissão manualmente
     return true;
   }
 }
 
-// Call early in your BLE flow
 await requestBluetoothPermissions();

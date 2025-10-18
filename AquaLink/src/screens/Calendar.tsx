@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, StatusBar, Dimensions, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -6,6 +6,9 @@ import CalendarCompontent from "../components/CalendarScreenComponents/CalendarC
 import BottomNavigation from "../components/BottomNavigation";
 import SliderComponent from "../components/CalendarScreenComponents/SliderComponent";
 import { EvilIcons } from '@expo/vector-icons';
+import { CalendarProvider } from "../contexts/CalendarContext";
+import { useCalendarContext } from "../hooks/useCalendarContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 import { useAppFonts } from "../hooks/useAppFonts";
 
@@ -16,9 +19,21 @@ const BOTTOM_NAV_PADDING = 30;
 const HEADER_HEIGHT = 100;
 const AVAILABLE_HEIGHT = height - BOTTOM_NAV_HEIGHT - BOTTOM_NAV_PADDING - HEADER_HEIGHT;
 
-export default function CalendarScreen() {
-  const fontsLoaded = useAppFonts();
-  if (!fontsLoaded) return null;
+function CalendarContent() {
+  const { refreshCalendarData } = useCalendarContext();
+  const hasLoadedRef = useRef(false);
+  
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!hasLoadedRef.current) {
+        hasLoadedRef.current = true;
+        return;
+      }
+      
+      console.log('📅 [Calendar] Tela ganhou foco, atualizando dados...');
+      refreshCalendarData();
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -35,13 +50,13 @@ export default function CalendarScreen() {
             </Text>
           </View>
 
-         
+        
           <ScrollView 
             style={styles.scrollContent}
             contentContainerStyle={styles.scrollContentContainer}
             showsVerticalScrollIndicator={false}
           >
-           
+          
             <View style={styles.calendarContainer}>
               <CalendarCompontent />
             </View>
@@ -53,7 +68,7 @@ export default function CalendarScreen() {
               end={{ x: 1, y: 0.5 }}
               style={styles.gradientDivider}
             />
-             
+            
             
             <View style={styles.sliderContainer}>
               <SliderComponent />
@@ -61,10 +76,21 @@ export default function CalendarScreen() {
           </ScrollView>
         </View>
 
-   
+  
         <BottomNavigation />
       </View>
     </SafeAreaView>
+  );
+}
+
+export default function CalendarScreen() {
+  const fontsLoaded = useAppFonts();
+  if (!fontsLoaded) return null;
+
+  return (
+    <CalendarProvider>
+      <CalendarContent />
+    </CalendarProvider>
   );
 }
 

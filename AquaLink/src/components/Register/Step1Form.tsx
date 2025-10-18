@@ -56,6 +56,7 @@ export default function Step1Form({
         <TouchableOpacity
           style={styles.iconOverlay}
           onPress={() => setShowPassword((prev) => !prev)}
+          activeOpacity={0.7}
         >
           <FontAwesome5
             name={showPassword ? "eye-slash" : "eye"}
@@ -76,6 +77,7 @@ export default function Step1Form({
         <TouchableOpacity
           style={styles.iconOverlay}
           onPress={() => setShowConfirmPassword((prev) => !prev)}
+          activeOpacity={0.7}
         >
           <FontAwesome5
             name={showConfirmPassword ? "eye-slash" : "eye"}
@@ -94,16 +96,15 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     position: 'relative',
-    justifyContent: 'center',
   },
   iconOverlay: {
     position: 'absolute',
-    right: 18,
-    top: 15,
-    height: 20,
+    right: 15,
+    bottom: 30,
+    width: 30,
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2,
-    paddingHorizontal: 2,
+    zIndex: 10,
   },
 });

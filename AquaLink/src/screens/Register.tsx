@@ -186,7 +186,7 @@ export default function Register() {
         await setDoc(doc(firestore, "users", userCredential.user.uid), {
           name,
           email,
-          height,
+          height: userHeight,
           weight,
           gender,
           birthdate: birthdate ? birthdate.toISOString() : ""
@@ -325,6 +325,7 @@ export default function Register() {
             }]
           }
         ]}
+        pointerEvents="none"
       >
         <View style={styles.logoCircle}>
           <Image
@@ -346,6 +347,7 @@ export default function Register() {
             }),
           }
         ]}
+        pointerEvents="none"
       >
         <StepIndicator currentStep={currentStep} totalSteps={2} />
       </Animated.View>

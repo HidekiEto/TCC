@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, LocaleConfig, DateData } from 'react-native-calendars';
-import { Dimensions } from 'react-native';
+import { Dimensions, ActivityIndicator, View, Text } from 'react-native';
+import { useCalendarContext } from '../../hooks/useCalendarContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,6 +24,27 @@ LocaleConfig.defaultLocale = 'pt';
 
 const CalendarComponent: React.FC = () => {
   const [selected, setSelected] = useState<string>('');
+  const { markedDates, loading } = useCalendarContext();
+
+  if (loading) {
+    return (
+      <View style={{ height: 350, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#27D5E8" />
+        <Text style={{ marginTop: 10, color: '#666' }}>Carregando dados...</Text>
+      </View>
+    );
+  }
+
+  const combinedMarkedDates = {
+    ...markedDates,
+    ...(selected ? {
+      [selected]: {
+        ...markedDates[selected],
+        selected: true,
+        selectedColor: markedDates[selected]?.customStyles ? '#1DBF84' : '#1976D2',
+      }
+    } : {})
+  };
 
   return (
     <Calendar
@@ -43,20 +65,13 @@ const CalendarComponent: React.FC = () => {
         textDayFontSize: 16,
         textDayHeaderFontSize: 14,
         textMonthFontFamily: "Poppins-Regular",
-      
-        
       }}
       onDayPress={(day: DateData) => {
         setSelected(day.dateString);
       }}
-      markedDates={{
-        [selected]: { 
-          selected: true, 
-          disableTouchEvent: true,
-          selectedColor: '#1976D2',
-        }
-      }}
-
+      markedDates={combinedMarkedDates}
+      markingType={'custom'}
+      enableSwipeMonths={true}
     />
   );
 };

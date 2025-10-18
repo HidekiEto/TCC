@@ -10,18 +10,15 @@ import * as Device from 'expo-device';
 const { width, height } = Dimensions.get('window');
 
 export default function Achievements() {
-    // Mostrar alertas quando o app está em foreground
     useEffect(() => {
         Notifications.setNotificationHandler({
             handleNotification: async () => ({
                 shouldPlaySound: true,
                 shouldSetBadge: false,
-                // iOS specific fields present em SDKs recentes
                 shouldShowBanner: true,
                 shouldShowList: true,
             } as Notifications.NotificationBehavior),
         });
-        // Configurar canal no Android para garantir alta prioridade
         (async () => {
             if (Platform.OS === 'android') {
                 try {
@@ -102,7 +99,6 @@ export default function Achievements() {
             
             await AsyncStorage.removeItem('keepLoggedIn');
             await AsyncStorage.removeItem('userToken');
-            // Limpa a sessão do SDK nativo do Google para forçar o seletor de contas
             try { await GoogleSignin.signOut(); } catch {}
             try { await GoogleSignin.revokeAccess(); } catch {}
             

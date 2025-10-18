@@ -1,5 +1,5 @@
-import React from 'react';
-
+import React, { useState, useEffect } from 'react';
+import dayjs from 'dayjs';
 
 type UserData = {
 	peso: number; // em kg
@@ -27,40 +27,69 @@ export function calcularMetaSemanalAgua(user: UserData): number {
 	return Math.round(semanal);
 }
 
-import { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import dayjs from 'dayjs';
-
-
 export function useConsumoUltimasSemanas(uid?: string): number[] {
 	const [consumoSemanas, setConsumoSemanas] = useState([0, 0, 0, 0]);
 
 	useEffect(() => {
 		async function calcularConsumoSemanas() {
 			if (!uid) return;
-			let leituras = [];
+			
 			try {
-				const cacheStr = await AsyncStorage.getItem(`leiturasCache_${uid}`);
-				leituras = cacheStr ? JSON.parse(cacheStr) : [];
-			} catch (e) {
-				leituras = [];
-			}
-			const semanas: number[] = [];
-			for (let i = 3; i >= 0; i--) {
-				const inicioSemana = dayjs().startOf('week').subtract(i, 'week');
-				const fimSemana = inicioSemana.endOf('week');
-				let soma = 0;
+				const { collection, query, where, getDocs } = await import('firebase/firestore');
+				const { firestore } = await import('../../config/firebase');
+				const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+				
+				const hoje = dayjs();
+				
+				const inicioIntervalo = hoje.startOf('week').subtract(3, 'week').format('YYYY-MM-DD');
+				const fimIntervalo = hoje.format('YYYY-MM-DD');
+				
+				const q = query(
+					collection(firestore, "consumoDiario"),
+					where("userId", "==", uid),
+					where("date", ">=", inicioIntervalo),
+					where("date", "<=", fimIntervalo)
+				);
+				
+				const snapshot = await getDocs(q);
+				const consumoPorDia: Record<string, number> = {};
+				
+				snapshot.forEach((doc) => {
+					const data = doc.data();
+					consumoPorDia[data.date] = data.total || 0;
+				});
+				
+				const cacheKey = `leiturasCache_${uid}`;
+				const cacheStr = await AsyncStorage.getItem(cacheKey);
+				const leituras = cacheStr ? JSON.parse(cacheStr) : [];
+				
+				const cachePorDia: Record<string, number> = {};
 				for (const leitura of leituras) {
 					if (typeof leitura.consumo === 'number' && leitura.timestamp) {
-						const dataLeitura = dayjs(leitura.timestamp);
-						if (dataLeitura.isAfter(inicioSemana.subtract(1, 'day')) && dataLeitura.isBefore(fimSemana.add(1, 'day'))) {
-							soma += leitura.consumo;
-						}
+						const dia = dayjs(leitura.timestamp).format('YYYY-MM-DD');
+						cachePorDia[dia] = (cachePorDia[dia] || 0) + leitura.consumo;
 					}
 				}
-				semanas.push(soma);
+				
+				const semanas: number[] = [];
+				for (let i = 3; i >= 0; i--) {
+					const inicioSemana = hoje.startOf('week').subtract(i, 'week');
+					const fimSemana = inicioSemana.endOf('week');
+					let soma = 0;
+					
+					for (let dia = inicioSemana; dia.isBefore(fimSemana.add(1, 'day')); dia = dia.add(1, 'day')) {
+						const dataString = dia.format('YYYY-MM-DD');
+						soma += (consumoPorDia[dataString] || 0) + (cachePorDia[dataString] || 0);
+					}
+					semanas.push(Math.round(soma));
+				}
+				
+				setConsumoSemanas(semanas);
+				console.log('📊 [WeeklyIntake] Consumo das últimas 4 semanas (Firestore + Cache):', semanas);
+			} catch (e) {
+				console.error('❌ [WeeklyIntake] Erro ao buscar consumo semanal:', e);
+				setConsumoSemanas([0, 0, 0, 0]);
 			}
-			setConsumoSemanas(semanas);
 		}
 		calcularConsumoSemanas();
 	}, [uid]);
@@ -68,53 +97,145 @@ export function useConsumoUltimasSemanas(uid?: string): number[] {
 	return consumoSemanas;
 }
 
-// Hook para obter consumo dos últimos 7 dias (dia a dia)
 export function useConsumoUltimos7Dias(uid?: string): number[] {
 	const [consumoDias, setConsumoDias] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
 
 	useEffect(() => {
 		async function calcularConsumoDias() {
 			if (!uid) return;
-			let leituras = [];
+			
 			try {
-				const cacheStr = await AsyncStorage.getItem(`leiturasCache_${uid}`);
-				leituras = cacheStr ? JSON.parse(cacheStr) : [];
-			} catch (e) {
-				leituras = [];
-			}
-
-			// Array para os últimos 7 dias (do mais antigo ao mais recente)
-			const dias: number[] = [];
-			const hoje = dayjs();
-
-			// Loop de 6 dias atrás até hoje (7 dias no total)
-			for (let i = 6; i >= 0; i--) {
-				const diaAtual = hoje.subtract(i, 'day');
-				const inicioDia = diaAtual.startOf('day');
-				const fimDia = diaAtual.endOf('day');
+				const { collection, query, where, getDocs } = await import('firebase/firestore');
+				const { firestore } = await import('../../config/firebase');
+				const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
 				
-				let somaConsumoDia = 0;
+				const hoje = dayjs();
 				
-				// Soma todo o consumo daquele dia
+				const inicioIntervalo = hoje.subtract(6, 'day').format('YYYY-MM-DD');
+				const fimIntervalo = hoje.format('YYYY-MM-DD');
+				
+				const q = query(
+					collection(firestore, "consumoDiario"),
+					where("userId", "==", uid),
+					where("date", ">=", inicioIntervalo),
+					where("date", "<=", fimIntervalo)
+				);
+				
+				const snapshot = await getDocs(q);
+				const consumoPorDia: Record<string, number> = {};
+				
+				snapshot.forEach((doc) => {
+					const data = doc.data();
+					consumoPorDia[data.date] = data.total || 0;
+				});
+				
+				const cacheKey = `leiturasCache_${uid}`;
+				const cacheStr = await AsyncStorage.getItem(cacheKey);
+				const leituras = cacheStr ? JSON.parse(cacheStr) : [];
+				
+				const cachePorDia: Record<string, number> = {};
 				for (const leitura of leituras) {
 					if (typeof leitura.consumo === 'number' && leitura.timestamp) {
-						const dataLeitura = dayjs(leitura.timestamp);
-						if (dataLeitura.isAfter(inicioDia.subtract(1, 'second')) && 
-						    dataLeitura.isBefore(fimDia.add(1, 'second'))) {
-							somaConsumoDia += leitura.consumo;
-						}
+						const dia = dayjs(leitura.timestamp).format('YYYY-MM-DD');
+						cachePorDia[dia] = (cachePorDia[dia] || 0) + leitura.consumo;
 					}
 				}
 				
-				dias.push(Math.round(somaConsumoDia));
+				const dias: number[] = [];
+				for (let i = 6; i >= 0; i--) {
+					const diaAtual = hoje.subtract(i, 'day').format('YYYY-MM-DD');
+					const totalFirestore = consumoPorDia[diaAtual] || 0;
+					const totalCache = cachePorDia[diaAtual] || 0;
+					dias.push(Math.round(totalFirestore + totalCache));
+				}
+				
+				setConsumoDias(dias);
+				console.log('📊 [WeeklyIntake] Consumo dos últimos 7 dias (Firestore + Cache):', dias);
+			} catch (e) {
+				console.error('❌ [WeeklyIntake] Erro ao buscar consumo:', e);
+				setConsumoDias([0, 0, 0, 0, 0, 0, 0]);
 			}
-
-			setConsumoDias(dias);
-			console.log('📊 Consumo dos últimos 7 dias:', dias);
 		}
 		
 		calcularConsumoDias();
 	}, [uid]);
 
 	return consumoDias;
+}
+
+export function useConsumoSemanasDoMesAtual(uid?: string): number[] {
+	const [consumoSemanas, setConsumoSemanas] = useState<number[]>([0, 0, 0, 0]);
+
+	useEffect(() => {
+		async function calcularConsumoSemanasDoMes() {
+			if (!uid) return;
+			
+			try {
+				const { collection, query, where, getDocs } = await import('firebase/firestore');
+				const { firestore } = await import('../../config/firebase');
+				const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+				
+				const hoje = dayjs();
+				const mesAtual = hoje.month() + 1; // dayjs month é 0-11, precisamos 1-12
+				const anoAtual = hoje.year();
+				
+				const startDate = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-01`;
+				const endDate = hoje.endOf('month').format('YYYY-MM-DD');
+				
+				const q = query(
+					collection(firestore, "consumoDiario"),
+					where("userId", "==", uid),
+					where("date", ">=", startDate),
+					where("date", "<=", endDate)
+				);
+				
+				const snapshot = await getDocs(q);
+				const consumoPorDia: Record<string, number> = {};
+				
+				snapshot.forEach((doc) => {
+					const data = doc.data();
+					consumoPorDia[data.date] = data.total || 0;
+				});
+				
+				const cacheKey = `leiturasCache_${uid}`;
+				const cacheStr = await AsyncStorage.getItem(cacheKey);
+				const leituras = cacheStr ? JSON.parse(cacheStr) : [];
+				
+				const cachePorDia: Record<string, number> = {};
+				for (const leitura of leituras) {
+					if (typeof leitura.consumo === 'number' && leitura.timestamp) {
+						const dia = dayjs(leitura.timestamp).format('YYYY-MM-DD');
+						cachePorDia[dia] = (cachePorDia[dia] || 0) + leitura.consumo;
+					}
+				}
+				
+				const semanas: number[] = [];
+				const intervalos = [
+					{ inicio: 1, fim: 7 },
+					{ inicio: 8, fim: 14 },
+					{ inicio: 15, fim: 21 },
+					{ inicio: 22, fim: hoje.daysInMonth() }
+				];
+
+				for (const intervalo of intervalos) {
+					let soma = 0;
+					for (let dia = intervalo.inicio; dia <= intervalo.fim; dia++) {
+						const dataString = `${anoAtual}-${String(mesAtual).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+						soma += (consumoPorDia[dataString] || 0) + (cachePorDia[dataString] || 0);
+					}
+					semanas.push(Math.round(soma));
+				}
+
+				setConsumoSemanas(semanas);
+				console.log('📊 [WeeklyIntake] Consumo das 4 semanas do mês (Firestore + Cache):', semanas);
+			} catch (e) {
+				console.error('❌ [WeeklyIntake] Erro ao buscar consumo semanal:', e);
+				setConsumoSemanas([0, 0, 0, 0]);
+			}
+		}
+		
+		calcularConsumoSemanasDoMes();
+	}, [uid]);
+
+	return consumoSemanas;
 }

@@ -30,7 +30,6 @@ export default function EditProfile() {
 	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [selectedDate, setSelectedDate] = useState(new Date());
 
-	// Placeholder localizado para cada campo
 	const getPlaceholder = (field: keyof typeof profile): string => {
 		switch (field) {
 			case "name":
@@ -60,7 +59,6 @@ export default function EditProfile() {
 		async function fetchProfile() {
 			if (!user) return;
 			try {
-				// Busca dados extras do Firestore
 				const docRef = doc(db, "users", user.uid);
 				const docSnap = await getDoc(docRef);
 				let data = docSnap.exists() ? docSnap.data() : {};
@@ -83,7 +81,6 @@ export default function EditProfile() {
 
 	const handleEdit = (field: string) => {
 		if (field === 'birthdate' && profile.birthdate) {
-			// Converte a string ISO para Date
 			const date = new Date(profile.birthdate);
 			setSelectedDate(date);
 			setShowDatePicker(true);
@@ -98,7 +95,6 @@ export default function EditProfile() {
 	const handleGenderSelect = (gender: string) => {
 		setFieldValue(gender);
 		setShowGenderModal(false);
-		// Salva automaticamente
 		handleSaveField('gender', gender);
 	};
 
@@ -108,7 +104,6 @@ export default function EditProfile() {
 			setSelectedDate(selectedDateValue);
 			const isoDate = selectedDateValue.toISOString();
 			setFieldValue(isoDate);
-			// Salva automaticamente
 			handleSaveField('birthdate', isoDate);
 		}
 	};
@@ -127,7 +122,6 @@ export default function EditProfile() {
 			} else {
 				updates[field] = value;
 			}
-			// Salva dados extras no Firestore
 			await setDoc(doc(db, "users", user.uid), {
 				...profile,
 				...updates

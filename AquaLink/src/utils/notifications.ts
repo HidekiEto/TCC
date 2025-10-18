@@ -1,25 +1,14 @@
-/**
- * Sistema de Notificações para Lembretes de Hidratação
- * 
- * Este módulo gerencia todas as notificações locais do aplicativo,
- * incluindo agendamento, cancelamento e configuração de lembretes.
- */
 
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 
-// ============================================================================
-// TIPOS E INTERFACES
-// ============================================================================
-
 export interface ReminderConfig {
   enabled: boolean;
-  startHour: number;      // Hora inicial (0-23)
-  endHour: number;        // Hora final (0-23)
-  intervalMinutes: number; // Intervalo entre notificações
-  daysOfWeek: number[];   // NOTA: Mantido para UI, mas no Android lembretes são diários
-                          // 0=Domingo, 1=Segunda, ..., 6=Sábado
+  startHour: number;
+  endHour: number;
+  intervalMinutes: number;
+  daysOfWeek: number[];
 }
 
 export interface NotificationData extends Record<string, unknown> {
@@ -28,31 +17,18 @@ export interface NotificationData extends Record<string, unknown> {
   metadata?: Record<string, any>;
 }
 
-// ============================================================================
-// CONFIGURAÇÃO INICIAL
-// ============================================================================
-
-/**
- * Configura o comportamento padrão das notificações
- * Deve ser chamado no início do app
- */
 export function setupNotificationHandler(): void {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: true,
-      // Campos específicos do iOS
       shouldShowBanner: true,
       shouldShowList: true,
     } as Notifications.NotificationBehavior),
   });
 }
 
-/**
- * Configura canal de notificação para Android
- * Necessário para Android 8.0+
- */
 export async function setupNotificationChannel(): Promise<void> {
   if (Platform.OS === 'android') {
     try {
@@ -81,13 +57,6 @@ export async function setupNotificationChannel(): Promise<void> {
   }
 }
 
-// ============================================================================
-// PERMISSÕES
-// ============================================================================
-
-/**
- * Verifica se as permissões de notificação foram concedidas
- */
 export async function checkNotificationPermissions(): Promise<boolean> {
   if (!Device.isDevice) {
     console.warn('⚠️ Notificações não funcionam em emulador');
@@ -98,9 +67,6 @@ export async function checkNotificationPermissions(): Promise<boolean> {
   return settings.status === 'granted';
 }
 
-/**
- * Solicita permissões de notificação ao usuário
- */
 export async function requestNotificationPermissions(): Promise<boolean> {
   if (!Device.isDevice) {
     console.warn('⚠️ Notificações não funcionam em emulador');
@@ -124,13 +90,6 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   }
 }
 
-// ============================================================================
-// AGENDAMENTO DE NOTIFICAÇÕES
-// ============================================================================
-
-/**
- * Agenda uma notificação única
- */
 export async function scheduleNotification(
   title: string,
   body: string,
@@ -165,9 +124,6 @@ export async function scheduleNotification(
   }
 }
 
-/**
- * Mensagens variadas para lembretes de água
- */
 const WATER_REMINDER_MESSAGES = [
   { title: '💧 Hora de se hidratar!', body: 'Beba um copo de água agora' },
   { title: '💧 Lembrete de Hidratação', body: 'Não se esqueça de beber água!' },
@@ -177,25 +133,12 @@ const WATER_REMINDER_MESSAGES = [
   { title: '🥤 Pause e Hidrate', body: 'Hora de tomar um gole de água' },
 ];
 
-/**
- * Retorna uma mensagem aleatória para lembrete de água
- */
 function getRandomWaterMessage(): { title: string; body: string } {
   return WATER_REMINDER_MESSAGES[
     Math.floor(Math.random() * WATER_REMINDER_MESSAGES.length)
   ];
 }
 
-/**
- * Agenda lembretes de água com base na configuração
- * 
- * IMPORTANTE: No Android, os lembretes são diários (todos os dias da semana).
- * A propriedade daysOfWeek é mantida na interface para compatibilidade com iOS
- * e futuras implementações, mas não é aplicada no Android devido a limitações
- * do trigger Calendar que não é suportado.
- * 
- * Solução: O usuário pode desativar lembretes manualmente nos dias que não quiser.
- */
 export async function scheduleWaterReminders(
   config: ReminderConfig
 ): Promise<number> {
@@ -205,13 +148,11 @@ export async function scheduleWaterReminders(
       return 0;
     }
 
-    // Cancelar todos os lembretes existentes antes de agendar novos
     await cancelAllWaterReminders();
 
     const { startHour, endHour, intervalMinutes, daysOfWeek } = config;
     let scheduledCount = 0;
 
-    // Calcular todos os horários do dia
     const times: { hour: number; minute: number }[] = [];
     let currentMinutes = startHour * 60;
     const endMinutes = endHour * 60;
@@ -225,15 +166,10 @@ export async function scheduleWaterReminders(
     }
 
     console.log(`📅 Agendando ${times.length} horários`);
-
-    // NOTA: No Android, não podemos usar Calendar Trigger com dias específicos
-    // Então agendamos notificações diárias para cada horário
-    // O usuário pode desabilitar lembretes nos dias que não quiser
     
     for (const time of times) {
       const message = getRandomWaterMessage();
       
-      // Usar DailyTriggerInput que funciona em Android e iOS
       const trigger: Notifications.DailyTriggerInput = {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: time.hour,
@@ -262,9 +198,6 @@ export async function scheduleWaterReminders(
   }
 }
 
-/**
- * Agenda lembretes simples por intervalo (alternativa mais simples)
- */
 export async function scheduleSimpleReminders(
   intervalMinutes: number = 120
 ): Promise<string | null> {
@@ -293,13 +226,6 @@ export async function scheduleSimpleReminders(
   }
 }
 
-// ============================================================================
-// CANCELAMENTO DE NOTIFICAÇÕES
-// ============================================================================
-
-/**
- * Cancela uma notificação específica
- */
 export async function cancelNotification(id: string): Promise<boolean> {
   try {
     await Notifications.cancelScheduledNotificationAsync(id);
@@ -311,9 +237,6 @@ export async function cancelNotification(id: string): Promise<boolean> {
   }
 }
 
-/**
- * Cancela todos os lembretes de água
- */
 export async function cancelAllWaterReminders(): Promise<boolean> {
   try {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
@@ -333,9 +256,6 @@ export async function cancelAllWaterReminders(): Promise<boolean> {
   }
 }
 
-/**
- * Cancela todas as notificações agendadas
- */
 export async function cancelAllNotifications(): Promise<boolean> {
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
@@ -347,13 +267,6 @@ export async function cancelAllNotifications(): Promise<boolean> {
   }
 }
 
-// ============================================================================
-// CONSULTA DE NOTIFICAÇÕES
-// ============================================================================
-
-/**
- * Lista todas as notificações agendadas
- */
 export async function getScheduledNotifications(): Promise<
   Notifications.NotificationRequest[]
 > {
@@ -367,9 +280,6 @@ export async function getScheduledNotifications(): Promise<
   }
 }
 
-/**
- * Conta quantos lembretes de água estão agendados
- */
 export async function countWaterReminders(): Promise<number> {
   try {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
@@ -384,13 +294,6 @@ export async function countWaterReminders(): Promise<number> {
   }
 }
 
-// ============================================================================
-// NOTIFICAÇÕES IMEDIATAS
-// ============================================================================
-
-/**
- * Envia uma notificação imediata (sem agendamento)
- */
 export async function sendImmediateNotification(
   title: string,
   body: string,
@@ -412,7 +315,7 @@ export async function sendImmediateNotification(
         sound: 'default',
         data: data || { type: 'custom', timestamp: Date.now() },
       },
-      trigger: null, // null = imediato
+      trigger: null,
     });
 
     console.log(`✅ Notificação imediata enviada: ${id}`);
@@ -423,9 +326,6 @@ export async function sendImmediateNotification(
   }
 }
 
-/**
- * Notificação de meta atingida
- */
 export async function notifyGoalAchieved(
   percentage: number
 ): Promise<string | null> {
@@ -444,9 +344,6 @@ export async function notifyGoalAchieved(
   });
 }
 
-/**
- * Notificação de marco importante (streak, etc)
- */
 export async function notifyMilestone(
   milestone: string,
   description: string
@@ -458,46 +355,26 @@ export async function notifyMilestone(
   });
 }
 
-// ============================================================================
-// LISTENERS DE NOTIFICAÇÕES
-// ============================================================================
-
-/**
- * Adiciona listener para quando uma notificação é recebida (app em foreground)
- */
 export function addNotificationReceivedListener(
   callback: (notification: Notifications.Notification) => void
 ): Notifications.Subscription {
   return Notifications.addNotificationReceivedListener(callback);
 }
 
-/**
- * Adiciona listener para quando uma notificação é tocada pelo usuário
- */
 export function addNotificationResponseListener(
   callback: (response: Notifications.NotificationResponse) => void
 ): Notifications.Subscription {
   return Notifications.addNotificationResponseReceivedListener(callback);
 }
 
-// ============================================================================
-// UTILITÁRIOS
-// ============================================================================
-
-/**
- * Configuração padrão de lembretes
- */
 export const DEFAULT_REMINDER_CONFIG: ReminderConfig = {
   enabled: true,
-  startHour: 8,  // 8h da manhã
-  endHour: 22,   // 22h (10pm)
-  intervalMinutes: 120, // A cada 2 horas
-  daysOfWeek: [1, 2, 3, 4, 5, 6, 7], // Todos os dias (0=Dom, 1=Seg, ..., 6=Sáb)
+  startHour: 8,
+  endHour: 22,
+  intervalMinutes: 120,
+  daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
 };
 
-/**
- * Valida configuração de lembretes
- */
 export function validateReminderConfig(config: ReminderConfig): boolean {
   if (config.startHour < 0 || config.startHour > 23) return false;
   if (config.endHour < 0 || config.endHour > 23) return false;
@@ -507,9 +384,6 @@ export function validateReminderConfig(config: ReminderConfig): boolean {
   return true;
 }
 
-/**
- * Formata configuração para display
- */
 export function formatReminderConfig(config: ReminderConfig): string {
   const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   const selectedDays = config.daysOfWeek.map(d => days[d]).join(', ');

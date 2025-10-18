@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDbContext } from '../../hooks/useDbContext';
 import dayjs from 'dayjs';
 
-// Hook para calcular o consumo mensal de água
 export function useConsumoMensalAgua() {
 	const { getConsumoAcumuladoNoCache } = useDbContext();
 	const [consumoMensal, setConsumoMensal] = useState(0);
@@ -12,7 +11,6 @@ export function useConsumoMensalAgua() {
 	useEffect(() => {
 		async function calcularConsumoMensal() {
 			const cache = await getConsumoAcumuladoNoCache();
-			// Supondo que o cache contém leituras com timestamp e consumo
 			let leituras = [];
 			try {
 				const cacheStr = await AsyncStorage.getItem('leiturasCache');
