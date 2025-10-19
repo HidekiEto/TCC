@@ -8,6 +8,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDbContext } from '../hooks/useDbContext';
 import { auth } from '../config/firebase';
 
+let bleDisconnectAlerted = false;
+let bleReconnectionInterval: NodeJS.Timeout | null = null;
+
+
 const SERVICE_UUID = "34303c72-4cb1-4d48-98cb-781afece9cd7";
 const CHARACTERISTIC_UUID = "5b4ff54f-8297-45b4-9949-7ff95e672aae";
 
@@ -52,6 +56,8 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
   const [foundDevices, setFoundDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null); 
+  // Flag para diferenciar desconexão manual de inesperada
+  const isManualDisconnect = useRef(false);
 
   const dataContext = useDataContext();
   const dbContext = useDbContext();
@@ -193,7 +199,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
 
   const writeToDevice = async (data: string) => {
     if (!connectedDevice) {
-      Alert.alert('Erro', 'Nenhum dispositivo conectado');
+      // Nenhum dispositivo conectado, não mostrar Alert
       return;
     }
     try {
@@ -206,7 +212,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
       console.log("Comando enviado via BLE:", data);
     } catch (error) {
       console.log("Erro ao enviar comando BLE:", error);
-      Alert.alert('Erro', 'Falha ao enviar comando BLE');
+      // Não mostrar Alert
     }
   };
 
@@ -216,7 +222,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
 
     const ok = await requestAndroidPermissions();
     if (!ok) {
-      Alert.alert('Permissão Bluetooth não concedida');
+      // Permissão Bluetooth não concedida, não mostrar Alert
       setIsScanning(false);
       return;
     }
@@ -227,7 +233,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
       (error, device) => {
 
         if (error) {
-          Alert.alert('Erro no scan', error.message);
+          // Erro no scan, não mostrar Alert
           setIsScanning(false);
           bleManager.stopDeviceScan();
           return;
@@ -250,40 +256,86 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
     }, 10000);
   };
 
-  const connectToDevice = async (deviceId: string, tentativa = 1) => {
-  setIsScanning(false);
-  bleManager.stopDeviceScan();
+  const connectToDevice = async (deviceId: string, tentativa = 1, isInitial = true) => {
+    setIsScanning(false);
+    bleManager.stopDeviceScan();
 
-  let timeoutId: NodeJS.Timeout | null = null;
-  let connected = false;
+    let timeoutId: NodeJS.Timeout | null = null;
+    let connected = false;
 
-  try {
-    await new Promise<void>((resolve, reject) => {
-      timeoutId = setTimeout(() => {
-        if (!connected) {
-          reject(new Error("Timeout na conexão BLE. Tentando novamente..."));
-        }
-      }, 3000); // 3 segundos de timeout
+    try {
+      await new Promise<void>((resolve, reject) => {
+        timeoutId = setTimeout(() => {
+          if (!connected) {
+            reject(new Error("Timeout na conexão BLE. Tentando novamente..."));
+          }
+        }, 3000);
 
-      bleManager.connectToDevice(deviceId)
-        .then(async (device) => {
-          connected = true;
-          if (timeoutId) clearTimeout(timeoutId);
+        bleManager.connectToDevice(deviceId)
+          .then(async (device) => {
+            connected = true;
+            if (timeoutId) clearTimeout(timeoutId);
 
-          await device.requestMTU(517);
-          await device.discoverAllServicesAndCharacteristics();
-          setConnectedDevice(device);
-          setIsConnected(true);
+            await device.requestMTU(517);
+            await device.discoverAllServicesAndCharacteristics();
+            setConnectedDevice(device);
+            setIsConnected(true);
 
-          device.onDisconnected((error, disconnectedDevice) => {
-            console.log("BLE desconectado!", error);
-            setIsConnected(false);
-            setConnectedDevice(null);
-            Alert.alert('Info', 'A garrafa foi desconectada!');
-          });
+            device.onDisconnected(async (error, disconnectedDevice) => {
+              setIsConnected(false);
+              setConnectedDevice(null);
 
+              // Limpa o loop de reconexão, se existir
+              if (bleReconnectionInterval) {
+                clearInterval(bleReconnectionInterval);
+                bleReconnectionInterval = null;
+              }
 
-          device.monitorCharacteristicForService(
+              // Só reconecta se NÃO for desconexão manual
+              if (isManualDisconnect.current) {
+                // Reseta a flag só aqui!
+                isManualDisconnect.current = false;
+                return;
+              }
+
+              if (!bleDisconnectAlerted) {
+                bleDisconnectAlerted = true;
+                Alert.alert('Info', 'A garrafa foi desconectada!');
+              }
+
+              // Reconexão automática com tentativa dupla
+              if (isScanning && deviceId && !bleReconnectionInterval) {
+                const tryReconnect = async () => {
+                  try {
+                    // Só tenta reconectar se o device estiver realmente desconectado
+                    const stillConnected = await bleManager.isDeviceConnected(deviceId);
+                    if (stillConnected) return;
+
+                    const deviceList = await bleManager.devices([deviceId]);
+                    if (deviceList && deviceList.length > 0) {
+                      if (bleReconnectionInterval) {
+                        clearInterval(bleReconnectionInterval);
+                        bleReconnectionInterval = null;
+                      }
+                      // Tentativa dupla
+                      try {
+                        await connectToDevice(deviceId, 1, false); // isInitial = false
+                      } catch (e) {
+                        try {
+                          await bleManager.cancelDeviceConnection(deviceId);
+                        } catch {}
+                        setTimeout(() => connectToDevice(deviceId, 2, false), 2000);
+                      }
+                    }
+                  } catch (e) {
+                    // Ignora erro, tenta novamente no próximo ciclo
+                  }
+                };
+                bleReconnectionInterval = setInterval(tryReconnect, 3000);
+              }
+            });
+
+            device.monitorCharacteristicForService(
             SERVICE_UUID,
             CHARACTERISTIC_UUID,
             (error, characteristic) => {
@@ -398,7 +450,40 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
             console.error("⚠️ [BLE] Erro ao vincular usuário à garrafa no Firebase:", e);
           }
 
-          Alert.alert('Sucesso', `Conectado ao dispositivo ${device.name || device.id}`);
+          // Limpa o loop de reconexão, se existir
+          if (bleReconnectionInterval) {
+            clearInterval(bleReconnectionInterval);
+            bleReconnectionInterval = null;
+          }
+          // Aviso de reconexão bem-sucedida (apenas uma vez, e só se realmente conectou)
+          if (bleDisconnectAlerted) {
+            // Confirma se está conectado mesmo
+            const connectedNow = await bleManager.isDeviceConnected(device.id);
+            if (connectedNow) {
+              bleDisconnectAlerted = false;
+              Alert.alert('Sucesso', `Reconectado ao dispositivo ${device.name || device.id}`);
+            } else {
+              // Se não conectou, não mostra alerta e tenta novamente depois
+              bleDisconnectAlerted = true;
+            }
+          }
+
+          // Só envia comando inicial na primeira conexão
+          if (isInitial) {
+            setTimeout(async () => {
+              try {
+                const base64data = Buffer.from("1", 'utf-8').toString('base64');
+                await device.writeCharacteristicWithResponseForService(
+                  SERVICE_UUID,
+                  CHARACTERISTIC_UUID,
+                  base64data
+                );
+                console.log("Comando inicial enviado via BLE: 1");
+              } catch (e) {
+                console.log('Erro ao enviar comando inicial para o ESP:', e);
+              }
+            }, 1000);
+          }
           resolve();
         })
         .catch((error) => {
@@ -409,29 +494,28 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
   } catch (error: any) {
     setIsConnected(false);
     setConnectedDevice(null);
-    Alert.alert('Erro', error.message || 'Erro ao conectar');
-
-   
+    // Não mostrar Alert de erro ao conectar
     if (tentativa < 2) {
-  try {
-    await bleManager.cancelDeviceConnection(deviceId);
-  } catch (e) {
-   
-  }
-  setTimeout(() => connectToDevice(deviceId, tentativa + 1), 2000); 
-}
+      try {
+        await bleManager.cancelDeviceConnection(deviceId);
+      } catch (e) {}
+      setTimeout(() => connectToDevice(deviceId, tentativa + 1, isInitial), 2000);
+    }
   }
 };
 
   const disconnectDevice = async () => {
     if (connectedDevice) {
+      isManualDisconnect.current = true;
       try {
         await bleManager.cancelDeviceConnection(connectedDevice.id);
       } catch { }
     }
-    setIsConnected(false);
-    setConnectedDevice(null);
-    Alert.alert('Info', 'Dispositivo desconectado');
+    // Limpa o loop de reconexão, se existir
+    if (bleReconnectionInterval) {
+      clearInterval(bleReconnectionInterval);
+      bleReconnectionInterval = null;
+    }
   };
 
   const value: BLEContextType = {
