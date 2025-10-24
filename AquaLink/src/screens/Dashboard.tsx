@@ -402,53 +402,62 @@ export default function Dashboard() {
               </View>
               <Text style={styles.garrafaInfoValue}>900 mL</Text>
               <View style={{ flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                <TouchableOpacity
-                  style={styles.resincronizarButton}
-                  onPress={handleScan}
-                  disabled={isScanning}
-                >
-                  <MaterialCommunityIcons name="bluetooth" size={16} color="white" />
-                  <Text style={styles.resincronizarText}>
-                    {isScanning ? "Procurando..." : "Ressincronizar"}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.resincronizarButton, { backgroundColor: '#2196F3' }]}
-                  onPress={async () => {
-                    if (!connectedDevice?.id) {
-                      console.log('❌ [SYNC] Erro: Nenhuma garrafa conectada');
-                      Alert.alert("Erro", "Nenhuma garrafa conectada.");
-                      return;
-                    }
-                    
-                    try {
-                      console.log('🔄 [SYNC] Iniciando sincronização...');
-                      console.log('📱 [SYNC] Garrafa ID:', connectedDevice.id);
-                      console.log('👤 [SYNC] Usuário ID:', auth.currentUser?.uid);
-                      
-                      await sincronizarCacheComBanco(connectedDevice.id);
-                      
-                      console.log('✅ [SYNC] Sincronização concluída com sucesso!');
-                      Alert.alert(
-                        "Sucesso", 
-                        "Leituras sincronizadas com sucesso!",
-                        [{ text: "OK" }]
-                      );
-                    } catch (error: any) {
-                      console.error('❌ [SYNC] Erro durante sincronização:', error);
-                      console.error('❌ [SYNC] Stack trace:', error.stack);
-                      Alert.alert(
-                        "Erro", 
-                        `Falha ao sincronizar: ${error.message || 'Erro desconhecido'}`,
-                        [{ text: "OK" }]
-                      );
-                    }
-                  }}
-                  disabled={!isConnected}
-                >
-                  <MaterialCommunityIcons name="cloud-upload" size={15} color="white" />
-                  <Text style={styles.resincronizarText}>Sincronizar Leituras</Text>
-                </TouchableOpacity>
+                {isConnected ? (
+                  <>
+                    <TouchableOpacity
+                      style={styles.resincronizarButton}
+                      onPress={disconnectDevice}
+                    >
+                      <MaterialCommunityIcons name="logout" size={18} color="#fff" />
+                      <Text style={styles.resincronizarText}>Desconectar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.resincronizarButton, { backgroundColor: '#2196F3', marginTop: 8 }]}
+                      onPress={async () => {
+                        if (!connectedDevice?.id) {
+                          console.log('❌ [SYNC] Erro: Nenhuma garrafa conectada');
+                          Alert.alert("Erro", "Nenhuma garrafa conectada.");
+                          return;
+                        }
+                        try {
+                          console.log('🔄 [SYNC] Iniciando sincronização...');
+                          console.log('📱 [SYNC] Garrafa ID:', connectedDevice.id);
+                          console.log('👤 [SYNC] Usuário ID:', auth.currentUser?.uid);
+                          await sincronizarCacheComBanco(connectedDevice.id);
+                          console.log('✅ [SYNC] Sincronização concluída com sucesso!');
+                          Alert.alert(
+                            "Sucesso", 
+                            "Leituras sincronizadas com sucesso!",
+                            [{ text: "OK" }]
+                          );
+                        } catch (error: any) {
+                          console.error('❌ [SYNC] Erro durante sincronização:', error);
+                          console.error('❌ [SYNC] Stack trace:', error.stack);
+                          Alert.alert(
+                            "Erro", 
+                            `Falha ao sincronizar: ${error.message || 'Erro desconhecido'}`,
+                            [{ text: "OK" }]
+                          );
+                        }
+                      }}
+                      disabled={!isConnected}
+                    >
+                      <MaterialCommunityIcons name="cloud-upload" size={15} color="white" />
+                      <Text style={styles.resincronizarText}>Sincronizar Leituras</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.resincronizarButton}
+                    onPress={handleScan}
+                    disabled={isScanning}
+                  >
+                    <MaterialCommunityIcons name="bluetooth" size={16} color="white" />
+                    <Text style={styles.resincronizarText}>
+                      {isScanning ? "Procurando..." : "Ressincronizar"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </View>

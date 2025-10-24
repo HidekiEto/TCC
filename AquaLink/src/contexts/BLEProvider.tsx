@@ -8,6 +8,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDbContext } from '../hooks/useDbContext';
 import { auth } from '../config/firebase';
 
+let bleDisconnectAlerted = false;
+let bleReconnectionInterval: NodeJS.Timeout | null = null;
+
+
 const SERVICE_UUID = "34303c72-4cb1-4d48-98cb-781afece9cd7";
 const CHARACTERISTIC_UUID = "5b4ff54f-8297-45b4-9949-7ff95e672aae";
 
@@ -52,6 +56,8 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
   const [foundDevices, setFoundDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null); 
+  // Flag para diferenciar desconexão manual de inesperada
+  const isManualDisconnect = useRef(false);
 
   const dataContext = useDataContext();
   const dbContext = useDbContext();
@@ -93,16 +99,13 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
     const tryReconnect = async () => {
       const lastDeviceId = await AsyncStorage.getItem('lastDeviceId');
       if (lastDeviceId) {
-        console.log(`🔄 [BLE] Tentando reconectar automaticamente ao dispositivo ${lastDeviceId}...`);
         try {
           await connectToDevice(lastDeviceId);
         } catch (e) {
-          console.log(`ℹ️ [BLE] Reconexão automática falhou. O app funcionará sem conexão BLE.`);
+    
           setIsConnected(false);
           setConnectedDevice(null);
         }
-      } else {
-        console.log(`ℹ️ [BLE] Nenhum dispositivo salvo para reconexão automática.`);
       }
     };
     tryReconnect();
@@ -196,7 +199,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
 
   const writeToDevice = async (data: string) => {
     if (!connectedDevice) {
-      Alert.alert('Erro', 'Nenhum dispositivo conectado');
+      // Nenhum dispositivo conectado, não mostrar Alert
       return;
     }
     try {
@@ -209,7 +212,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
       console.log("Comando enviado via BLE:", data);
     } catch (error) {
       console.log("Erro ao enviar comando BLE:", error);
-      Alert.alert('Erro', 'Falha ao enviar comando BLE');
+      // Não mostrar Alert
     }
   };
 
@@ -219,7 +222,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
 
     const ok = await requestAndroidPermissions();
     if (!ok) {
-      Alert.alert('Permissão Bluetooth não concedida');
+      // Permissão Bluetooth não concedida, não mostrar Alert
       setIsScanning(false);
       return;
     }
@@ -230,7 +233,7 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
       (error, device) => {
 
         if (error) {
-          Alert.alert('Erro no scan', error.message);
+          // Erro no scan, não mostrar Alert
           setIsScanning(false);
           bleManager.stopDeviceScan();
           return;
@@ -253,184 +256,266 @@ export const BLEProvider: React.FC<BLEProviderProps> = ({ children }) => {
     }, 10000);
   };
 
-  const connectToDevice = async (deviceId: string, tentativa = 1) => {
+  const connectToDevice = async (deviceId: string, tentativa = 1, isInitial = true) => {
     setIsScanning(false);
     bleManager.stopDeviceScan();
 
-    console.log(`🔄 [BLE] Tentando conectar ao dispositivo ${deviceId} (tentativa ${tentativa}/3)...`);
+    let timeoutId: NodeJS.Timeout | null = null;
+    let connected = false;
 
     try {
-      const device = await bleManager.connectToDevice(deviceId, { 
-        timeout: 8000 // 8 segundos de timeout
-      });
-
-      console.log(`✅ [BLE] Dispositivo conectado com sucesso: ${device.name || device.id}`);
-
-      await device.requestMTU(517);
-      await device.discoverAllServicesAndCharacteristics();
-      setConnectedDevice(device);
-      setIsConnected(true);
-
-      device.onDisconnected((error, disconnectedDevice) => {
-        console.log("🔌 [BLE] Dispositivo desconectado", error);
-        setIsConnected(false);
-        setConnectedDevice(null);
-        console.log("ℹ️ [BLE] A garrafa foi desconectada. O app continuará funcionando normalmente.");
-      });
-
-      device.monitorCharacteristicForService(
-        SERVICE_UUID,
-        CHARACTERISTIC_UUID,
-        (error, characteristic) => {
-          if (error) {
-            console.log("⚠️ [BLE] Erro ao monitorar notify:", error);
-            return;
+      await new Promise<void>((resolve, reject) => {
+        timeoutId = setTimeout(() => {
+          if (!connected) {
+            reject(new Error("Timeout na conexão BLE. Tentando novamente..."));
           }
-          if (characteristic?.value) {
-            const decoded = Buffer.from(characteristic.value, 'base64').toString('utf-8');
-            console.log("📡 [BLE] Notify recebido da garrafa:", decoded);
+        }, 3000);
 
-            try {
-              if (decoded.trim().startsWith("{")) {
-                const data = JSON.parse(decoded);
-                
-                const volume = typeof data.volume === "number" ? data.volume : null;
-                const distancia = typeof data.distancia === "number" ? data.distancia : null;
-                const batteryV = typeof data.bateria_v === "number" ? data.bateria_v : null;
-                const batteryPct = typeof data.bateria_pct === "number" ? data.bateria_pct : null;
-                const ldrPct = typeof data.ldr_pct === "number" ? data.ldr_pct : null;
+        bleManager.connectToDevice(deviceId)
+          .then(async (device) => {
+            connected = true;
+            if (timeoutId) clearTimeout(timeoutId);
 
-                if (batteryPct !== null) {
-                  setBatteryLevel(Math.round(batteryPct)); 
-                  console.log("🔋 Bateria:", batteryPct, "% | Tensão:", batteryV, "V");
-                }
+            await device.requestMTU(517);
+            await device.discoverAllServicesAndCharacteristics();
+            setConnectedDevice(device);
+            setIsConnected(true);
 
-                if (dataContext) {
-                  if (distancia !== null) dataContext.setDistancia(distancia);
-                  if (batteryV !== null) dataContext.setBatteryV(batteryV);
-                  if (batteryPct !== null) dataContext.setBatteryPct(batteryPct);
-                  if (ldrPct !== null) dataContext.setLdrPct(ldrPct);
+            device.onDisconnected(async (error, disconnectedDevice) => {
+              setIsConnected(false);
+              setConnectedDevice(null);
 
-                  if (volume !== null) {
-                    if (volumeAnteriorRef.current !== null) {
-                      dataContext.setVolumeAnterior(volumeAnteriorRef.current);
-                      let consumo = volumeAnteriorRef.current - volume;
+              // Limpa o loop de reconexão, se existir
+              if (bleReconnectionInterval) {
+                clearInterval(bleReconnectionInterval);
+                bleReconnectionInterval = null;
+              }
 
-                      if (consumo < 0) {
-                        console.log("⚠️ Consumo negativo detectado, ajustando para 0");
-                        consumo = 0;
+              // Só reconecta se NÃO for desconexão manual
+              if (isManualDisconnect.current) {
+                // Reseta a flag só aqui!
+                isManualDisconnect.current = false;
+                return;
+              }
+
+              if (!bleDisconnectAlerted) {
+                bleDisconnectAlerted = true;
+                Alert.alert('Info', 'A garrafa foi desconectada!');
+              }
+
+              // Reconexão automática com tentativa dupla
+              if (isScanning && deviceId && !bleReconnectionInterval) {
+                const tryReconnect = async () => {
+                  try {
+                    // Só tenta reconectar se o device estiver realmente desconectado
+                    const stillConnected = await bleManager.isDeviceConnected(deviceId);
+                    if (stillConnected) return;
+
+                    const deviceList = await bleManager.devices([deviceId]);
+                    if (deviceList && deviceList.length > 0) {
+                      if (bleReconnectionInterval) {
+                        clearInterval(bleReconnectionInterval);
+                        bleReconnectionInterval = null;
                       }
-
-                      consumo = Math.round(consumo * 10) / 10;
-                      dataContext.setConsumo(consumo);
-                      consumoAcumuladoRef.current = Math.round((consumoAcumuladoRef.current + (consumo > 0 ? consumo : 0)) * 10) / 10;
-                      dataContext.setConsumoAcumulado(consumoAcumuladoRef.current);
-
-                      if (dbContext) {
-                        const leitura = {
-                          timestamp: Date.now(),
-                          volume,
-                          volumeAnterior: volumeAnteriorRef.current,
-                          consumo,
-                        };
-                        dbContext.salvarLeituraNoCache(leitura);
-                      }
-
-                      console.log("==== DADOS ATUALIZADOS ====");
-                      console.log("📏 Distância:", distancia, "cm");
-                      console.log("💧 Volume anterior:", volumeAnteriorRef.current, "mL");
-                      console.log("💧 Volume atual:", volume, "mL");
-                      console.log("📊 Consumo calculado:", consumo, "mL");
-                      console.log("🔋 Bateria:", batteryPct, "% (", batteryV, "V)");
-                      console.log("☀️ LDR:", ldrPct, "%");
-                      console.log("=================================");
-                    } else {
-                      dataContext.setVolumeAnterior(volume);
-                      dataContext.setConsumo(0);
-                      consumoAcumuladoRef.current = 0;
-                      dataContext.setConsumoAcumulado(0); 
-                      console.log("🆕 Primeira leitura: volume anterior inicializado como o volume recebido.");
-
-                      if (dbContext) {
-                        const leitura = {
-                          timestamp: Date.now(),
-                          volume,
-                          volumeAnterior: volume,
-                          consumo: 0,
-                          consumoAcumulado: 0,
-                        };
-                        dbContext.salvarLeituraNoCache(leitura);
+                      // Tentativa dupla
+                      try {
+                        await connectToDevice(deviceId, 1, false); // isInitial = false
+                      } catch (e) {
+                        try {
+                          await bleManager.cancelDeviceConnection(deviceId);
+                        } catch {}
+                        setTimeout(() => connectToDevice(deviceId, 2, false), 2000);
                       }
                     }
-
-                    volumeAnteriorRef.current = volume;
-                    dataContext.setVolume(volume);
+                  } catch (e) {
+                    // Ignora erro, tenta novamente no próximo ciclo
                   }
-                }
-              } else {
-                console.log("📨 [BLE] Mensagem recebida:", decoded);
+                };
+                bleReconnectionInterval = setInterval(tryReconnect, 3000);
               }
-            } catch (e) {
-              console.log("❌ [BLE] Erro ao processar notify:", e);
+            });
+
+            device.monitorCharacteristicForService(
+            SERVICE_UUID,
+            CHARACTERISTIC_UUID,
+            (error, characteristic) => {
+              if (error) {
+                console.log("Erro ao monitorar notify:", error);
+                return;
+              }
+              if (characteristic?.value) {
+                const decoded = Buffer.from(characteristic.value, 'base64').toString('utf-8');
+                console.log("Notify recebido da garrafa:", decoded);
+
+                try {
+                  if (decoded.trim().startsWith("{")) {
+                    const data = JSON.parse(decoded);
+                    
+                    const volume = typeof data.volume === "number" ? data.volume : null;
+                    const distancia = typeof data.distancia === "number" ? data.distancia : null;
+                    const batteryV = typeof data.bateria_v === "number" ? data.bateria_v : null;
+                    const batteryPct = typeof data.bateria_pct === "number" ? data.bateria_pct : null;
+                    const ldrPct = typeof data.ldr_pct === "number" ? data.ldr_pct : null;
+
+                    if (batteryPct !== null) {
+                      setBatteryLevel(Math.round(batteryPct)); 
+                      console.log("🔋 Bateria:", batteryPct, "% | Tensão:", batteryV, "V");
+                    }
+
+                    if (dataContext) {
+                      if (distancia !== null) dataContext.setDistancia(distancia);
+                      if (batteryV !== null) dataContext.setBatteryV(batteryV);
+                      if (batteryPct !== null) dataContext.setBatteryPct(batteryPct);
+                      if (ldrPct !== null) dataContext.setLdrPct(ldrPct);
+
+                      if (volume !== null) {
+                        if (volumeAnteriorRef.current !== null) {
+                          dataContext.setVolumeAnterior(volumeAnteriorRef.current);
+                          let consumo = volumeAnteriorRef.current - volume;
+
+                          if (consumo < 0) {
+                            console.log("⚠️ Consumo negativo detectado, ajustando para 0");
+                            consumo = 0;
+                          }
+
+                          consumo = Math.round(consumo * 10) / 10;
+                          dataContext.setConsumo(consumo);
+                          consumoAcumuladoRef.current = Math.round((consumoAcumuladoRef.current + (consumo > 0 ? consumo : 0)) * 10) / 10;
+                          dataContext.setConsumoAcumulado(consumoAcumuladoRef.current);
+
+                          if (dbContext) {
+                            const leitura = {
+                              timestamp: Date.now(),
+                              volume,
+                              volumeAnterior: volumeAnteriorRef.current,
+                              consumo,
+                            };
+                            dbContext.salvarLeituraNoCache(leitura);
+                          }
+
+                          console.log("==== DADOS ATUALIZADOS ====");
+                          console.log("📏 Distância:", distancia, "cm");
+                          console.log("💧 Volume anterior:", volumeAnteriorRef.current, "mL");
+                          console.log("💧 Volume atual:", volume, "mL");
+                          console.log("📊 Consumo calculado:", consumo, "mL");
+                          console.log("🔋 Bateria:", batteryPct, "% (", batteryV, "V)");
+                          console.log("☀️ LDR:", ldrPct, "%");
+                          console.log("=================================");
+                        } else {
+                          dataContext.setVolumeAnterior(volume);
+                          dataContext.setConsumo(0);
+                          consumoAcumuladoRef.current = 0;
+                          dataContext.setConsumoAcumulado(0); 
+                          console.log("🆕 Primeira leitura: volume anterior inicializado como o volume recebido.");
+
+                          if (dbContext) {
+                            const leitura = {
+                              timestamp: Date.now(),
+                              volume,
+                              volumeAnterior: volume,
+                              consumo: 0,
+                              consumoAcumulado: 0,
+                            };
+                            dbContext.salvarLeituraNoCache(leitura);
+                          }
+                        }
+
+                        volumeAnteriorRef.current = volume;
+                        dataContext.setVolume(volume);
+                      }
+                    }
+                  } else {
+                    console.log("Mensagem recebida:", decoded);
+                  }
+                } catch (e) {
+                  console.log("Erro ao processar notify:", e);
+                }
+              }
+            }
+          );
+
+          try {
+            const uid = auth.currentUser?.uid;
+            if (uid && device.id) {
+              const { ref, set } = await import('firebase/database');
+              const { db } = await import('../config/firebase');
+              
+              await set(ref(db, `users/${uid}/connectedBottle`), device.id);
+              console.log(`🔗 [BLE] Usuário ${uid} vinculado à garrafa ${device.id} no Firebase`);
+              
+              await AsyncStorage.setItem('lastDeviceId', device.id);
+              console.log(`💾 [BLE] Device ID salvo no AsyncStorage`);
+            }
+          } catch (e) {
+            console.error("⚠️ [BLE] Erro ao vincular usuário à garrafa no Firebase:", e);
+          }
+
+          // Limpa o loop de reconexão, se existir
+          if (bleReconnectionInterval) {
+            clearInterval(bleReconnectionInterval);
+            bleReconnectionInterval = null;
+          }
+          // Aviso de reconexão bem-sucedida (apenas uma vez, e só se realmente conectou)
+          if (bleDisconnectAlerted) {
+            // Confirma se está conectado mesmo
+            const connectedNow = await bleManager.isDeviceConnected(device.id);
+            if (connectedNow) {
+              bleDisconnectAlerted = false;
+              Alert.alert('Sucesso', `Reconectado ao dispositivo ${device.name || device.id}`);
+            } else {
+              // Se não conectou, não mostra alerta e tenta novamente depois
+              bleDisconnectAlerted = true;
             }
           }
-        }
-      );
 
+          // Só envia comando inicial na primeira conexão
+          if (isInitial) {
+            setTimeout(async () => {
+              try {
+                const base64data = Buffer.from("1", 'utf-8').toString('base64');
+                await device.writeCharacteristicWithResponseForService(
+                  SERVICE_UUID,
+                  CHARACTERISTIC_UUID,
+                  base64data
+                );
+                console.log("Comando inicial enviado via BLE: 1");
+              } catch (e) {
+                console.log('Erro ao enviar comando inicial para o ESP:', e);
+              }
+            }, 1000);
+          }
+          resolve();
+        })
+        .catch((error) => {
+          if (timeoutId) clearTimeout(timeoutId);
+          reject(error);
+        });
+    });
+  } catch (error: any) {
+    setIsConnected(false);
+    setConnectedDevice(null);
+    // Não mostrar Alert de erro ao conectar
+    if (tentativa < 2) {
       try {
-        const uid = auth.currentUser?.uid;
-        if (uid && device.id) {
-          const { ref, set } = await import('firebase/database');
-          const { db } = await import('../config/firebase');
-          
-          await set(ref(db, `users/${uid}/connectedBottle`), device.id);
-          console.log(`🔗 [BLE] Usuário ${uid} vinculado à garrafa ${device.id} no Firebase`);
-          
-          await AsyncStorage.setItem('lastDeviceId', device.id);
-          console.log(`💾 [BLE] Device ID salvo no AsyncStorage`);
-        }
-      } catch (e) {
-        console.error("⚠️ [BLE] Erro ao vincular usuário à garrafa no Firebase:", e);
-      }
-
-      Alert.alert('Sucesso', `Conectado ao dispositivo ${device.name || device.id}`);
-      
-    } catch (error: any) {
-      console.log(`⚠️ [BLE] Falha na conexão (tentativa ${tentativa}/3):`, error.message);
-      
-      setIsConnected(false);
-      setConnectedDevice(null);
-
-      // Tentar novamente se ainda houver tentativas
-      if (tentativa < 3) {
-        try {
-          await bleManager.cancelDeviceConnection(deviceId);
-        } catch (e) {
-          // Ignora erro ao cancelar conexão
-        }
-        console.log(`🔄 [BLE] Aguardando 2 segundos antes de tentar novamente...`);
-        setTimeout(() => connectToDevice(deviceId, tentativa + 1), 2000);
-      } else {
-        // Após 3 tentativas, apenas informa mas não bloqueia o app
-        console.log(`ℹ️ [BLE] Não foi possível conectar após ${tentativa} tentativas. O app funcionará sem conexão BLE.`);
-        Alert.alert(
-          'Conexão BLE', 
-          'Não foi possível conectar à garrafa. O aplicativo continuará funcionando normalmente.',
-          [{ text: 'OK' }]
-        );
-      }
+        await bleManager.cancelDeviceConnection(deviceId);
+      } catch (e) {}
+      setTimeout(() => connectToDevice(deviceId, tentativa + 1, isInitial), 2000);
     }
-  };
+  }
+};
 
   const disconnectDevice = async () => {
     if (connectedDevice) {
+      isManualDisconnect.current = true;
       try {
         await bleManager.cancelDeviceConnection(connectedDevice.id);
       } catch { }
     }
-    setIsConnected(false);
-    setConnectedDevice(null);
-    Alert.alert('Info', 'Dispositivo desconectado');
+    // Limpa o loop de reconexão, se existir
+    if (bleReconnectionInterval) {
+      clearInterval(bleReconnectionInterval);
+      bleReconnectionInterval = null;
+    }
   };
 
   const value: BLEContextType = {
