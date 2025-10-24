@@ -1,19 +1,52 @@
 import * as React from "react";
-import { View, StyleSheet, TouchableOpacity, Alert, Modal, Text, Pressable, Dimensions } from "react-native";
+import { 
+  View, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Modal, 
+  Text, 
+  Pressable, 
+  Dimensions, 
+  FlatList,
+  Image,
+  ActivityIndicator 
+} from "react-native";
 import { Avatar } from "react-native-paper";
-import { Entypo, MaterialIcons } from "@expo/vector-icons";
-import * as ImagePicker from 'expo-image-picker';
+import { MaterialIcons } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
-import { storage, firestore, auth } from "../../config/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { firestore, auth } from "../../config/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const { width, height } = Dimensions.get('window');
 
-const AVATAR_SIZE = Math.round(width * 0.28);
+const AVATAR_SIZE = Math.round(width * 0.30);
+
+// Array com todos os avatares disponíveis (pulando o Avatar02 que não existe)
+const AVATARS = [
+  { id: 1, source: require('../../assets/avatars/Avatar01.png') },
+  { id: 3, source: require('../../assets/avatars/Avatar03.png') },
+  { id: 4, source: require('../../assets/avatars/Avatar04.png') },
+  { id: 5, source: require('../../assets/avatars/Avatar05.png') },
+  { id: 6, source: require('../../assets/avatars/Avatar06.png') },
+  { id: 7, source: require('../../assets/avatars/Avatar07.png') },
+  { id: 8, source: require('../../assets/avatars/Avatar08.png') },
+  { id: 9, source: require('../../assets/avatars/Avatar09.png') },
+  { id: 10, source: require('../../assets/avatars/Avatar10.png') },
+  { id: 11, source: require('../../assets/avatars/Avatar11.png') },
+  { id: 12, source: require('../../assets/avatars/Avatar12.png') },
+  { id: 13, source: require('../../assets/avatars/Avatar13.png') },
+  { id: 14, source: require('../../assets/avatars/Avatar14.png') },
+  { id: 15, source: require('../../assets/avatars/Avatar15.png') },
+  { id: 16, source: require('../../assets/avatars/Avatar16.png') },
+  { id: 17, source: require('../../assets/avatars/Avatar17.png') },
+  { id: 18, source: require('../../assets/avatars/Avatar18.png') },
+  { id: 19, source: require('../../assets/avatars/Avatar19.png') },
+  { id: 20, source: require('../../assets/avatars/Avatar20.png') },
+  { id: 21, source: require('../../assets/avatars/Avatar21.png') },
+];
 
 interface AvatarComponentProps {
-  onImageSelect?: (imageUri: string) => void;
+  onImageSelect?: (avatarId: number) => void;
   triggerImagePicker?: boolean;
   onTriggerReset?: () => void;
 }
@@ -23,23 +56,37 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
   triggerImagePicker, 
   onTriggerReset 
 }) => {
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [selectedAvatarId, setSelectedAvatarId] = useState<number | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-
+  // Carregar avatar salvo do usuário
   useEffect(() => {
     const fetchAvatar = async () => {
       const user = auth.currentUser;
       if (user) {
-        const docRef = doc(firestore, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.avatarUrl) {
-            setImageUri(data.avatarUrl);
+        try {
+          const docRef = doc(firestore, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.avatarId) {
+              setSelectedAvatarId(data.avatarId);
+            } else {
+              setSelectedAvatarId(1); // Avatar padrão se não tiver salvo
+            }
+          } else {
+            setSelectedAvatarId(1); // Avatar padrão para novos usuários
           }
+        } catch (error) {
+          console.error("Erro ao carregar avatar:", error);
+          setSelectedAvatarId(1); // Avatar padrão em caso de erro
+        } finally {
+          setLoading(false);
         }
+      } else {
+        setSelectedAvatarId(1);
+        setLoading(false);
       }
     };
     fetchAvatar();
@@ -52,79 +99,27 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
     }
   }, [triggerImagePicker, onTriggerReset]);
 
-  const requestPermissions = async () => {
-    const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-    const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (cameraPermission.status !== 'granted' || mediaLibraryPermission.status !== 'granted') {
-      Alert.alert(
-        'Permissões necessárias',
-        'Precisamos de permissão para acessar a câmera e galeria.',
-        [{ text: 'OK' }]
-      );
-      return false;
-    }
-    return true;
-  };
-
-
-  const uploadImageAsync = async (uri: string) => {
+  // Salvar avatar selecionado no Firestore
+  const handleAvatarSelect = async (avatarId: number) => {
     setLoading(true);
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("Usuário não autenticado");
-     
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const storageRef = ref(storage, `avatars/${user.uid}.jpg`);
-      await uploadBytes(storageRef, blob);
-      const downloadURL = await getDownloadURL(storageRef);
       
-  await setDoc(doc(firestore, "users", user.uid), { avatarUrl: downloadURL }, { merge: true });
-      setImageUri(downloadURL);
-      onImageSelect?.(downloadURL);
-    } catch (error: any) {
-      Alert.alert('Erro', 'Não foi possível salvar a imagem.');
-    }
-    setLoading(false);
-  };
-
-  const openCamera = async () => {
-    setModalVisible(false);
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) return;
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-      if (!result.canceled && result.assets && result.assets[0]) {
-        const newImageUri = result.assets[0].uri;
-        await uploadImageAsync(newImageUri);
-      }
+      // Salvar no Firestore
+      await setDoc(
+        doc(firestore, "users", user.uid), 
+        { avatarId }, 
+        { merge: true }
+      );
+      
+      setSelectedAvatarId(avatarId);
+      onImageSelect?.(avatarId);
+      setModalVisible(false);
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível abrir a câmera.');
-    }
-  };
-
-  const openGallery = async () => {
-    setModalVisible(false);
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) return;
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-      if (!result.canceled && result.assets && result.assets[0]) {
-        const newImageUri = result.assets[0].uri;
-        await uploadImageAsync(newImageUri);
-      }
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível abrir a galeria.');
+      console.error("Erro ao salvar avatar:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -132,21 +127,61 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
     setModalVisible(true);
   };
 
+  const getAvatarSource = () => {
+    if (selectedAvatarId === null) {
+      return AVATARS[0].source; // Retorna avatar padrão enquanto carrega
+    }
+    const avatar = AVATARS.find(a => a.id === selectedAvatarId);
+    return avatar ? avatar.source : AVATARS[0].source;
+  };
+
+  const renderAvatarItem = ({ item }: { item: typeof AVATARS[0] }) => {
+    const isSelected = item.id === selectedAvatarId;
+    return (
+      <TouchableOpacity
+        style={[
+          styles.avatarItem,
+          isSelected && styles.avatarItemSelected
+        ]}
+        onPress={() => handleAvatarSelect(item.id)}
+      >
+        <View style={styles.avatarImageContainer}>
+          <Image 
+            source={item.source} 
+            style={styles.avatarItemImage}
+          />
+        </View>
+        {isSelected && (
+          <View style={styles.selectedBadge}>
+            <MaterialIcons name="check-circle" size={24} color="#27D5E8" />
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <Avatar.Image
-        size={AVATAR_SIZE}
-        source={imageUri ? { uri: imageUri } : require("../../assets/avatar.png")}
-        style={styles.avatar}
-      />
-      {loading && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: AVATAR_SIZE/2 }}>
-          <Text>Salvando...</Text>
+      {selectedAvatarId !== null ? (
+        <Avatar.Image
+          size={AVATAR_SIZE}
+          source={getAvatarSource()}
+          style={styles.avatar}
+        />
+      ) : (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="small" color="#27D5E8" />
+        </View>
+      )}
+      {loading && selectedAvatarId !== null && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="small" color="#27D5E8" />
         </View>
       )}
       <TouchableOpacity style={styles.iconWrapper} onPress={handleAvatarPress}>
-        <Entypo name="camera" size={18} color="#084F8C" />
+        <MaterialIcons name="swap-horiz" size={20} color="#084F8C" />
       </TouchableOpacity>
+      
       <Modal
         animationType="slide"
         transparent={true}
@@ -155,19 +190,29 @@ const AvatarComponent: React.FC<AvatarComponentProps> = React.memo(({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Selecionar Foto</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Escolha seu Avatar</Text>
+              <TouchableOpacity 
+                onPress={() => setModalVisible(false)}
+                style={styles.closeButton}
+              >
+                <MaterialIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
             
-            <TouchableOpacity style={styles.optionButton} onPress={openCamera}>
-              <MaterialIcons name="camera-alt" size={24} color="#084F8C" />
-              <Text style={styles.optionText}>Câmera</Text>
-            </TouchableOpacity>
+            <FlatList
+              data={AVATARS}
+              renderItem={renderAvatarItem}
+              keyExtractor={(item) => item.id.toString()}
+              numColumns={3}
+              contentContainerStyle={styles.avatarGrid}
+              showsVerticalScrollIndicator={false}
+            />
             
-            <TouchableOpacity style={styles.optionButton} onPress={openGallery}>
-              <MaterialIcons name="photo-library" size={24} color="#084F8C" />
-              <Text style={styles.optionText}>Galeria</Text>
-            </TouchableOpacity>
-            
-            <Pressable style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+            <Pressable 
+              style={styles.cancelButton} 
+              onPress={() => setModalVisible(false)}
+            >
               <Text style={styles.cancelText}>Cancelar</Text>
             </Pressable>
           </View>
@@ -186,16 +231,27 @@ const styles = StyleSheet.create({
     left: -width * 0.025,
   },
   avatar: {
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: AVATAR_SIZE / 2,
   },
   iconWrapper: {
     position: "absolute",
     bottom: -width * 0.005,
     right: -width * 0.005,
-    width: width * 0.07,
-    height: width * 0.07,
-    borderRadius: width * 0.035,
+    width: width * 0.08,
+    height: width * 0.08,
+    borderRadius: width * 0.04,
     backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
@@ -207,49 +263,83 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContent: {
     backgroundColor: 'white',
-    borderTopLeftRadius: width * 0.05,
-    borderTopRightRadius: width * 0.05,
+    borderRadius: width * 0.05,
     padding: width * 0.05,
-    paddingBottom: height * 0.05,
+    width: width * 0.9,
+    maxHeight: height * 0.8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
     color: '#333',
   },
-  optionButton: {
-    flexDirection: 'row',
+  closeButton: {
+    padding: 4,
+  },
+  avatarGrid: {
+    paddingVertical: 10,
+  },
+  avatarItem: {
+    flex: 1,
+    margin: width * 0.015,
+    aspectRatio: 1,
+    borderRadius: 1000,
+    borderWidth: 3,
+    borderColor: 'transparent',
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: 'transparent',
+  },
+  avatarItemSelected: {
+    borderColor: '#27D5E8',
+    elevation: 5,
+    shadowColor: '#27D5E8',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  avatarImageContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: height * 0.018,
-    paddingHorizontal: width * 0.05,
-    marginVertical: height * 0.006,
-    backgroundColor: '#f8f9fa',
-    borderRadius: width * 0.03,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
   },
-  optionText: {
-    fontSize: Math.round(width * 0.04),
-    marginLeft: width * 0.04,
-    color: '#333',
-    fontWeight: '500',
+  avatarItemImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  selectedBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 2,
   },
   cancelButton: {
     paddingVertical: height * 0.018,
-    marginTop: height * 0.012,
+    marginTop: height * 0.015,
     alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: width * 0.03,
   },
   cancelText: {
     fontSize: Math.round(width * 0.04),
     color: '#666',
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });
 

@@ -87,6 +87,11 @@ export default function Navigation({ initialRouteName = "Welcome" }: NavigationP
           headerTitleStyle: { fontWeight: 'bold' }
         }}
       />
+      <Stack.Screen
+        name="Settings"
+        component={require('../screens/Settings').default}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }

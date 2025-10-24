@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useEffect } from "react";
-import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, StatusBar, Dimensions, ScrollView, Alert } from "react-native";
+import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, StatusBar, Dimensions, ScrollView, Alert, BackHandler } from "react-native";
 import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { PaperProvider } from "react-native-paper";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -55,6 +55,12 @@ export default function Home() {
   } = useReminders();
 
   const [profileData, setProfileData] = useState<any>(null);
+  const [waterValue, setWaterValue] = useState(44); 
+  const goalMl = profileData ? calcularMetaDiariaAgua(profileData) : 2000;
+  const [user, setUser] = useState<User | null>(null);
+  const [showInitialSlides, setShowInitialSlides] = useState<boolean>(false);
+  const [loadingSlides, setLoadingSlides] = useState(true);
+  const [keepLoggedIn, setKeepLoggedIn] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -108,12 +114,22 @@ export default function Home() {
     };
     checkKeepLoggedIn();
   }, []);
-  const [waterValue, setWaterValue] = useState(44); 
-  const goalMl = profileData ? calcularMetaDiariaAgua(profileData) : 2000;
-  const [user, setUser] = useState<User | null>(null);
-  const [showInitialSlides, setShowInitialSlides] = useState<boolean>(false);
-  const [loadingSlides, setLoadingSlides] = useState(true);
-  const [keepLoggedIn, setKeepLoggedIn] = useState<string | null>(null);
+
+  // Tratamento do botão voltar do Android - sair do app se estiver com "manter conectado" ativado
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      // Se "manter conectado" estiver ativado, sai do app ao invés de voltar
+      if (keepLoggedIn === 'true') {
+        BackHandler.exitApp();
+        return true;
+      }
+      
+      // Se não estiver com "manter conectado", permite o comportamento padrão
+      return false;
+    });
+
+    return () => backHandler.remove();
+  }, [keepLoggedIn]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -297,9 +313,12 @@ export default function Home() {
             <Text style={styles.greeting}>Olá, {getFirstName()},</Text>
             <Text style={styles.subGreeting}>Bem vindo ao AquaLink.</Text>
           </View>
-          <View style={styles.notificationButton}>
-            <FontAwesome5 name="bell" size={20} color="white" />
-          </View>
+          <TouchableOpacity 
+            style={styles.notificationButton}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <MaterialCommunityIcons name="menu" size={24} color="white" />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.calendarSection}>

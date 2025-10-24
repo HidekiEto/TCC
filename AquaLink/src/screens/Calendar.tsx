@@ -44,7 +44,7 @@ function CalendarContent() {
         <View style={styles.contentArea}>
         
           <View style={styles.header}>
-            <EvilIcons name="calendar" size={50} color="#27D5E8"/>
+          
             <Text style={styles.headerTitle}>
               Calendário
             </Text>

@@ -73,10 +73,8 @@ export default function Profile() {
   );
 
   
-  const handleImageSelect = (imageUri: string) => {
-    console.log('Nova imagem selecionada:', imageUri);
-  
- 
+  const handleImageSelect = (avatarId: number) => {
+    console.log('Novo avatar selecionado:', avatarId);
   };
 
  
@@ -189,7 +187,7 @@ export default function Profile() {
               Visão Geral da performance
             </Text>
             <Text style={styles.performanceSubtitle}>
-              Média p/dia: <Text style={styles.performanceValue}>
+              Média p/semana: <Text style={styles.performanceValue}>
                 {(() => {
                   if (Array.isArray(consumoSemana) && consumoSemana.length > 0) {
                     
@@ -197,10 +195,11 @@ export default function Profile() {
                   
                     if (Array.isArray(lastWeek)) {
                       const soma = lastWeek.reduce((acc, v) => acc + v, 0);
-                      return `${Math.round(soma / 7)} mls`;
+                      const media = soma / lastWeek.length;
+                      return `${Math.round(media)} mls`;
                     } else {
                      
-                      return `${Math.round(lastWeek / 7)} mls`;
+                      return `${Math.round(lastWeek)} mls`;
                     }
                   }
                   return '--';

@@ -14,4 +14,5 @@ export type RootStackParamList = {
   Info: undefined;
   EditProfile: undefined;
   ReminderSettings: undefined;
+  Settings: undefined;
 };

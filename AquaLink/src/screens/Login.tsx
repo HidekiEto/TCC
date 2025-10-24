@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Image, GestureResponderEvent, StyleSheet, Dimensions, StatusBar, Keyboard, Animated, Platform, Alert } from "react-native";
+import { View, Text, TouchableOpacity, Image, GestureResponderEvent, StyleSheet, Dimensions, StatusBar, Keyboard, Animated, Platform, Alert, BackHandler } from "react-native";
 import { CheckBox } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -31,6 +31,18 @@ export default function Login() {
   const [headerOpacity] = useState(new Animated.Value(1));
   const [headerHeight] = useState(new Animated.Value(1));
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Tratamento do botão voltar do Android - sair do app ao invés de voltar
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      // Retorna true para prevenir o comportamento padrão (voltar na navegação)
+      // O app será fechado pelo sistema
+      BackHandler.exitApp();
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, []);
 
   useEffect(() => {
     const keyboardWillShowListener = Keyboard.addListener(

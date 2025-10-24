@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   iconOverlay: {
     position: 'absolute',
     right: 15,
-    bottom: 30,
+    bottom: 25,
     width: 30,
     height: 30,
     justifyContent: 'center',

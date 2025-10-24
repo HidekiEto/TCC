@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import dayjs from 'dayjs';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../config/firebase";
-import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity, Modal, ActivityIndicator, Dimensions, Platform, Alert, StatusBar } from "react-native";
+import { Text, View, ScrollView, StyleSheet, Image, TouchableOpacity, Modal, ActivityIndicator, Dimensions, Platform, Alert, StatusBar, Linking } from "react-native";
 const { width, height } = Dimensions.get("window");
 import BottomNavigation from "../components/BottomNavigation";
 import { MaterialIcons, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
@@ -14,10 +14,14 @@ import { useDbContext } from "../hooks/useDbContext";
 import { useReminders } from "../contexts/ReminderContext";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useDataContext } from "../hooks/useDataContext";
+import { fetchWaterHealthNews, formatPublishedDate, NewsArticle } from "../services/newsService";
 
 
 export default function Dashboard() {
   const [profileData, setProfileData] = useState<any>(null);
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
+  const [loadingNews, setLoadingNews] = useState(true);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -40,6 +44,23 @@ export default function Dashboard() {
       }
     });
     return () => unsubscribe();
+  }, []);
+
+  // Buscar notícias ao carregar o componente
+  useEffect(() => {
+    const loadNews = async () => {
+      setLoadingNews(true);
+      try {
+        const articles = await fetchWaterHealthNews();
+        setNewsArticles(articles);
+      } catch (error) {
+        console.error('Erro ao carregar notícias:', error);
+      } finally {
+        setLoadingNews(false);
+      }
+    };
+    
+    loadNews();
   }, []);
 
   const { useFocusEffect } = require('@react-navigation/native');
@@ -580,33 +601,67 @@ export default function Dashboard() {
   
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <MaterialCommunityIcons name="information" size={20} color="#082862" />
-            <Text style={styles.cardTitle}>Informativos</Text>
+            <MaterialCommunityIcons name="newspaper-variant" size={20} color="#082862" />
+            <Text style={styles.cardTitle}>Informativos Recentes</Text>
           </View>
 
-          <View style={styles.infoCard}>
-            <View style={styles.infoImagePlaceholder}>
-              <MaterialCommunityIcons name="water-outline" size={40} color="#29EBD5" />
+          {loadingNews ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#082862" />
+              <Text style={styles.loadingText}>Carregando notícias...</Text>
             </View>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>
-                Beber água é importante para o bom funcionamento do organismo
-              </Text>
-              <Text style={styles.infoLink}>https://orientacoesnutricionais.com.br/67</Text>
-            </View>
-          </View>
-
-          <View style={styles.infoCard}>
-            <View style={styles.infoImagePlaceholder}>
-              <MaterialCommunityIcons name="heart-outline" size={40} color="#29EBD5" />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>
-                Beber água é importante para o bom funcionamento do organismo
-              </Text>
-              <Text style={styles.infoLink}>https://orientacoesnutricionais.com.br/67</Text>
-            </View>
-          </View>
+          ) : (
+            newsArticles.map((article, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.infoCard}
+                onPress={async () => {
+                  try {
+                    const supported = await Linking.canOpenURL(article.url);
+                    if (supported) {
+                      await Linking.openURL(article.url);
+                    } else {
+                      Alert.alert('Erro', 'Não foi possível abrir o link');
+                    }
+                  } catch (error) {
+                    Alert.alert('Erro', 'Não foi possível abrir a notícia');
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                {article.imageSource ? (
+                  <Image
+                    source={article.imageSource}
+                    style={styles.infoImage}
+                    resizeMode="contain"
+                  />
+                ) : article.imageUrl ? (
+                  <Image
+                    source={{ uri: article.imageUrl }}
+                    style={styles.infoImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <View style={styles.infoImagePlaceholder}>
+                    <MaterialCommunityIcons 
+                      name={index === 0 ? "water-outline" : index === 1 ? "heart-pulse" : "brain"} 
+                      size={40} 
+                      color="#29EBD5" 
+                    />
+                  </View>
+                )}
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoTitle} numberOfLines={3}>
+                    {article.title}
+                  </Text>
+                  <View style={styles.infoFooter}>
+                    <Text style={styles.infoSource} numberOfLines={1}>{article.source}</Text>
+                    <Text style={styles.infoDate}>{formatPublishedDate(article.publishedAt)}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
 
 
@@ -908,10 +963,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     borderRadius: 8,
     padding: width * 0.03,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  infoImage: {
+    width: width * 0.22,
+    height: width * 0.22,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    marginRight: width * 0.03,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   infoImagePlaceholder: {
-    width: width * 0.15,
-    height: width * 0.15,
+    width: width * 0.22,
+    height: width * 0.22,
     backgroundColor: '#E3F2FD',
     borderRadius: 8,
     justifyContent: 'center',
@@ -920,17 +992,57 @@ const styles = StyleSheet.create({
   },
   infoContent: {
     flex: 1,
+    justifyContent: 'space-between',
   },
   infoTitle: {
     fontSize: Math.round(width * 0.035),
     fontWeight: '500',
     color: '#333',
-    marginBottom: height * 0.005,
+    marginBottom: height * 0.008,
     lineHeight: Math.round(width * 0.045),
+  },
+  infoFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: height * 0.005,
+  },
+  sourceLogoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: width * 0.02,
+  },
+  sourceLogo: {
+    width: width * 0.045,
+    height: width * 0.045,
+    marginRight: width * 0.015,
+    borderRadius: 4,
+  },
+  infoSource: {
+    fontSize: Math.round(width * 0.028),
+    color: '#29EBD5',
+    fontWeight: '600',
+    flex: 1,
+  },
+  infoDate: {
+    fontSize: Math.round(width * 0.028),
+    color: '#999',
   },
   infoLink: {
     fontSize: Math.round(width * 0.03),
     color: '#29EBD5',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: height * 0.03,
+  },
+  loadingText: {
+    fontSize: Math.round(width * 0.035),
+    color: '#666',
+    marginLeft: width * 0.02,
   },
   bottomSpace: {
     height: height * 0.12,

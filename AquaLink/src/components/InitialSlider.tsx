@@ -49,33 +49,9 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
   const [isTransitioning, setIsTransitioning] = useState(false);
   const slideTransitionAnim = useRef(new Animated.Value(0)).current;
   const [hasReachedSlide4, setHasReachedSlide4] = useState(false);
+  const [shouldAnimateWelcome, setShouldAnimateWelcome] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
-
- 
-  useEffect(() => {
-    if (hasReachedSlide4) {
-      setCurrentIndex(3);
-     
-      slideTransitionAnim.setValue(1);
-      scrollViewRef.current?.scrollTo({
-        x: width * 3,
-        animated: false
-      });
-    }
-  }, [hasReachedSlide4]);
-
-
-  const forceStayOnSlide4 = () => {
-    if (hasReachedSlide4) {
-      scrollViewRef.current?.scrollTo({
-        x: width * 3,
-        animated: false
-      });
-      setCurrentIndex(3);
-     
-      slideTransitionAnim.setValue(1);
-    }
-  };
+  const isLockingScroll = useRef(false);
 
   const handleScroll = (event: any) => {
     if (isTransitioning) return;
@@ -83,38 +59,41 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const index = Math.round(scrollPosition / width);
     
-   
-    if (index === 3 && !hasReachedSlide4) {
-      setHasReachedSlide4(true);
-      
-      slideTransitionAnim.setValue(1);
-    }
-    
-   
-    if (hasReachedSlide4) {
-      
-      if (scrollPosition < width * 3) {
-        forceStayOnSlide4();
-        return;
+    // Previne scroll para trás após chegar no slide 4
+    if (hasReachedSlide4 && scrollPosition < width * 3) {
+      if (!isLockingScroll.current) {
+        isLockingScroll.current = true;
+        scrollViewRef.current?.scrollTo({
+          x: width * 3,
+          animated: false
+        });
+        setTimeout(() => {
+          isLockingScroll.current = false;
+        }, 100);
       }
-      
-      if (index !== 3) {
-        forceStayOnSlide4();
-        return;
-      }
-      setCurrentIndex(3);
       return;
     }
     
     const slide3Position = width * 2;
     const slide4Position = width * 3;
     
+    // Gerencia a transição entre slide 3 e 4
     if (scrollPosition >= slide3Position && scrollPosition <= slide4Position) {
       const progress = Math.min((scrollPosition - slide3Position) / width, 1);
       slideTransitionAnim.setValue(progress);
       
-      if (progress >= 0.9 && index === 3) {
-        console.log("chegou no Welcome slide");
+      // Quando atinge 95% da transição, trava o scroll e inicia animações
+      if (progress >= 0.95 && !hasReachedSlide4) {
+        setHasReachedSlide4(true);
+        setShouldAnimateWelcome(true);
+        
+        // Suaviza o snap para a posição final
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({
+            x: width * 3,
+            animated: true
+          });
+        }, 50);
       }
     }
     
@@ -146,7 +125,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
               style={[
                 styles.transitionOverlay,
                 {
-                  opacity: hasReachedSlide4 ? 0 : slideTransitionAnim.interpolate({
+                  opacity: shouldAnimateWelcome ? 0 : slideTransitionAnim.interpolate({
                     inputRange: [0, 0.3, 1],
                     outputRange: [1, 0.7, 0],
                     extrapolate: 'clamp',
@@ -160,7 +139,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
               style={[
                 styles.welcomeContent,
                 {
-                  transform: hasReachedSlide4 ? [] : [{
+                  transform: shouldAnimateWelcome ? [] : [{
                     translateY: slideTransitionAnim.interpolate({
                       inputRange: [0, 1],
                       outputRange: [30, 0],
@@ -173,7 +152,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
                       extrapolate: 'clamp',
                     })
                   }],
-                  opacity: hasReachedSlide4 ? 1 : slideTransitionAnim.interpolate({
+                  opacity: shouldAnimateWelcome ? 1 : slideTransitionAnim.interpolate({
                     inputRange: [0, 0.5, 1],
                     outputRange: [0, 0.5, 1],
                     extrapolate: 'clamp',
@@ -184,7 +163,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
             >
               <Animatable.View 
                 style={styles.welcomeHeaderContainer}
-                animation={currentIndex === 3 ? "fadeInLeft" : undefined}
+                animation={shouldAnimateWelcome ? "fadeInLeft" : undefined}
                 duration={1000}
                 delay={200}
               >
@@ -208,7 +187,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
                 >
                   <Animatable.Text 
                     style={styles.welcomePrimaryButtonText}
-                    animation={currentIndex === 3 ? "fadeInLeft" : undefined}
+                    animation={shouldAnimateWelcome ? "fadeInLeft" : undefined}
                     duration={1000}
                     delay={500}
                   >
@@ -226,7 +205,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
                 >
                   <Animatable.Text 
                     style={styles.welcomeSecondaryButtonText}
-                    animation={currentIndex === 3 ? "fadeInLeft" : undefined}
+                    animation={shouldAnimateWelcome ? "fadeInLeft" : undefined}
                     duration={1000}
                     delay={700}
                   >
@@ -237,7 +216,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
 
               <Animatable.View 
                 style={styles.welcomeImageContainer}
-                animation={currentIndex === 3 ? "fadeInLeft" : undefined}
+                animation={shouldAnimateWelcome ? "fadeInLeft" : undefined}
                 duration={1200}
                 delay={600}
               >
@@ -257,7 +236,7 @@ export default function Slides({ onDone, onNavigateToWelcome, onNavigateToRegist
       switch(index) {
         case 0: // Slide 1: De cima para baixo (vertical)
           return {
-            start: { x: 0, y: 0 },
+            start: { x: 1, y: 0 },
             end: { x: 0, y: 1 }
           };
         case 1: // Slide 2: Diagonal do topo-esquerda para baixo-direita
