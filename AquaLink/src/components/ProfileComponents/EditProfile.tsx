@@ -267,12 +267,15 @@ export default function EditProfile() {
 											 field === 'gender' && value ? formatGender(value) :
 											 value || "Não informado"}
 										</Text>
-										<TouchableOpacity 
-											style={styles.editIconButton}
-											onPress={() => handleEdit(field)}
-										>
-											<Ionicons name="pencil" size={20} color="#27D5E8" />
-										</TouchableOpacity>
+										{/* Não mostrar botão de edição para data de nascimento */}
+										{field !== 'birthdate' && (
+											<TouchableOpacity 
+												style={styles.editIconButton}
+												onPress={() => handleEdit(field)}
+											>
+												<Ionicons name="pencil" size={20} color="#27D5E8" />
+											</TouchableOpacity>
+										)}
 									</View>
 								)}
 							</View>

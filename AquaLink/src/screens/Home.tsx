@@ -304,7 +304,7 @@ export default function Home() {
 
   return (
     <PaperProvider>
-      <StatusBar backgroundColor="#F8F9FA" barStyle="dark-content" />
+      <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
 
       <View style={styles.container}>
       

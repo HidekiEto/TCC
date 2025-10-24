@@ -79,13 +79,7 @@ export default function Navigation({ initialRouteName = "Welcome" }: NavigationP
       <Stack.Screen
         name="ReminderSettings"
         component={ReminderSettings}
-        options={{ 
-          headerShown: true,
-          title: "Configurar Lembretes",
-          headerStyle: { backgroundColor: '#0288D1' },
-          headerTintColor: '#fff',
-          headerTitleStyle: { fontWeight: 'bold' }
-        }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Settings"

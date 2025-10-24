@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -9,11 +8,14 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  StatusBar,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useReminders } from '../contexts/ReminderContext';
 import { formatReminderConfig } from '../utils/notifications';
 
 export default function ReminderSettings() {
+  const navigation = useNavigation();
   const {
     config,
     isLoading,
@@ -131,12 +133,12 @@ export default function ReminderSettings() {
   const nextReminder = getNextReminderTime();
 
   const intervalOptions = [
+    { label: '15 min', value: 15 },
     { label: '30 min', value: 30 },
     { label: '1 hora', value: 60 },
     { label: '1h 30min', value: 90 },
     { label: '2 horas', value: 120 },
     { label: '3 horas', value: 180 },
-    { label: '4 horas', value: 240 },
   ];
 
   const days = [
@@ -159,23 +161,32 @@ export default function ReminderSettings() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-   
-      <View style={styles.header}>
-        <Text style={styles.title}>⏰ Lembretes de Hidratação</Text>
-        <Text style={styles.subtitle}>
-          Configure quando e como receber lembretes
-        </Text>
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#1399CF" barStyle="light-content" />
+      <ScrollView style={styles.scrollContent}>
+        {/* Header com Botão de Voltar */}
+        <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>⏰ Lembretes de Hidratação</Text>
+          <Text style={styles.subtitle}>
+            Configure quando e como receber lembretes
+          </Text>
+        </View>
       </View>
 
-  
-      <View style={styles.card}>
+        <View style={styles.card}>
         <View style={styles.row}>
           <Text style={styles.label}>Lembretes Ativos</Text>
           <Switch
             value={config.enabled}
             onValueChange={handleToggle}
-            trackColor={{ false: '#ccc', true: '#4CAF50' }}
+            trackColor={{ false: '#ccc', true: '#27D5E8' }}
             thumbColor={config.enabled ? '#fff' : '#f4f3f4'}
           />
         </View>
@@ -351,7 +362,8 @@ export default function ReminderSettings() {
       </View>
 
       <View style={styles.bottomSpace} />
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -361,6 +373,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  scrollContent: {
+    flex: 1,
+    marginTop: -1,
+  },
   loadingText: {
     textAlign: 'center',
     marginTop: 50,
@@ -368,20 +384,44 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   header: {
-    padding: 20,
-    backgroundColor: '#0288D1',
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: '#1399CF',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+  },
+  headerContent: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: 'bold',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    marginBottom: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 5,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
     color: '#e3f2fd',
+    textAlign: 'center',
   },
   card: {
     backgroundColor: '#fff',
@@ -456,8 +496,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   timeButton: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
     backgroundColor: '#0288D1',
     borderRadius: 20,
     justifyContent: 'center',
@@ -471,7 +511,7 @@ const styles = StyleSheet.create({
   timeValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginHorizontal: 20,
+    marginHorizontal: 10,
     minWidth: 60,
     textAlign: 'center',
   },
